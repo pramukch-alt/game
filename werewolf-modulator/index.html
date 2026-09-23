@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Werewolf Modulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 p-4 text-center sticky top-0 z-50 relative">
+        <a href="../" class="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-amber-400 flex items-center gap-1 transition" title="กลับสู่หน้าหลัก Game Hub">
+            <span>&larr;</span> <span class="hidden sm:inline">หน้าหลัก</span>
+        </a>
+        <h1 class="text-xl font-bold text-amber-400">🐺 Werewolf Modulator</h1>
+        <div id="game-status" class="text-xs text-slate-400 mt-1">สถานะ: เลือกบทบาท (Setting)</div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-md w-full mx-auto p-4 pb-20 space-y-4">
+
+        <!-- STEP 1: เลือก Role -->
+        <section id="step-1" class="space-y-4">
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <h2 class="text-lg font-semibold text-amber-300 mb-2">ขั้นตอนที่ 1: เลือกบทบาทในเกม</h2>
+                <p class="text-xs text-slate-400 mb-4">เลือก Role ที่ต้องการใช้ในรอบนี้</p>
+                
+                <div id="role-checkboxes" class="grid grid-cols-2 gap-2">
+                    <!-- Javascript will populate roles here -->
+                </div>
+            </div>
+            <button onclick="goToStep(2)" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg">
+                ถัดไป: ใส่ชื่อผู้เล่น
+            </button>
+        </section>
+
+        <!-- STEP 2: กรอกชื่อผู้เล่น -->
+        <section id="step-2" class="space-y-4 hidden">
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <h2 class="text-lg font-semibold text-amber-300 mb-2">ขั้นตอนที่ 2: กรอกชื่อผู้เล่น</h2>
+                <p class="text-xs text-slate-400 mb-4">จำนวนผู้เล่นต้องเท่ากับจำนวน Role ที่เลือก (<span id="required-count">0</span> คน)</p>
+                
+                <div id="player-inputs" class="space-y-2 max-h-96 overflow-y-auto pr-1">
+                    <!-- Javascript will generate inputs here -->
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="goToStep(1)" class="w-1/3 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-3 rounded-xl transition">
+                    ย้อนกลับ
+                </button>
+                <button onclick="goToStep(3)" class="w-2/3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg">
+                    ถัดไป: จัดคู่ Role (Matching)
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 3: Matching Role กับผู้เล่น -->
+        <section id="step-3" class="space-y-4 hidden">
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <h2 class="text-lg font-semibold text-amber-300 mb-2">ขั้นตอนที่ 3: จับคู่ผู้เล่นกับบทบาท</h2>
+                <p class="text-xs text-slate-400 mb-4">กำหนดว่าใครได้รับบทบาทไหน</p>
+                
+                <div id="matching-list" class="space-y-3">
+                    <!-- Javascript will generate selects here -->
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="goToStep(2)" class="w-1/3 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-3 rounded-xl transition">
+                    ย้อนกลับ
+                </button>
+                <button onclick="startGame()" class="w-2/3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg">
+                    🚀 เริ่มเกม (Start Game)
+                </button>
+            </div>
+        </section>
+
+        <!-- GAMEPLAY / DASHBOARD -->
+        <section id="gameplay-screen" class="space-y-4 hidden">
+            <!-- Game Info Card -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center">
+                <div>
+                    <span id="day-night-indicator" class="text-xs px-2 py-1 rounded bg-indigo-900 text-indigo-300 font-semibold">🌙 คืนที่ 1</span>
+                    <h3 id="phase-title" class="text-base font-bold text-slate-200 mt-1">ช่วงเวลากลางคืน (Night Phase)</h3>
+                </div>
+                <button onclick="nextPhase()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
+                    เปลี่ยนรอบ ➡️
+                </button>
+            </div>
+
+            <!-- Timer Card (แสดงเฉพาะตอนกลางวัน) -->
+            <div id="timer-card" class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3 hidden">
+                <div class="flex justify-between items-center">
+                    <h4 class="text-xs font-semibold text-amber-400">⏱️ ตัวจับเวลาอภิปราย / โหวต</h4>
+                    <span id="timer-display" class="text-lg font-bold text-slate-100 font-mono">00:00</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input type="range" id="timer-range" min="10" max="300" step="10" value="60" class="w-full accent-amber-500 bg-slate-700 h-2 rounded cursor-pointer" oninput="updateTimerRange(this.value)">
+                    <span id="timer-range-label" class="text-[11px] text-slate-400 w-12 text-right">60s</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="startTimer()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-1.5 rounded-lg transition">Start</button>
+                    <button onclick="stopTimer()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold py-1.5 rounded-lg transition">Stop</button>
+                    <button onclick="resetTimer()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-semibold py-1.5 rounded-lg transition">Reset</button>
+                </div>
+            </div>
+
+            <!-- Actions Checklist Card -->
+            <div id="actions-container" class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <h4 id="actions-card-title" class="text-sm font-semibold text-amber-400 border-b border-slate-700 pb-2">ลำดับการทำงานตอนกลางคืน</h4>
+                <div class="space-y-2 text-xs" id="actions-checklist">
+                    <!-- Checklist generated via JS -->
+                </div>
+            </div>
+
+            <!-- Player Status Management List -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <h4 class="text-sm font-semibold text-amber-400 border-b border-slate-700 pb-2">สถานะผู้เล่นทั้งหมด</h4>
+                <div id="player-status-list" class="space-y-2 max-h-96 overflow-y-auto">
+                    <!-- Player list with status -->
+                </div>
+            </div>
+
+            <button onclick="resetGame()" class="w-full bg-rose-900/40 hover:bg-rose-900/60 text-rose-300 border border-rose-700 text-xs font-semibold py-2 rounded-xl transition">
+                🔄 เริ่มเกมใหม่ / ตั้งค่าใหม่
+            </button>
+        </section>
+
+    </main>
+
+    <script>
+        const availableRoles = [
+            { id: 'werewolf', name: '🐺 Werewolf', team: 'wolf' },
+            { id: 'wolf_cub', name: '🐺 Wolf Cub', team: 'wolf' },
+            { id: 'sorcerer', name: '🧙 Sorcerer', team: 'wolf' },
+            { id: 'seer', name: '🔮 Seer', team: 'good' },
+            { id: 'bodyguard', name: '🛡️ Bodyguard', team: 'good' },
+            { id: 'tough_guy', name: '💪 Tough Guy', team: 'good' },
+            { id: 'disease', name: '🦠 Disease', team: 'good' }, // Role ใหม่
+            { id: 'cursed', name: '🧑 Cursed', team: 'good' },
+            { id: 'villager', name: '🧑 Villager', team: 'good' },
+            { id: 'hunter', name: '🏹 Hunter', team: 'good' },
+            { id: 'apprentice_seer', name: '🔮 Apprentice Seer', team: 'good' },
+            { id: 'cupid', name: '💘 Cupid', team: 'special' }
+        ];
+
+        let gameState = {
+            selectedRoles: [],
+            players: [],
+            gamePhase: 'night',
+            dayCount: 1,
+            playerStatus: {},
+            lovers: [],
+            wolfTarget: '',
+            bodyguardTarget: '',
+            cursedTurned: [],
+            lastNightResultText: '- ยังไม่มีข้อมูลการโจมตีจากคืนที่ผ่านมา -'
+        };
+
+        let timerInterval = null;
+        let timeLeft = 60;
+        let totalTime = 60;
+
+        window.onload = function() {
+            const container = document.getElementById('role-checkboxes');
+            availableRoles.forEach(r => {
+                container.innerHTML += `
+                    <label class="flex items-center space-x-2 bg-slate-900/50 p-2.5 rounded-lg border border-slate-700 cursor-pointer hover:border-amber-500/50 transition">
+                        <input type="checkbox" value="${r.id}" class="role-cb w-4 h-4 text-amber-500 rounded bg-slate-900 border-slate-700 focus:ring-amber-500" checked onchange="updateRequiredCount()">
+                        <span class="text-xs font-medium">${r.name}</span>
+                    </label>
+                `;
+            });
+            updateRequiredCount();
+        };
+
+        function updateRequiredCount() {
+            const checked = document.querySelectorAll('.role-cb:checked');
+            document.getElementById('required-count').innerText = checked.length;
+        }
+
+        function goToStep(step) {
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-3').classList.add('hidden');
+            document.getElementById('gameplay-screen').classList.add('hidden');
+
+            if (step === 1) {
+                document.getElementById('step-1').classList.remove('hidden');
+                document.getElementById('game-status').innerText = 'สถานะ: เลือกบทบาท (Setting)';
+            } else if (step === 2) {
+                const checked = document.querySelectorAll('.role-cb:checked');
+                if (checked.length === 0) {
+                    alert('กรุณาเลือก Role อย่างน้อย 1 บทบาท');
+                    goToStep(1);
+                    return;
+                }
+                
+                const inputContainer = document.getElementById('player-inputs');
+                inputContainer.innerHTML = '';
+                for (let i = 0; i < checked.length; i++) {
+                    inputContainer.innerHTML += `
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-slate-400 w-6">#${i+1}</span>
+                            <input type="text" placeholder="ชื่อผู้เล่น ${i+1}" class="player-name-input w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500" value="ผู้เล่น ${i+1}">
+                        </div>
+                    `;
+                }
+                document.getElementById('step-2').classList.remove('hidden');
+                document.getElementById('game-status').innerText = 'สถานะ: กรอกชื่อผู้เล่น';
+            } else if (step === 3) {
+                const nameInputs = document.querySelectorAll('.player-name-input');
+                gameState.players = [];
+                nameInputs.forEach(input => {
+                    gameState.players.push(input.value || "ไม่ระบุชื่อ");
+                });
+
+                const checked = document.querySelectorAll('.role-cb:checked');
+                gameState.selectedRoles = Array.from(checked).map(cb => cb.value);
+
+                const matchingContainer = document.getElementById('matching-list');
+                matchingContainer.innerHTML = '';
+                
+                gameState.selectedRoles.forEach((roleId, index) => {
+                    const roleObj = availableRoles.find(r => r.id === roleId);
+                    let optionsHtml = '';
+                    gameState.players.forEach((p, pIndex) => {
+                        const selected = (pIndex === index) ? 'selected' : '';
+                        optionsHtml += `<option value="${p}" ${selected}>${p}</option>`;
+                    });
+
+                    matchingContainer.innerHTML += `
+                        <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-700 flex items-center justify-between">
+                            <span class="text-xs font-semibold text-amber-300 w-1/2">${roleObj.name}</span>
+                            <select class="match-select w-1/2 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-100 focus:outline-none focus:border-amber-500" data-role="${roleId}">
+                                ${optionsHtml}
+                            </select>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('step-3').classList.remove('hidden');
+                document.getElementById('game-status').innerText = 'สถานะ: จับคู่ Role กับผู้เล่น';
+            }
+        }
+
+        function startGame() {
+            const selects = document.querySelectorAll('.match-select');
+            gameState.playerRoleMap = {};
+            gameState.rolePlayerMap = {};
+            gameState.playerStatus = {};
+            gameState.lovers = [];
+            gameState.wolfTarget = '';
+            gameState.bodyguardTarget = '';
+            gameState.cursedTurned = [];
+            gameState.lastNightResultText = '- ยังไม่มีข้อมูลการโจมตีจากคืนที่ผ่านมา -';
+
+            selects.forEach(sel => {
+                const role = sel.getAttribute('data-role');
+                const player = sel.value;
+                gameState.playerRoleMap[role] = player;
+                gameState.rolePlayerMap[player] = role;
+            });
+
+            gameState.players.forEach(p => {
+                gameState.playerStatus[p] = { alive: true, note: '' };
+            });
+
+            document.getElementById('step-3').classList.add('hidden');
+            document.getElementById('gameplay-screen').classList.remove('hidden');
+            document.getElementById('game-status').innerText = 'สถานะ: เกมกำลังดำเนินอยู่';
+
+            renderGameplay();
+            resetTimer();
+        }
+
+        function renderGameplay() {
+            const indicator = document.getElementById('day-night-indicator');
+            const title = document.getElementById('phase-title');
+            const cardTitle = document.getElementById('actions-card-title');
+            const checklistContainer = document.getElementById('actions-checklist');
+            const timerCard = document.getElementById('timer-card');
+
+            let playerOpts = '';
+            gameState.players.forEach(p => {
+                playerOpts += `<option value="${p}">${p}</option>`;
+            });
+
+            if (gameState.gamePhase === 'night') {
+                timerCard.classList.add('hidden');
+                stopTimer();
+
+                indicator.className = "text-xs px-2 py-1 rounded bg-indigo-900 text-indigo-300 font-semibold";
+                indicator.innerText = `🌙 คืนที่ ${gameState.dayCount}`;
+                title.innerText = "ช่วงเวลากลางคืน (Night Phase)";
+                cardTitle.innerText = "ลำดับการทำงานตอนกลางคืน";
+
+                const nightSteps = [
+                    { id: 'cupid', name: '1. Cupid เลือก Lovers (เฉพาะคืนแรก)', show: gameState.selectedRoles.includes('cupid') && gameState.dayCount === 1 },
+                    { id: 'wolf', name: '2. Werewolf เลือกเหยื่อ', show: true },
+                    { id: 'bodyguard', name: '3. Bodyguard เลือกป้องกัน', show: gameState.selectedRoles.includes('bodyguard') },
+                    { id: 'seer', name: '4. Seer ตรวจผู้เล่น', show: gameState.selectedRoles.includes('seer') },
+                    { id: 'sorcerer', name: '5. Sorcerer ตรวจหา Seer', show: gameState.selectedRoles.includes('sorcerer') },
+                    { id: 'apprentice', name: '6. Apprentice Seer ทำงาน', show: gameState.selectedRoles.includes('apprentice_seer') }
+                ];
+
+                checklistContainer.innerHTML = '';
+                nightSteps.forEach(step => {
+                    if (step.show) {
+                        if (step.id === 'cupid') {
+                            checklistContainer.innerHTML += `
+                                <div class="bg-slate-900/40 p-2.5 rounded border border-slate-700/50 space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" id="cupid-cb" class="w-4 h-4 text-indigo-500 rounded bg-slate-900 border-slate-700" onchange="toggleCupidDropdown()">
+                                        <span class="text-slate-300 font-semibold">${step.name}</span>
+                                    </label>
+                                    <div id="cupid-dropdowns" class="hidden pl-6 space-y-1.5">
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="text-slate-400">Lover คนที่ 1:</span>
+                                            <select id="lover-1" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100" onchange="updateLovers()">
+                                                ${playerOpts}
+                                            </select>
+                                        </div>
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="text-slate-400">Lover คนที่ 2:</span>
+                                            <select id="lover-2" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100" onchange="updateLovers()">
+                                                ${playerOpts}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else if (step.id === 'wolf') {
+                            checklistContainer.innerHTML += `
+                                <div class="bg-slate-900/40 p-2.5 rounded border border-slate-700/50 space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" id="wolf-cb" class="w-4 h-4 text-indigo-500 rounded bg-slate-900 border-slate-700" onchange="toggleWolfDropdown()">
+                                        <span class="text-slate-300 font-semibold">${step.name}</span>
+                                    </label>
+                                    <div id="wolf-dropdown" class="hidden pl-6">
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="text-slate-400">เลือกเหยื่อที่จะฆ่า:</span>
+                                            <select id="wolf-target-select" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100" onchange="updateWolfTarget()">
+                                                <option value="">-- เลือกผู้เล่น --</option>
+                                                ${playerOpts}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else if (step.id === 'bodyguard') {
+                            checklistContainer.innerHTML += `
+                                <div class="bg-slate-900/40 p-2.5 rounded border border-slate-700/50 space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" id="bg-cb" class="w-4 h-4 text-indigo-500 rounded bg-slate-900 border-slate-700" onchange="toggleBgDropdown()">
+                                        <span class="text-slate-300 font-semibold">${step.name}</span>
+                                    </label>
+                                    <div id="bg-dropdown" class="hidden pl-6">
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="text-slate-400">เลือกคนที่จะป้องกัน:</span>
+                                            <select id="bg-target-select" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100" onchange="updateBgTarget()">
+                                                <option value="">-- เลือกผู้เล่น --</option>
+                                                ${playerOpts}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            checklistContainer.innerHTML += `
+                                <label class="flex items-center space-x-2 bg-slate-900/40 p-2 rounded border border-slate-700/50 cursor-pointer">
+                                    <input type="checkbox" class="w-4 h-4 text-indigo-500 rounded bg-slate-900 border-slate-700">
+                                    <span class="text-slate-300">${step.name}</span>
+                                </label>
+                            `;
+                        }
+                    }
+                });
+
+                setTimeout(() => {
+                    if (gameState.lovers.length === 2) {
+                        const cupidCb = document.getElementById('cupid-cb');
+                        if (cupidCb) {
+                            cupidCb.checked = true;
+                            toggleCupidDropdown();
+                            document.getElementById('lover-1').value = gameState.lovers[0];
+                            document.getElementById('lover-2').value = gameState.lovers[1];
+                        }
+                    }
+                    if (gameState.wolfTarget) {
+                        const wolfCb = document.getElementById('wolf-cb');
+                        if (wolfCb) {
+                            wolfCb.checked = true;
+                            toggleWolfDropdown();
+                            document.getElementById('wolf-target-select').value = gameState.wolfTarget;
+                        }
+                    }
+                    if (gameState.bodyguardTarget) {
+                        const bgCb = document.getElementById('bg-cb');
+                        if (bgCb) {
+                            bgCb.checked = true;
+                            toggleBgDropdown();
+                            document.getElementById('bg-target-select').value = gameState.bodyguardTarget;
+                        }
+                    }
+                }, 50);
+
+            } else {
+                timerCard.classList.remove('hidden');
+
+                indicator.className = "text-xs px-2 py-1 rounded bg-amber-900 text-amber-300 font-semibold";
+                indicator.innerText = `☀️ กลางวัน วันที่ ${gameState.dayCount}`;
+                title.innerText = "ช่วงอภิปรายและโหวต (Day Phase)";
+                cardTitle.innerText = "ลำดับการทำงานตอนกลางวัน";
+
+                let hunterCheckHtml = '';
+                const wolf = gameState.wolfTarget;
+                const bg = gameState.bodyguardTarget;
+                const isHunterKilled = wolf && (gameState.rolePlayerMap[wolf] === 'hunter') && (!(bg && wolf === bg));
+
+                if (isHunterKilled) {
+                    hunterCheckHtml = `
+                        <div class="bg-rose-950/50 p-2.5 rounded border border-rose-900 space-y-1">
+                            <span class="text-rose-400 font-semibold text-xs">⚠️ Hunter (${wolf}) ถูกหมาป่าฆ่า!</span>
+                            <div class="text-[11px] text-slate-300">
+                                • ให้ Mod สอบถาม Hunter เพื่อใช้ความสามารถ <b>ยิงผู้เล่น 1 คน</b> ให้ตายตามทันที
+                            </div>
+                        </div>
+                    `;
+                }
+
+                checklistContainer.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="bg-indigo-950/50 p-3 rounded border border-indigo-900/60 space-y-1">
+                            <span class="text-indigo-300 font-semibold text-xs">📊 สรุปผลการโจมตีเมื่อคืน (Auto Monitor)</span>
+                            <div class="text-[11px] text-amber-300 mt-1">
+                                ${gameState.lastNightResultText}
+                            </div>
+                        </div>
+
+                        ${hunterCheckHtml}
+
+                        <label class="flex items-center space-x-2 bg-slate-900/40 p-2 rounded border border-slate-700/50 cursor-pointer">
+                            <input type="checkbox" class="w-4 h-4 text-amber-500 rounded bg-slate-900 border-slate-700">
+                            <span class="text-slate-300">1. หาก Hunter ถูกหมาป่าฆ่า: เรียกถาม Hunter เพื่อเลือกยิงเป้าหมาย</span>
+                        </label>
+                        <label class="flex items-center space-x-2 bg-slate-900/40 p-2 rounded border border-slate-700/50 cursor-pointer">
+                            <input type="checkbox" class="w-4 h-4 text-amber-500 rounded bg-slate-900 border-slate-700">
+                            <span class="text-slate-300">2. เปิดโอกาสให้ผู้เล่นพูดคุย อภิปราย และจับพิรุธร่วมกัน</span>
+                        </label>
+                        <label class="flex items-center space-x-2 bg-slate-900/40 p-2 rounded border border-slate-700/50 cursor-pointer">
+                            <input type="checkbox" class="w-4 h-4 text-amber-500 rounded bg-slate-900 border-slate-700">
+                            <span class="text-slate-300">3. ดำเนินการ Vote Out ประจำวันเพื่อโหวตผู้เล่นออก</span>
+                        </label>
+                    </div>
+                `;
+            }
+
+            renderPlayerStatusList();
+        }
+
+        function renderPlayerStatusList() {
+            const statusList = document.getElementById('player-status-list');
+            statusList.innerHTML = '';
+            
+            gameState.players.forEach(p => {
+                const role = gameState.rolePlayerMap[p] || 'unknown';
+                const roleObj = availableRoles.find(r => r.id === role);
+                const status = gameState.playerStatus[p];
+                const opacityClass = status.alive ? '' : 'opacity-50 bg-slate-900/80';
+                const statusBtnText = status.alive ? '🟢 <span>รอด</span>' : '💀 <span>ตาย</span>';
+                const statusBtnClass = status.alive ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-rose-950 text-rose-400 border-rose-800';
+                
+                const isLover = gameState.lovers.includes(p);
+                const loverBadge = isLover ? '<span class="text-rose-400 font-bold ml-1" title="Lovers (คู่รัก)">❤️</span>' : '';
+                const isTurnedWolf = gameState.cursedTurned.includes(p);
+                const wolfTurnBadge = isTurnedWolf ? '<span class="text-amber-500 font-bold ml-1" title="Cursed กลายร่างเป็น Werewolf แล้ว">🐺</span>' : '';
+
+                statusList.innerHTML += `
+                    <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700 flex items-center justify-between ${opacityClass}">
+                        <div class="space-y-0.5 flex-1">
+                            <div class="flex items-center space-x-1.5 flex-wrap">
+                                <span class="font-semibold text-slate-100 text-xs">${p}</span>
+                                ${loverBadge}
+                                ${wolfTurnBadge}
+                                <span class="text-[10px] text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-900/50">${roleObj ? roleObj.name : role}</span>
+                            </div>
+                            <input type="text" placeholder="จดโน้ตย่อ..." class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-[11px] text-slate-300 focus:outline-none focus:border-amber-500" value="${status.note}" onchange="updatePlayerNote('${p}', this.value)">
+                        </div>
+                        <button onclick="toggleLife('${p}')" class="text-[11px] font-semibold px-2.5 py-1 rounded border ${statusBtnClass} transition ml-2">
+                            ${statusBtnText}
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleCupidDropdown() {
+            const cb = document.getElementById('cupid-cb');
+            const dropdowns = document.getElementById('cupid-dropdowns');
+            if (cb.checked) {
+                dropdowns.classList.remove('hidden');
+                updateLovers();
+            } else {
+                dropdowns.classList.add('hidden');
+                gameState.lovers = [];
+                renderPlayerStatusList();
+            }
+        }
+
+        function updateLovers() {
+            const cb = document.getElementById('cupid-cb');
+            if (cb && cb.checked) {
+                const l1 = document.getElementById('lover-1').value;
+                const l2 = document.getElementById('lover-2').value;
+                gameState.lovers = [l1, l2];
+                renderPlayerStatusList();
+                calculateNightResult();
+            }
+        }
+
+        function toggleWolfDropdown() {
+            const cb = document.getElementById('wolf-cb');
+            const dropdown = document.getElementById('wolf-dropdown');
+            if (cb.checked) {
+                dropdown.classList.remove('hidden');
+                updateWolfTarget();
+            } else {
+                dropdown.classList.add('hidden');
+                gameState.wolfTarget = '';
+                calculateNightResult();
+            }
+        }
+
+        function updateWolfTarget() {
+            const select = document.getElementById('wolf-target-select');
+            gameState.wolfTarget = select ? select.value : '';
+            calculateNightResult();
+        }
+
+        function toggleBgDropdown() {
+            const cb = document.getElementById('bg-cb');
+            const dropdown = document.getElementById('bg-dropdown');
+            if (cb.checked) {
+                dropdown.classList.remove('hidden');
+                updateBgTarget();
+            } else {
+                dropdown.classList.add('hidden');
+                gameState.bodyguardTarget = '';
+                calculateNightResult();
+            }
+        }
+
+        function updateBgTarget() {
+            const select = document.getElementById('bg-target-select');
+            gameState.bodyguardTarget = select ? select.value : '';
+            calculateNightResult();
+        }
+
+        function calculateNightResult() {
+            const wolf = gameState.wolfTarget;
+            const bg = gameState.bodyguardTarget;
+            gameState.cursedTurned = [];
+
+            if (!wolf) {
+                gameState.lastNightResultText = "- ยังไม่ได้เลือกเป้าหมายที่หมาป่าฆ่า -";
+                renderPlayerStatusList();
+                return;
+            }
+
+            const targetRole = gameState.rolePlayerMap[wolf];
+            const isLoverTarget = gameState.lovers.includes(wolf);
+
+            if (bg && wolf === bg) {
+                gameState.lastNightResultText = `🛡️ Bodyguard ป้องกัน <b>${wolf}</b> สำเร็จ!<br>👉 <b>ผลลัพธ์: ไม่มีใครตาย</b> (การโจมตีถูกบล็อก)`;
+                renderPlayerStatusList();
+                return;
+            }
+
+            if (targetRole === 'disease') {
+                gameState.lastNightResultText = `🦠 Disease (<b>${wolf}</b>) ถูกหมาป่าโจมตี!<br>👉 <b>ผลลัพธ์: ไม่มีใครตาย</b> (โรคระบาดทำให้หมาป่าไม่สามารถฆ่าได้ในคืนนี้ และ Disease ยังรอดชีวิต)`;
+                renderPlayerStatusList();
+                return;
+            }
+
+            if (targetRole === 'cursed') {
+                gameState.cursedTurned.push(wolf);
+                gameState.lastNightResultText = `🧑 Cursed (<b>${wolf}</b>) ถูกหมาป่าโจมตี<br>👉 <b>ผลลัพธ์: ไม่มีใครตาย และ Cursed กลายร่างเป็นหมาป่า 🐺</b>`;
+                renderPlayerStatusList();
+                return;
+            }
+
+            if (targetRole === 'tough_guy') {
+                gameState.lastNightResultText = `💪 Tough Guy (<b>${wolf}</b>) ถูกหมาป่ากัด<br>👉 <b>ผลลัพธ์: ยังไม่ตายในวันนี้</b> (จะตายในวันถัดไป)`;
+            } else {
+                if (isLoverTarget) {
+                    const partner = gameState.lovers.find(p => p !== wolf);
+                    gameState.lastNightResultText = `🐺 หมาป่าฆ่า <b>${wolf}</b> ซึ่งเป็นหนึ่งในคู่รัก (Lovers)!<br>👉 <b>ผลลัพธ์: ผู้เล่นคู่รักทั้งคู่ (${wolf} และ ${partner}) เสียชีวิตทันทีตามเงื่อนไข ❤️</b>`;
+                    
+                    if (gameState.playerStatus[wolf]) gameState.playerStatus[wolf].alive = false;
+                    if (partner && gameState.playerStatus[partner]) gameState.playerStatus[partner].alive = false;
+                } else {
+                    gameState.lastNightResultText = `🐺 หมาป่าเลือกฆ่า: <b>${wolf}</b> (${targetRole || 'unknown'})<br>👉 <b>ผลลัพธ์: ผู้เล่นเสียชีวิตในคืนนี้</b>`;
+                    if (gameState.playerStatus[wolf]) gameState.playerStatus[wolf].alive = false;
+                }
+            }
+            renderPlayerStatusList();
+        }
+
+        function toggleLife(playerName) {
+            const currentStatus = gameState.playerStatus[playerName].alive;
+            const newStatus = !currentStatus;
+            
+            gameState.playerStatus[playerName].alive = newStatus;
+
+            if (!newStatus && gameState.lovers.includes(playerName)) {
+                const partner = gameState.lovers.find(p => p !== playerName);
+                if (partner && gameState.playerStatus[partner].alive) {
+                    gameState.playerStatus[partner].alive = false;
+                    alert(`💘 เงื่อนไข Lover: ${partner} เสียชีวิตตาม ${playerName} ทันที!`);
+                }
+            }
+
+            renderPlayerStatusList();
+        }
+
+        function updatePlayerNote(playerName, note) {
+            gameState.playerStatus[playerName].note = note;
+        }
+
+        function nextPhase() {
+            if (gameState.gamePhase === 'night') {
+                gameState.gamePhase = 'day';
+            } else {
+                gameState.gamePhase = 'night';
+                gameState.dayCount++;
+            }
+            renderGameplay();
+            resetTimer();
+        }
+
+        function updateTimerRange(val) {
+            totalTime = parseInt(val);
+            timeLeft = totalTime;
+            document.getElementById('timer-range-label').innerText = val + 's';
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${m}:${s}`;
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateTimerDisplay();
+                } else {
+                    clearInterval(timerInterval);
+                    alert('⏰ หมดเวลาแล้ว!');
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
+        function resetTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timeLeft = totalTime;
+            updateTimerDisplay();
+        }
+
+        function resetGame() {
+            if (confirm('คุณต้องการรีเซ็ตและตั้งค่าเกมใหม่ทั้งหมดใช่หรือไม่?')) {
+                stopTimer();
+                gameState = {
+                    selectedRoles: [],
+                    players: [],
+                    gamePhase: 'night',
+                    dayCount: 1,
+                    playerStatus: {},
+                    lovers: [],
+                    wolfTarget: '',
+                    bodyguardTarget: '',
+                    cursedTurned: [],
+                    lastNightResultText: ''
+                };
+                goToStep(1);
+            }
+        }
+    </script>
+</body>
+</html>
