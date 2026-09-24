@@ -10,8 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- QR Code Generator JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- MQTT.js for Real-time Serverless WebSocket Communication -->
-    <script src="https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js"></script>
+    <!-- PeerJS for Real-time WebRTC Peer-to-Peer Communication (Port 443 HTTPS/WSS) -->
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
     <style>
         body { font-family: 'Prompt', sans-serif; }
@@ -205,6 +205,11 @@
                     <div id="mod-room-code-display" class="text-3xl font-black text-amber-400 font-mono tracking-widest mt-0.5">
                         WW-0000
                     </div>
+                    <!-- Connection Status Tag -->
+                    <div id="mod-conn-status" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800 mt-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>🟢 กำลังเปิดสัญญาณห้อง...</span>
+                    </div>
                 </div>
 
                 <!-- QR Code Box -->
@@ -216,7 +221,7 @@
 
                 <div class="space-y-1">
                     <p class="text-xs font-semibold text-slate-200">ให้ผู้เล่นสแกน QR Code ด้วยกล้องมือถือ</p>
-                    <p class="text-[11px] text-slate-400">ระบบจะแจกการ์ดเข้ามือถือของแต่ละคนโดยอัตโนมัติ</p>
+                    <p id="qr-target-url-display" class="text-[10px] text-slate-400 font-mono break-all px-2"></p>
                 </div>
 
                 <!-- Copy Link Button -->
@@ -283,7 +288,7 @@
 
                 <div class="space-y-3 pt-2">
                     <input type="text" id="player-name-input-field" placeholder="พิมพ์ชื่อเล่นของคุณ..." maxlength="20" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 text-center font-semibold focus:outline-none focus:border-amber-500 transition shadow-inner">
-                    <button onclick="submitPlayerJoin()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-amber-500/20 text-sm">
+                    <button onclick="submitPlayerJoin()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-amber-500/20 text-sm active:scale-95">
                         เข้าร่วมห้อง & รอรับการ์ด 🃏
                     </button>
                 </div>
@@ -338,10 +343,14 @@
             </div>
 
             <!-- Joined Player Info Box -->
-            <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center">
-                <span class="text-xs text-slate-400">คุณเข้าร่วมในชื่อ:</span>
-                <span id="player-my-name-display" class="text-xs font-bold text-slate-100 ml-1">ผู้เล่น</span>
-                <div class="mt-2 text-[11px] text-slate-400">
+            <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center space-y-2">
+                <div class="flex items-center justify-center gap-2">
+                    <span id="player-conn-status-badge" class="px-2 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800">
+                        🟢 เชื่อมต่อห้องสำเร็จ
+                    </span>
+                    <span class="text-xs text-slate-300">คุณ: <b id="player-my-name-display" class="text-amber-400">ผู้เล่น</b></span>
+                </div>
+                <div id="player-friends-preview" class="text-[11px] text-slate-400">
                     เมื่อสมาชิกครบทีม ระบบจะสุ่มบทบาทและพลิกการ์ดให้อัตโนมัติทันที
                 </div>
             </div>
@@ -551,7 +560,9 @@
         let activeRoomCode = '';
         let joinedPlayers = []; // [{ id, name }]
         
-        let mqttClient = null;
+        let peer = null;
+        let playerConnections = {}; // For Mod: { deviceId: conn }
+        let playerConnToMod = null; // For Player: conn
         let localChannel = null;
 
         // Mod Gameplay State
@@ -619,97 +630,165 @@
                 // Direct Player Join Flow
                 activeRoomCode = roomParam.trim().toUpperCase();
                 document.getElementById('player-view-room-code').innerText = activeRoomCode;
+                
+                // Pre-fill a random fun nickname to make joining instant
+                const defaultNames = ['พรานป่า', 'ชาวบ้านใจกล้า', 'เงาจันทร์', 'ดาวเหนือ', 'อินทรี', 'พายุ', 'หมอกจาง', 'แสงเทียน', 'รุ่งอรุณ', 'สายลม'];
+                const randomDefault = defaultNames[Math.floor(Math.random() * defaultNames.length)];
+                const inputField = document.getElementById('player-name-input-field');
+                if (inputField) inputField.value = randomDefault;
+
                 showScreen('screen-player-join');
-                setupNetworking(activeRoomCode, false);
+                setupPlayerNetworking(activeRoomCode);
             } else {
                 showScreen('screen-home');
             }
         };
 
         // ---------------------------------------------
-        // REAL-TIME COMMUNICATION (MQTT + BroadcastChannel)
+        // REAL-TIME COMMUNICATION (PEERJS + BROADCASTCHANNEL)
         // ---------------------------------------------
-        function setupNetworking(roomCode, asMod) {
-            isMod = asMod;
-            activeRoomCode = roomCode;
+        const PEER_CONFIG = {
+            debug: 1,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' }
+                ]
+            }
+        };
 
-            // 1. Setup local BroadcastChannel for zero-latency local testing
+        function getRoomPeerId(roomCode) {
+            return 'wwroom_' + roomCode.toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        // Setup Mod Networking
+        function setupModNetworking(roomCode) {
+            isMod = true;
+            activeRoomCode = roomCode;
+            playerConnections = {};
+
+            // 1. BroadcastChannel for local tabs
             try {
                 if (localChannel) localChannel.close();
-                localChannel = new BroadcastChannel('werewolf_room_' + roomCode);
-                localChannel.onmessage = (event) => handleIncomingMessage(event.data);
-            } catch (e) {
-                console.warn('BroadcastChannel not supported, relying on MQTT', e);
-            }
+                localChannel = new BroadcastChannel('werewolf_chan_' + roomCode);
+                localChannel.onmessage = (event) => handleIncomingData(event.data, null);
+            } catch (e) {}
 
-            // 2. Setup MQTT over WebSocket
-            if (mqttClient) {
-                try { mqttClient.end(); } catch (e) {}
-            }
+            // 2. PeerJS Peer for cross-device mobile connections
+            const modId = getRoomPeerId(roomCode);
+            if (peer) { try { peer.destroy(); } catch(e){} }
+
+            const statusEl = document.getElementById('mod-conn-status');
+            if (statusEl) statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span><span>🟡 กำลังเปิดสัญญาณห้อง...</span>`;
 
             try {
-                const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
-                mqttClient = mqtt.connect(brokerUrl, {
-                    clientId: 'ww_' + (asMod ? 'mod_' : 'ply_') + Math.random().toString(16).substr(2, 8),
-                    clean: true,
-                    connectTimeout: 5000,
-                    reconnectPeriod: 3000
+                peer = new Peer(modId, PEER_CONFIG);
+
+                peer.on('open', (id) => {
+                    console.log('Mod Peer opened successfully:', id);
+                    if (statusEl) statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>🟢 สัญญาณออนไลน์ พร้อมรับผู้เล่น</span>`;
                 });
 
-                mqttClient.on('connect', () => {
-                    console.log('Connected to Realtime Broker for room', roomCode);
-                    const topic = 'werewolf/room/' + roomCode + '/#';
-                    mqttClient.subscribe(topic);
-                    
-                    if (!asMod && myPlayerName) {
-                        // Re-announce join if reconnecting
-                        publishNetworkMessage({
-                            type: 'PLAYER_JOIN',
-                            id: myDeviceId,
-                            name: myPlayerName
-                        });
-                    }
+                peer.on('connection', (conn) => {
+                    console.log('Player connecting to Mod:', conn.peer);
+                    conn.on('open', () => {
+                        console.log('Connection established with player:', conn.peer);
+                    });
+                    conn.on('data', (data) => {
+                        handleIncomingData(data, conn);
+                    });
+                    conn.on('close', () => {
+                        console.log('Player disconnected:', conn.peer);
+                    });
                 });
 
-                mqttClient.on('message', (topic, message) => {
-                    try {
-                        const data = JSON.parse(message.toString());
-                        // Ignore messages sent by ourselves
-                        if (data.senderId === myDeviceId) return;
-                        handleIncomingMessage(data);
-                    } catch (err) {
-                        console.error('Error parsing MQTT message', err);
+                peer.on('error', (err) => {
+                    console.warn('Mod Peer warning:', err);
+                    if (err.type === 'unavailable-id') {
+                        // Room code collision: regenerate and recreate
+                        activeRoomCode = 'WW-' + Math.floor(1000 + Math.random() * 9000);
+                        confirmRolesAndCreateRoom();
                     }
                 });
             } catch (err) {
-                console.warn('MQTT init error, using BroadcastChannel fallback', err);
+                console.error('PeerJS init error:', err);
             }
         }
 
-        function publishNetworkMessage(data) {
-            data.senderId = myDeviceId;
-            data.timestamp = Date.now();
-            data.room = activeRoomCode;
+        // Setup Player Networking
+        function setupPlayerNetworking(roomCode) {
+            isMod = false;
+            activeRoomCode = roomCode;
 
-            // Send via BroadcastChannel (local tabs)
-            if (localChannel) {
-                try { localChannel.postMessage(data); } catch (e) {}
-            }
+            // 1. BroadcastChannel for local tabs
+            try {
+                if (localChannel) localChannel.close();
+                localChannel = new BroadcastChannel('werewolf_chan_' + roomCode);
+                localChannel.onmessage = (event) => handleIncomingData(event.data, null);
+            } catch (e) {}
 
-            // Send via MQTT WebSocket
-            if (mqttClient && mqttClient.connected) {
-                try {
-                    const topic = 'werewolf/room/' + activeRoomCode + '/broadcast';
-                    mqttClient.publish(topic, JSON.stringify(data));
-                } catch (e) {}
+            // 2. PeerJS Peer for Player
+            if (peer) { try { peer.destroy(); } catch(e){} }
+
+            try {
+                peer = new Peer(null, PEER_CONFIG);
+
+                peer.on('open', (id) => {
+                    console.log('Player Peer opened:', id);
+                    connectPlayerToMod();
+                });
+
+                peer.on('error', (err) => {
+                    console.warn('Player Peer error:', err);
+                });
+            } catch (err) {
+                console.error('Player PeerJS init error:', err);
             }
         }
 
-        function handleIncomingMessage(data) {
+        function connectPlayerToMod() {
+            if (!peer || peer.destroyed) return;
+            const targetModId = getRoomPeerId(activeRoomCode);
+            
+            const badge = document.getElementById('player-conn-status-badge');
+            if (badge) badge.innerText = '🟡 กำลังเชื่อมต่อกับ Mod...';
+
+            playerConnToMod = peer.connect(targetModId, { reliable: true });
+
+            playerConnToMod.on('open', () => {
+                console.log('Player connected to Mod successfully!');
+                if (badge) badge.innerText = '🟢 เชื่อมต่อห้องสำเร็จ';
+
+                // Send join event if name is already set
+                if (myPlayerName) {
+                    playerConnToMod.send({
+                        type: 'PLAYER_JOIN',
+                        id: myDeviceId,
+                        name: myPlayerName,
+                        room: activeRoomCode
+                    });
+                }
+            });
+
+            playerConnToMod.on('data', (data) => {
+                handleIncomingData(data, playerConnToMod);
+            });
+
+            playerConnToMod.on('close', () => {
+                if (badge) badge.innerText = '🔴 สัญญาณขาดหาย กำลังต่อใหม่...';
+                setTimeout(connectPlayerToMod, 2500);
+            });
+        }
+
+        function handleIncomingData(data, sourceConn) {
             if (!data || data.room !== activeRoomCode) return;
 
             // MOD RECEIVES PLAYER JOIN
             if (isMod && data.type === 'PLAYER_JOIN') {
+                if (sourceConn) {
+                    playerConnections[data.id] = sourceConn;
+                }
                 const existing = joinedPlayers.find(p => p.id === data.id);
                 if (!existing) {
                     joinedPlayers.push({ id: data.id, name: data.name });
@@ -719,15 +798,10 @@
                 updateModLobbyUI();
 
                 // Broadcast current room state back to all players
-                const totalTarget = getTotalPlayersCount();
-                publishNetworkMessage({
-                    type: 'ROOM_STATE_UPDATE',
-                    joinedCount: joinedPlayers.length,
-                    totalTarget: totalTarget,
-                    playersList: joinedPlayers.map(p => p.name)
-                });
+                broadcastRoomStateUpdate();
 
                 // Auto-start if all players joined!
+                const totalTarget = getTotalPlayersCount();
                 if (joinedPlayers.length >= totalTarget && totalTarget > 0) {
                     setTimeout(() => {
                         triggerGameStart();
@@ -741,6 +815,11 @@
                 const totalEl = document.getElementById('player-view-total');
                 if (countEl) countEl.innerText = data.joinedCount;
                 if (totalEl) totalEl.innerText = data.totalTarget;
+
+                const friendsEl = document.getElementById('player-friends-preview');
+                if (friendsEl && data.playersList && data.playersList.length > 0) {
+                    friendsEl.innerHTML = `<span class="text-slate-400">เพื่อนในห้อง: </span>` + data.playersList.map(n => `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 mr-1 inline-block text-[10px]">${n}</span>`).join('');
+                }
             }
 
             // PLAYERS RECEIVE ROLE ASSIGNMENTS & GAME START
@@ -751,6 +830,32 @@
                     renderPlayerCard(myAssignment);
                     showScreen('screen-player-card');
                 }
+            }
+        }
+
+        function broadcastRoomStateUpdate() {
+            const totalTarget = getTotalPlayersCount();
+            const msg = {
+                type: 'ROOM_STATE_UPDATE',
+                room: activeRoomCode,
+                joinedCount: joinedPlayers.length,
+                totalTarget: totalTarget,
+                playersList: joinedPlayers.map(p => p.name)
+            };
+
+            // Send to WebRTC peers
+            for (let id in playerConnections) {
+                try {
+                    const conn = playerConnections[id];
+                    if (conn && conn.open) {
+                        conn.send(msg);
+                    }
+                } catch(e) {}
+            }
+
+            // Send to local BroadcastChannel
+            if (localChannel) {
+                try { localChannel.postMessage(msg); } catch(e){}
             }
         }
 
@@ -926,7 +1031,7 @@
             joinedPlayers = [];
 
             // Setup Realtime connection as Mod
-            setupNetworking(activeRoomCode, true);
+            setupModNetworking(activeRoomCode);
 
             // Render Lobby UI
             document.getElementById('mod-room-code-display').innerText = activeRoomCode;
@@ -940,16 +1045,24 @@
             showScreen('screen-mod-lobby');
         }
 
+        // Get Join URL: If opened on file:/// or localhost, ensure QR Code directs to GitHub Pages!
         function getFullJoinUrl() {
-            const url = new URL(window.location.href);
-            url.searchParams.set('room', activeRoomCode);
-            return url.toString();
+            let base = window.location.href.split('?')[0];
+            // If running on local computer (file:/// or localhost), automatically point QR Code to GitHub Pages production URL!
+            if (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                base = 'https://pramukch-alt.github.io/game/werewolf-modulator/';
+            }
+            return `${base}?room=${activeRoomCode}`;
         }
 
         function generateLobbyQRCode() {
             const container = document.getElementById('qrcode-container');
             container.innerHTML = '';
             const joinUrl = getFullJoinUrl();
+
+            // Display target URL text for Mod verification
+            const urlDisplay = document.getElementById('qr-target-url-display');
+            if (urlDisplay) urlDisplay.innerText = joinUrl;
 
             try {
                 if (typeof QRCode !== 'undefined') {
@@ -997,6 +1110,7 @@
                 name: randomName
             });
             updateModLobbyUI();
+            broadcastRoomStateUpdate();
 
             // Auto start if full
             if (joinedPlayers.length >= total) {
@@ -1036,7 +1150,7 @@
 
         function cancelRoomAndBack() {
             if (confirm('คุณต้องการยกเลิกห้องนี้และกลับสู่หน้าหลักใช่หรือไม่?')) {
-                if (mqttClient) mqttClient.end();
+                if (peer) { try { peer.destroy(); } catch(e){} }
                 showScreen('screen-home');
             }
         }
@@ -1052,7 +1166,7 @@
             }
             activeRoomCode = input;
             document.getElementById('player-view-room-code').innerText = activeRoomCode;
-            setupNetworking(activeRoomCode, false);
+            setupPlayerNetworking(activeRoomCode);
             showScreen('screen-player-join');
         }
 
@@ -1065,12 +1179,20 @@
             }
             myPlayerName = name;
 
-            // Send join message to Mod
-            publishNetworkMessage({
+            // Send join message to Mod via PeerJS or local BroadcastChannel
+            const joinMsg = {
                 type: 'PLAYER_JOIN',
                 id: myDeviceId,
-                name: myPlayerName
-            });
+                name: myPlayerName,
+                room: activeRoomCode
+            };
+
+            if (playerConnToMod && playerConnToMod.open) {
+                try { playerConnToMod.send(joinMsg); } catch(e) {}
+            }
+            if (localChannel) {
+                try { localChannel.postMessage(joinMsg); } catch(e) {}
+            }
 
             // Update Waiting Room Screen UI
             document.getElementById('waiting-room-tag').innerText = activeRoomCode;
@@ -1129,10 +1251,23 @@
             });
 
             // 3. Broadcast role assignments to all connected players
-            publishNetworkMessage({
+            const startMsg = {
                 type: 'GAME_STARTED_ASSIGNMENTS',
+                room: activeRoomCode,
                 assignments: playerRoleAssignments
-            });
+            };
+
+            for (let id in playerConnections) {
+                try {
+                    const conn = playerConnections[id];
+                    if (conn && conn.open) {
+                        conn.send(startMsg);
+                    }
+                } catch(e) {}
+            }
+            if (localChannel) {
+                try { localChannel.postMessage(startMsg); } catch(e){}
+            }
 
             // 4. Mod transitions directly to Night Phase 1!
             showScreen('gameplay-screen');
