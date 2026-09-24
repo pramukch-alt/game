@@ -370,6 +370,11 @@
                 <div id="player-friends-preview" class="text-[11px] text-slate-400">
                     เมื่อสมาชิกครบทีม ระบบจะสุ่มบทบาทและพลิกการ์ดให้อัตโนมัติทันที
                 </div>
+                <div class="pt-1">
+                    <button onclick="leavePlayerWaitingRoom()" class="text-[11px] text-rose-400 hover:text-rose-300 bg-rose-950/40 hover:bg-rose-950 px-3 py-1 rounded-lg border border-rose-900/60 transition inline-flex items-center gap-1">
+                        <span>🚪</span><span>เปลี่ยนชื่อ / ออกจากห้อง</span>
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -576,12 +581,15 @@
         let currentRoleCounts = {};
         let myDeviceId = null;
         try {
-            myDeviceId = sessionStorage.getItem('ww_device_id');
+            myDeviceId = localStorage.getItem('ww_device_id') || sessionStorage.getItem('ww_device_id');
         } catch(e) {}
         if (!myDeviceId) {
             myDeviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
-            try { sessionStorage.setItem('ww_device_id', myDeviceId); } catch(e){}
         }
+        try {
+            localStorage.setItem('ww_device_id', myDeviceId);
+            sessionStorage.setItem('ww_device_id', myDeviceId);
+        } catch(e){}
         let myPlayerName = '';
         let myAssignedRole = null;
         let isMod = false;
@@ -748,16 +756,7 @@
                     { urls: 'stun:stun2.l.google.com:19302' },
                     { urls: 'stun:stun3.l.google.com:19302' },
                     { urls: 'stun:stun4.l.google.com:19302' },
-                    { urls: 'stun:stun.cloudflare.com:3478' },
-                    {
-                        urls: [
-                            'turn:openrelay.metered.ca:80',
-                            'turn:openrelay.metered.ca:443',
-                            'turn:openrelay.metered.ca:443?transport=tcp'
-                        ],
-                        username: 'openrelay',
-                        credential: 'openrelay'
-                    }
+                    { urls: 'stun:stun.cloudflare.com:3478' }
                 ]
             }
         };
@@ -912,28 +911,42 @@
                 // PLAYER INITIALIZATION
                 updatePlayerConnBadge(false, '🟡 กำลังเชื่อมต่อห้อง...');
 
-                try {
-                    peerInstance = new Peer(null, PEER_SERVER_CONFIG);
-                } catch(e) {
-                    console.error('Failed to create Player Peer:', e);
-                }
+                const createPlayerPeer = () => {
+                    if (peerInstance) {
+                        try { peerInstance.destroy(); } catch(e) {}
+                        peerInstance = null;
+                    }
+                    try {
+                        peerInstance = new Peer(null, PEER_SERVER_CONFIG);
+                    } catch(e) {
+                        console.error('Failed to create Player Peer:', e);
+                        return;
+                    }
 
-                if (!peerInstance) return;
+                    peerInstance.on('open', (id) => {
+                        console.log('Player Peer opened with ID:', id);
+                        connectPlayerToMod(roomCode);
+                    });
 
-                peerInstance.on('open', (id) => {
-                    console.log('Player Peer opened with ID:', id);
-                    connectPlayerToMod(roomCode);
-                });
-
-                peerInstance.on('error', (err) => {
-                    console.warn('Player Peer error:', err);
-                    updatePlayerConnBadge(false, '🟡 สัญญาณขัดข้อง กำลังลองใหม่...');
+                    // Fast trigger fallback if open is delayed on iOS Safari
                     setTimeout(() => {
                         if (!isMod && activeRoomCode === roomCode && (!playerModConn || !playerModConn.open)) {
                             connectPlayerToMod(roomCode);
                         }
-                    }, 2000);
-                });
+                    }, 500);
+
+                    peerInstance.on('error', (err) => {
+                        console.warn('Player Peer error:', err);
+                        updatePlayerConnBadge(false, '🟡 สัญญาณขัดข้อง กำลังลองใหม่...');
+                        setTimeout(() => {
+                            if (!isMod && activeRoomCode === roomCode && (!playerModConn || !playerModConn.open)) {
+                                connectPlayerToMod(roomCode);
+                            }
+                        }, 1500);
+                    });
+                };
+
+                createPlayerPeer();
             }
 
             startSyncHeartbeat();
@@ -1084,16 +1097,19 @@
                     return;
                 }
 
-                let existing = joinedPlayers.find(p => p.id === data.id);
-                if (!existing) {
-                    let uniqueName = (data.name || '').trim();
-                    const nameConflictCount = joinedPlayers.filter(p => p.name === uniqueName).length;
-                    if (nameConflictCount > 0) {
-                        uniqueName = `${uniqueName} #${nameConflictCount + 1}`;
-                    }
-                    joinedPlayers.push({ id: data.id, name: uniqueName });
+                let uniqueName = (data.name || '').trim();
+                let cleanName = uniqueName.toLowerCase();
+
+                // Deduplicate: match existing player by EITHER same device ID OR same player name
+                let existingById = joinedPlayers.find(p => p.id === data.id);
+                let existingByName = joinedPlayers.find(p => (p.name || '').trim().toLowerCase() === cleanName);
+
+                if (existingById) {
+                    existingById.name = uniqueName;
+                } else if (existingByName) {
+                    existingByName.id = data.id;
                 } else {
-                    existing.name = (data.name || '').trim();
+                    joinedPlayers.push({ id: data.id, name: uniqueName });
                 }
                 updateModLobbyUI();
 
@@ -1498,10 +1514,19 @@
                             <span class="text-amber-400 font-mono text-[10px]">#${idx+1}</span>
                             <span class="font-semibold text-slate-200">${p.name}</span>
                         </div>
-                        <span class="text-[10px] text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-900">พร้อม</span>
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-[10px] text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-900">พร้อม</span>
+                            <button onclick="removePlayerFromLobby('${p.id}')" title="ลบผู้เล่นนี้ออกจากห้อง" class="text-xs text-slate-500 hover:text-rose-400 p-1 hover:bg-slate-800 rounded transition">❌</button>
+                        </div>
                     </div>
                 `;
             });
+        }
+
+        function removePlayerFromLobby(playerId) {
+            joinedPlayers = joinedPlayers.filter(p => p.id !== playerId);
+            updateModLobbyUI();
+            broadcastRoomStateUpdate();
         }
 
         function cancelRoomAndBack() {
@@ -1573,6 +1598,13 @@
             document.getElementById('waiting-room-tag').innerText = activeRoomCode;
             document.getElementById('player-my-name-display').innerText = myPlayerName;
             showScreen('screen-player-waiting');
+        }
+
+        function leavePlayerWaitingRoom() {
+            try {
+                sessionStorage.removeItem('ww_joined_room');
+            } catch(e){}
+            showScreen('screen-player-join');
         }
 
         // ---------------------------------------------
