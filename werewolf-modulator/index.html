@@ -680,11 +680,14 @@
             roomEventSource.onmessage = (event) => {
                 try {
                     const parsed = JSON.parse(event.data);
-                    if (parsed.event === 'message') {
-                        const payload = JSON.parse(parsed.message);
-                        if (payload.senderId !== myDeviceId) {
-                            handleIncomingMessage(payload);
-                        }
+                    let payload = null;
+                    if (parsed.message) {
+                        payload = typeof parsed.message === 'string' ? JSON.parse(parsed.message) : parsed.message;
+                    } else if (parsed.type) {
+                        payload = parsed;
+                    }
+                    if (payload && payload.senderId !== myDeviceId) {
+                        handleIncomingMessage(payload);
                     }
                 } catch(e) {
                     console.error('Error parsing SSE event', e);
@@ -703,15 +706,43 @@
                     lines.forEach(l => {
                         try {
                             const p = JSON.parse(l);
-                            if (p.event === 'message') {
-                                const payload = JSON.parse(p.message);
-                                if (payload.senderId !== myDeviceId) {
-                                    handleIncomingMessage(payload);
-                                }
+                            let payload = null;
+                            if (p.message) {
+                                payload = typeof p.message === 'string' ? JSON.parse(p.message) : p.message;
+                            } else if (p.type) {
+                                payload = p;
+                            }
+                            if (payload && payload.senderId !== myDeviceId) {
+                                handleIncomingMessage(payload);
                             }
                         } catch(err) {}
                     });
                 }).catch(() => {});
+
+            startSyncHeartbeat();
+        }
+
+        let syncHeartbeatInterval = null;
+        function startSyncHeartbeat() {
+            if (syncHeartbeatInterval) clearInterval(syncHeartbeatInterval);
+            syncHeartbeatInterval = setInterval(() => {
+                if (!activeRoomCode) return;
+                if (isMod) {
+                    const lobbyScreen = document.getElementById('screen-mod-lobby');
+                    if (lobbyScreen && !lobbyScreen.classList.contains('hidden')) {
+                        broadcastRoomStateUpdate();
+                    }
+                } else {
+                    const waitingScreen = document.getElementById('screen-player-waiting');
+                    if (waitingScreen && !waitingScreen.classList.contains('hidden') && myPlayerName && !myAssignedRole) {
+                        broadcastMessage({
+                            type: 'PLAYER_JOIN',
+                            id: myDeviceId,
+                            name: myPlayerName
+                        });
+                    }
+                }
+            }, 3000);
         }
 
         function broadcastMessage(data) {
