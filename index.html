@@ -52,38 +52,52 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Game Card: Werewolf Modulator -->
-            <div class="bg-[#24070c] border border-rose-950 rounded-2xl p-6 flex flex-col justify-between hover:border-amber-500/50 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300 group">
-                <div>
-                    <div class="flex items-start justify-between">
-                        <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 p-1 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform">
-                            <img src="./WolfIcon.png" alt="Werewolf Icon" class="w-full h-full object-contain rounded-xl">
-                        </div>
-                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-950/80 text-amber-500 border border-amber-900/80">
-                            🟢 พร้อมใช้งาน
-                        </span>
-                    </div>
-
-                    <h4 class="mt-4 text-xl font-bold text-white group-hover:text-amber-400 transition-colors">
-                        Werewolf Modulator
-                    </h4>
-                    <p class="mt-2 text-xs text-rose-300/60 leading-relaxed">
-                        ระบบจัดการและช่วยผู้ดำเนินเกม (GM) ในเกมหมาป่า: เลือก Role, สุ่มจับคู่ผู้เล่น, ดำเนินช่วงเวลากลางคืน และคำนวณผลการรอดชีวิตอัตโนมัติ
-                    </p>
-
-                    <div class="mt-4 flex flex-wrap gap-1.5">
-                        <span class="px-2 py-0.5 rounded text-[11px] bg-[#380d15] text-rose-200/80">GM Assistant</span>
-                        <span class="px-2 py-0.5 rounded text-[11px] bg-[#380d15] text-rose-200/80">Party Game</span>
-                        <span class="px-2 py-0.5 rounded text-[11px] bg-[#380d15] text-rose-200/80">Mobile Friendly</span>
-                    </div>
+            <div class="relative bg-[#24070c] border border-rose-950 rounded-2xl flex flex-col justify-between hover:border-amber-500/50 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300 group overflow-hidden min-h-[350px]">
+                
+                <!-- Background Image -->
+                <div class="absolute inset-0 z-0">
+                    <img src="./werewolf-modulator/design/bg_card.png" alt="Werewolf Background" class="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700">
                 </div>
 
-                <div class="mt-6 pt-4 border-t border-rose-950/80">
-                    <a href="./werewolf-modulator/" class="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 px-4 rounded-xl transition duration-200 shadow-md shadow-amber-500/20">
-                        <span>เปิดใช้งานระบบ</span>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                        </svg>
-                    </a>
+                <!-- Bottom 30% Overlay for clear button visibility -->
+                <div class="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#140305] via-[#140305]/80 to-transparent z-0"></div>
+                
+                <!-- Top Dark Gradient Overlay for text readability (optional but good for white text) -->
+                <div class="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-[#140305]/90 to-transparent z-0"></div>
+
+                <div class="relative z-10 p-6 flex flex-col h-full justify-between">
+                    <div>
+                        <div class="flex items-start justify-between">
+                            <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 p-1 flex items-center justify-center overflow-hidden">
+                                <img src="./WolfIcon.png" alt="Werewolf Icon" class="w-full h-full object-contain rounded-xl">
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-950/80 text-amber-500 border border-amber-900/80 backdrop-blur-sm">
+                                🟢 พร้อมใช้งาน
+                            </span>
+                        </div>
+
+                        <h4 class="mt-4 text-xl font-bold text-white group-hover:text-amber-400 transition-colors drop-shadow-md">
+                            Werewolf Modulator
+                        </h4>
+                        <p class="mt-2 text-xs text-rose-100/80 leading-relaxed drop-shadow">
+                            ระบบจัดการและช่วยผู้ดำเนินเกม (GM) ในเกมหมาป่า: เลือก Role, สุ่มจับคู่ผู้เล่น, ดำเนินช่วงเวลากลางคืน และคำนวณผลอัตโนมัติ
+                        </p>
+
+                        <div class="mt-4 flex flex-wrap gap-1.5">
+                            <span class="px-2 py-0.5 rounded text-[11px] bg-[#380d15]/80 backdrop-blur-sm text-rose-200/80 border border-rose-900/40">GM Assistant</span>
+                            <span class="px-2 py-0.5 rounded text-[11px] bg-[#380d15]/80 backdrop-blur-sm text-rose-200/80 border border-rose-900/40">Party Game</span>
+                            <span class="px-2 py-0.5 rounded text-[11px] bg-[#380d15]/80 backdrop-blur-sm text-rose-200/80 border border-rose-900/40">Mobile</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-rose-950/50">
+                        <a href="./werewolf-modulator/" class="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 px-4 rounded-xl transition duration-200 shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                            <span>เปิดใช้งานระบบ</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                        </a>
+                    </div>
                 </div>
             </div>
 
