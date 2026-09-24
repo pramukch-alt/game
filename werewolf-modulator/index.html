@@ -99,33 +99,43 @@
         <!-- SCREEN 0: MOD HOME (เลือกโหมดเปิดห้อง) -->
         <!-- ========================================== -->
         <section id="screen-home" class="space-y-4">
-            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center space-y-4 shadow-xl">
-                <div class="w-24 h-24 mx-auto rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/40 p-1.5 bg-slate-950/70 flex items-center justify-center">
-                    <img src="./WolfIcon.png" alt="Wolf Icon" class="w-full h-full object-contain rounded-2xl drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+            <div class="relative bg-slate-900 border border-slate-800 rounded-2xl text-center shadow-xl overflow-hidden">
+                <!-- Background Image -->
+                <div class="absolute inset-0 z-0">
+                    <img src="./design/bg_card.png" alt="Background" class="w-full h-full object-cover opacity-50">
                 </div>
-                <div>
-                    <h2 class="text-xl font-bold text-slate-100">ยินดีต้อนรับเข้าสู่ Game Werewolf</h2>
-                    <p class="text-xs text-slate-400 mt-1">เลือกรูปแบบการดำเนินเกม Werewolf ที่คุณต้องการ</p>
-                </div>
+                <!-- Gradients for readability -->
+                <div class="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-slate-900/95 to-transparent z-0"></div>
+                <div class="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-slate-900 via-slate-900/90 to-transparent z-0"></div>
 
-                <div class="space-y-3 pt-2">
-                    <!-- ปุ่มเปิดห้องแบบ QR Code (ระบบใหม่ที่แนะนำ) -->
-                    <button onclick="startCreateRoom()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 group active:scale-[0.99]">
-                        <span class="text-lg">📱</span>
-                        <span>สร้างห้องใหม่ (สแกน QR Code รับการ์ด)</span>
-                    </button>
-                    <p class="text-[11px] text-slate-400">สแกนมือถือ สุ่มการ์ดอัตโนมัติ ไม่ต้องเลือก Dropdown</p>
-
-                    <div class="relative py-2">
-                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-800"></div></div>
-                        <div class="relative flex justify-center text-xs"><span class="bg-slate-900 px-2 text-slate-500">หรือ</span></div>
+                <div class="relative z-10 p-6 space-y-4">
+                    <div class="w-24 h-24 mx-auto rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/40 p-1.5 bg-slate-950/70 flex items-center justify-center backdrop-blur-sm">
+                        <img src="./WolfIcon.png" alt="Wolf Icon" class="w-full h-full object-contain rounded-2xl drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-100 drop-shadow-md">ยินดีต้อนรับเข้าสู่ Game Werewolf</h2>
+                        <p class="text-xs text-slate-300 mt-1 drop-shadow">เลือกรูปแบบการดำเนินเกม Werewolf ที่คุณต้องการ</p>
                     </div>
 
-                    <!-- ปุ่มโหมดเล่นเครื่องเดียว (Manual Offline Mode) -->
-                    <button onclick="startSingleDeviceMode()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2.5 px-4 rounded-xl transition border border-slate-700 text-xs flex items-center justify-center gap-2">
-                        <span>🕹️</span>
-                        <span>โหมดเล่นเครื่องเดียว (Mod จัดการเอง / ออฟไลน์)</span>
-                    </button>
+                    <div class="space-y-3 pt-2">
+                        <!-- ปุ่มเปิดห้องแบบ QR Code (ระบบใหม่ที่แนะนำ) -->
+                        <button onclick="startCreateRoom()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-3.5 px-4 rounded-xl transition shadow-[0_0_15px_rgba(245,158,11,0.2)] flex items-center justify-center gap-2 group active:scale-[0.99]">
+                            <span class="text-lg">📱</span>
+                            <span>สร้างห้องใหม่ (สแกน QR Code รับการ์ด)</span>
+                        </button>
+                        <p class="text-[11px] text-slate-400 drop-shadow">สแกนมือถือ สุ่มการ์ดอัตโนมัติ ไม่ต้องเลือก Dropdown</p>
+
+                        <div class="relative py-2">
+                            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-700/50"></div></div>
+                            <div class="relative flex justify-center text-xs"><span class="bg-slate-900/80 px-2 text-slate-400 rounded-full backdrop-blur-sm">หรือ</span></div>
+                        </div>
+
+                        <!-- ปุ่มโหมดเล่นเครื่องเดียว (Manual Offline Mode) -->
+                        <button onclick="startSingleDeviceMode()" class="w-full bg-slate-800/80 hover:bg-slate-700 backdrop-blur-sm text-slate-200 font-medium py-2.5 px-4 rounded-xl transition border border-slate-700 text-xs flex items-center justify-center gap-2 shadow-lg">
+                            <span>🕹️</span>
+                            <span>โหมดเล่นเครื่องเดียว (Mod จัดการเอง / ออฟไลน์)</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
