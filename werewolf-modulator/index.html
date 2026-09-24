@@ -261,7 +261,7 @@
 
             <!-- Start Game Button (Enables when full or can force start) -->
             <div class="space-y-2">
-                <button id="btn-force-start" onclick="triggerGameStart()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-emerald-600/20 text-xs sm:text-sm flex items-center justify-center gap-2">
+                <button id="btn-force-start" onclick="manualTriggerGameStart()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-emerald-600/20 text-xs sm:text-sm flex items-center justify-center gap-2">
                     <span>🚀</span>
                     <span>สุ่มบทบาทและเริ่มเกมทันที (Start Game)</span>
                 </button>
@@ -556,12 +556,23 @@
         // APPLICATION STATE
         // ---------------------------------------------
         let currentRoleCounts = {};
-        let myDeviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
+        let myDeviceId = null;
+        try {
+            myDeviceId = sessionStorage.getItem('ww_device_id');
+        } catch(e) {}
+        if (!myDeviceId) {
+            myDeviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
+            try { sessionStorage.setItem('ww_device_id', myDeviceId); } catch(e){}
+        }
         let myPlayerName = '';
         let myAssignedRole = null;
         let isMod = false;
+        let isGameStarted = false;
+        let autoStartTimer = null;
         let activeRoomCode = '';
+        let currentGameSessionId = '';
         let joinedPlayers = []; // [{ id, name }]
+        let activeRoleAssignments = {}; // { [playerId]: assignmentObj }
         
         let roomEventSource = null;
         let localChannel = null;
@@ -634,6 +645,25 @@
                 // Direct Player Join Flow
                 activeRoomCode = roomParam.trim().toUpperCase();
                 document.getElementById('player-view-room-code').innerText = activeRoomCode;
+
+                // Check if player has an active assigned role saved in sessionStorage for this exact room!
+                let savedRoom = null, savedRole = null, savedName = null;
+                try {
+                    savedRoom = sessionStorage.getItem('ww_room_code');
+                    savedRole = sessionStorage.getItem('ww_assigned_role');
+                    savedName = sessionStorage.getItem('ww_player_name');
+                } catch(e) {}
+
+                if (savedRoom === activeRoomCode && savedRole && savedName) {
+                    try {
+                        myPlayerName = savedName;
+                        myAssignedRole = JSON.parse(savedRole);
+                        renderPlayerCard(myAssignedRole);
+                        showScreen('screen-player-card');
+                        setupRealtimeListener(activeRoomCode, false);
+                        return;
+                    } catch(e) {}
+                }
                 
                 // Pre-fill a random fun nickname to make joining instant
                 const defaultNames = ['พรานป่า', 'ชาวบ้านใจกล้า', 'เงาจันทร์', 'ดาวเหนือ', 'อินทรี', 'พายุ', 'หมอกจาง', 'แสงเทียน', 'รุ่งอรุณ', 'สายลม'];
@@ -737,7 +767,7 @@
                 if (!activeRoomCode) return;
                 if (isMod) {
                     const lobbyScreen = document.getElementById('screen-mod-lobby');
-                    if (lobbyScreen && !lobbyScreen.classList.contains('hidden')) {
+                    if (lobbyScreen && !lobbyScreen.classList.contains('hidden') && !isGameStarted) {
                         broadcastRoomStateUpdate();
                     }
                 } else {
@@ -779,11 +809,23 @@
 
             // MOD RECEIVES PLAYER JOIN
             if (isMod && data.type === 'PLAYER_JOIN') {
-                const existing = joinedPlayers.find(p => p.id === data.id);
+                if (isGameStarted) {
+                    // Game already started: Never re-shuffle!
+                    // Re-broadcast existing assignments so reconnecting player immediately gets their card
+                    broadcastAssignments();
+                    return;
+                }
+
+                let existing = joinedPlayers.find(p => p.id === data.id);
                 if (!existing) {
-                    joinedPlayers.push({ id: data.id, name: data.name });
+                    let uniqueName = (data.name || '').trim();
+                    const nameConflictCount = joinedPlayers.filter(p => p.name === uniqueName).length;
+                    if (nameConflictCount > 0) {
+                        uniqueName = `${uniqueName} #${nameConflictCount + 1}`;
+                    }
+                    joinedPlayers.push({ id: data.id, name: uniqueName });
                 } else {
-                    existing.name = data.name;
+                    existing.name = (data.name || '').trim();
                 }
                 updateModLobbyUI();
 
@@ -793,7 +835,8 @@
                 // Auto-start if all players joined!
                 const totalTarget = getTotalPlayersCount();
                 if (joinedPlayers.length >= totalTarget && totalTarget > 0) {
-                    setTimeout(() => {
+                    if (autoStartTimer) clearTimeout(autoStartTimer);
+                    autoStartTimer = setTimeout(() => {
                         triggerGameStart();
                     }, 800);
                 }
@@ -814,12 +857,41 @@
 
             // PLAYERS RECEIVE ROLE ASSIGNMENTS & GAME START
             if (!isMod && data.type === 'GAME_STARTED_ASSIGNMENTS') {
-                const myAssignment = data.assignments[myDeviceId];
+                if (!data.assignments) return;
+
+                // 1. Direct device ID lookup
+                let myAssignment = data.assignments[myDeviceId];
+
+                // 2. Fallback: match by player name (trim and lowercase)
+                if (!myAssignment && myPlayerName) {
+                    const cleanName = myPlayerName.trim().toLowerCase();
+                    myAssignment = Object.values(data.assignments).find(a => 
+                        (a.playerName || '').trim().toLowerCase() === cleanName
+                    );
+                }
+
                 if (myAssignment) {
                     myAssignedRole = myAssignment;
+                    try {
+                        sessionStorage.setItem('ww_assigned_role', JSON.stringify(myAssignment));
+                        sessionStorage.setItem('ww_player_name', myPlayerName);
+                        sessionStorage.setItem('ww_room_code', activeRoomCode);
+                        sessionStorage.setItem('ww_session_id', data.gameSessionId || '');
+                    } catch(e) {}
+
                     renderPlayerCard(myAssignment);
                     showScreen('screen-player-card');
                 }
+            }
+
+            // PLAYERS RECEIVE GAME RESET FROM MOD
+            if (!isMod && data.type === 'GAME_RESET') {
+                myAssignedRole = null;
+                try {
+                    sessionStorage.removeItem('ww_assigned_role');
+                    sessionStorage.removeItem('ww_session_id');
+                } catch(e) {}
+                showScreen('screen-player-waiting');
             }
         }
 
@@ -1001,8 +1073,20 @@
             const randomCode = Math.floor(1000 + Math.random() * 9000);
             activeRoomCode = 'WW-' + randomCode;
 
-            // Reset lobby joined players
+            // Reset lobby state
+            isGameStarted = false;
+            if (autoStartTimer) {
+                clearTimeout(autoStartTimer);
+                autoStartTimer = null;
+            }
+            activeRoleAssignments = {};
             joinedPlayers = [];
+
+            const btn = document.getElementById('btn-force-start');
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
 
             // Setup Realtime connection as Mod
             setupRealtimeListener(activeRoomCode, true);
@@ -1088,7 +1172,8 @@
 
             // Auto start if full
             if (joinedPlayers.length >= total) {
-                setTimeout(() => { triggerGameStart(); }, 600);
+                if (autoStartTimer) clearTimeout(autoStartTimer);
+                autoStartTimer = setTimeout(() => { triggerGameStart(); }, 600);
             }
         }
 
@@ -1124,6 +1209,12 @@
 
         function cancelRoomAndBack() {
             if (confirm('คุณต้องการยกเลิกห้องนี้และกลับสู่หน้าหลักใช่หรือไม่?')) {
+                if (autoStartTimer) {
+                    clearTimeout(autoStartTimer);
+                    autoStartTimer = null;
+                }
+                isGameStarted = false;
+                activeRoleAssignments = {};
                 if (roomEventSource) { try { roomEventSource.close(); } catch(e){} }
                 showScreen('screen-home');
             }
@@ -1169,10 +1260,35 @@
         // ---------------------------------------------
         // STEP 4: AUTO SHUFFLE & START GAME
         // ---------------------------------------------
+        function manualTriggerGameStart() {
+            if (autoStartTimer) {
+                clearTimeout(autoStartTimer);
+                autoStartTimer = null;
+            }
+            triggerGameStart();
+        }
+
         function triggerGameStart() {
+            if (isGameStarted) {
+                console.warn('Game already started! Ignoring duplicate trigger.');
+                return;
+            }
+            if (autoStartTimer) {
+                clearTimeout(autoStartTimer);
+                autoStartTimer = null;
+            }
             if (joinedPlayers.length === 0) {
                 alert('ยังไม่มีผู้เล่นเข้าร่วม');
                 return;
+            }
+
+            isGameStarted = true;
+            currentGameSessionId = activeRoomCode + '_' + Date.now();
+
+            const startBtn = document.getElementById('btn-force-start');
+            if (startBtn) {
+                startBtn.disabled = true;
+                startBtn.classList.add('opacity-50', 'cursor-not-allowed');
             }
 
             // 1. Shuffle selected roles randomly (Fisher-Yates Shuffle)
@@ -1180,6 +1296,11 @@
             for (let i = rolesPool.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [rolesPool[i], rolesPool[j]] = [rolesPool[j], rolesPool[i]];
+            }
+
+            // Ensure rolesPool has enough roles for all joined players
+            while (rolesPool.length < joinedPlayers.length) {
+                rolesPool.push('villager');
             }
 
             // 2. Map players to roles
@@ -1197,19 +1318,28 @@
             gameState.silencedTarget = '';
             gameState.lastNightResultText = '- เริ่มต้นเกมคืนแรก -';
 
-            const playerRoleAssignments = {};
+            activeRoleAssignments = {};
 
             joinedPlayers.forEach((playerObj, idx) => {
                 const pName = playerObj.name;
-                const assignedRoleId = rolesPool[idx % rolesPool.length];
-                const roleObj = ROLES_DATABASE.find(r => r.id === assignedRoleId);
+                const assignedRoleId = rolesPool[idx];
+                const roleObj = ROLES_DATABASE.find(r => r.id === assignedRoleId) || {
+                    id: assignedRoleId,
+                    name: assignedRoleId,
+                    thai: assignedRoleId,
+                    icon: '❓',
+                    team: 'good',
+                    desc: ''
+                };
 
                 gameState.players.push(pName);
-                gameState.playerRoleMap[assignedRoleId] = pName;
                 gameState.rolePlayerMap[pName] = assignedRoleId;
+                gameState.rolePlayerMap[playerObj.id] = assignedRoleId;
                 gameState.playerStatus[pName] = { alive: true, note: '' };
 
-                playerRoleAssignments[playerObj.id] = {
+                activeRoleAssignments[playerObj.id] = {
+                    playerId: playerObj.id,
+                    playerName: pName,
                     roleId: assignedRoleId,
                     roleName: roleObj.name,
                     roleThai: roleObj.thai,
@@ -1219,11 +1349,10 @@
                 };
             });
 
-            // 3. Broadcast role assignments to all connected players
-            broadcastMessage({
-                type: 'GAME_STARTED_ASSIGNMENTS',
-                assignments: playerRoleAssignments
-            });
+            // 3. Broadcast role assignments to all connected players (immediate + 2 retries for reliability)
+            broadcastAssignments();
+            setTimeout(broadcastAssignments, 1000);
+            setTimeout(broadcastAssignments, 2500);
 
             // 4. Mod transitions directly to Night Phase 1!
             showScreen('gameplay-screen');
@@ -1231,6 +1360,16 @@
             gameState.dayCount = 1;
             renderGameplay();
             resetTimer();
+        }
+
+        function broadcastAssignments() {
+            if (!activeRoomCode || !activeRoleAssignments || Object.keys(activeRoleAssignments).length === 0) return;
+            broadcastMessage({
+                type: 'GAME_STARTED_ASSIGNMENTS',
+                gameSessionId: currentGameSessionId,
+                assignments: activeRoleAssignments,
+                playersList: joinedPlayers.map(p => ({ id: p.id, name: p.name }))
+            });
         }
 
         // ---------------------------------------------
@@ -2188,6 +2327,30 @@
         function resetGame() {
             if (confirm('คุณต้องการรีเซ็ตและตั้งค่าเกมใหม่ทั้งหมดใช่หรือไม่?')) {
                 stopTimer();
+                if (autoStartTimer) {
+                    clearTimeout(autoStartTimer);
+                    autoStartTimer = null;
+                }
+                isGameStarted = false;
+                currentGameSessionId = '';
+                activeRoleAssignments = {};
+                joinedPlayers = [];
+
+                const btn = document.getElementById('btn-force-start');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+
+                try {
+                    sessionStorage.removeItem('ww_assigned_role');
+                    sessionStorage.removeItem('ww_session_id');
+                } catch(e) {}
+
+                broadcastMessage({
+                    type: 'GAME_RESET'
+                });
+
                 gameState = {
                     selectedRoles: [],
                     players: [],
