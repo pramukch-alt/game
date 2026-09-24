@@ -838,10 +838,6 @@
                         }
                     });
 
-                    peerInstance.on('connection', (conn) => {
-                        console.log('Player connection initiated:', conn.peer);
-                        connectedPeers[conn.peer] = conn;
-
                     const sendRoomStateToConn = (conn) => {
                         if (conn && conn.open) {
                             try {
