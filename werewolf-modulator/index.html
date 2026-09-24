@@ -596,6 +596,7 @@
         let peerInstance = null;
         let connectedPeers = {}; // Mod: { [peerId]: conn }
         let playerModConn = null; // Player: DataConnection to Mod
+        let currentModPeerId = ''; // Mod's active assigned Peer ID
 
         // Mod Gameplay State
         let gameState = {
@@ -746,7 +747,16 @@
                     { urls: 'stun:stun2.l.google.com:19302' },
                     { urls: 'stun:stun3.l.google.com:19302' },
                     { urls: 'stun:stun4.l.google.com:19302' },
-                    { urls: 'stun:stun.cloudflare.com:3478' }
+                    { urls: 'stun:stun.cloudflare.com:3478' },
+                    {
+                        urls: [
+                            'turn:openrelay.metered.ca:80',
+                            'turn:openrelay.metered.ca:443',
+                            'turn:openrelay.metered.ca:443?transport=tcp'
+                        ],
+                        username: 'openrelay',
+                        credential: 'openrelay'
+                    }
                 ]
             }
         };
@@ -797,83 +807,95 @@
 
             if (asMod) {
                 // MOD INITIALIZATION
-                const modPeerId = getModPeerId(roomCode);
                 const modStatus = document.getElementById('mod-conn-status');
                 if (modStatus) {
                     modStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span><span>🟡 กำลังเปิดห้อง...</span>`;
                 }
 
-                try {
-                    peerInstance = new Peer(modPeerId, PEER_SERVER_CONFIG);
-                } catch(e) {
-                    console.error('Failed to create Mod Peer:', e);
-                }
-
-                if (!peerInstance) return;
-
-                peerInstance.on('open', (id) => {
-                    console.log('Mod Peer opened successfully with ID:', id);
-                    if (modStatus) {
-                        modStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>🟢 สัญญาณออนไลน์ พร้อมรับผู้เล่น</span>`;
+                const baseModId = getModPeerId(roomCode);
+                const attemptConnectModPeer = (targetId) => {
+                    if (peerInstance) {
+                        try { peerInstance.destroy(); } catch(e) {}
+                        peerInstance = null;
                     }
-                });
+                    try {
+                        peerInstance = new Peer(targetId, PEER_SERVER_CONFIG);
+                    } catch(e) {
+                        console.error('Failed to create Mod Peer:', e);
+                        return;
+                    }
 
-                peerInstance.on('connection', (conn) => {
-                    console.log('Player connection initiated:', conn.peer);
-                    connectedPeers[conn.peer] = conn;
-
-                    conn.on('open', () => {
-                        console.log('Player DataChannel open:', conn.peer);
-                        // Immediately send current room state to newly connected player
-                        conn.send({
-                            type: 'ROOM_STATE_UPDATE',
-                            room: activeRoomCode,
-                            joinedCount: joinedPlayers.length,
-                            totalTarget: getTotalPlayersCount(),
-                            playersList: joinedPlayers.map(p => p.name)
-                        });
-
-                        // If game already started, send assignments
-                        if (isGameStarted && activeRoleAssignments && Object.keys(activeRoleAssignments).length > 0) {
-                            conn.send({
-                                type: 'GAME_STARTED_ASSIGNMENTS',
-                                room: activeRoomCode,
-                                assignments: activeRoleAssignments,
-                                gameSessionId: currentGameSessionId
-                            });
+                    peerInstance.on('open', (id) => {
+                        console.log('Mod Peer opened successfully with ID:', id);
+                        currentModPeerId = id;
+                        if (modStatus) {
+                            modStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>🟢 สัญญาณออนไลน์ พร้อมรับผู้เล่น</span>`;
+                        }
+                        const lobbyScreen = document.getElementById('screen-mod-lobby');
+                        if (lobbyScreen && !lobbyScreen.classList.contains('hidden')) {
+                            generateLobbyQRCode();
                         }
                     });
 
-                    conn.on('data', (data) => {
-                        console.log('Mod received data:', data);
-                        handleIncomingMessage(data, conn);
-                    });
+                    peerInstance.on('connection', (conn) => {
+                        console.log('Player connection initiated:', conn.peer);
+                        connectedPeers[conn.peer] = conn;
 
-                    conn.on('close', () => {
-                        console.log('Player disconnected:', conn.peer);
-                        delete connectedPeers[conn.peer];
-                    });
+                        conn.on('open', () => {
+                            console.log('Player DataChannel open:', conn.peer);
+                            // Immediately send current room state to newly connected player
+                            conn.send({
+                                type: 'ROOM_STATE_UPDATE',
+                                room: activeRoomCode,
+                                joinedCount: joinedPlayers.length,
+                                totalTarget: getTotalPlayersCount(),
+                                playersList: joinedPlayers.map(p => p.name)
+                            });
 
-                    conn.on('error', (err) => {
-                        console.warn('Player connection error:', err);
-                        delete connectedPeers[conn.peer];
-                    });
-                });
-
-                peerInstance.on('error', (err) => {
-                    console.error('Mod Peer error:', err);
-                    if (err.type === 'unavailable-id') {
-                        // Previous socket didn't close yet, retry after 1.5s
-                        console.log('Mod ID still held, retrying in 1.5s...');
-                        setTimeout(() => {
-                            if (isMod && activeRoomCode === roomCode) {
-                                setupRealtimeListener(roomCode, true);
+                            // If game already started, send assignments
+                            if (isGameStarted && activeRoleAssignments && Object.keys(activeRoleAssignments).length > 0) {
+                                conn.send({
+                                    type: 'GAME_STARTED_ASSIGNMENTS',
+                                    room: activeRoomCode,
+                                    assignments: activeRoleAssignments,
+                                    gameSessionId: currentGameSessionId
+                                });
                             }
-                        }, 1500);
-                    } else if (modStatus) {
-                        modStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span>🟡 เชื่อมต่อสัญญาณใหม่...</span>`;
-                    }
-                });
+                        });
+
+                        conn.on('data', (data) => {
+                            console.log('Mod received data:', data);
+                            handleIncomingMessage(data, conn);
+                        });
+
+                        conn.on('close', () => {
+                            console.log('Player disconnected:', conn.peer);
+                            delete connectedPeers[conn.peer];
+                        });
+
+                        conn.on('error', (err) => {
+                            console.warn('Player connection error:', err);
+                            delete connectedPeers[conn.peer];
+                        });
+                    });
+
+                    peerInstance.on('error', (err) => {
+                        console.error('Mod Peer error:', err);
+                        if (err.type === 'unavailable-id') {
+                            const fallbackId = baseModId + '_' + Math.random().toString(36).substr(2, 4);
+                            console.log('Mod ID held by server, retrying with fallback ID:', fallbackId);
+                            setTimeout(() => {
+                                if (isMod && activeRoomCode === roomCode) {
+                                    attemptConnectModPeer(fallbackId);
+                                }
+                            }, 500);
+                        } else if (modStatus) {
+                            modStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span>🟡 เชื่อมต่อสัญญาณใหม่...</span>`;
+                        }
+                    });
+                };
+
+                attemptConnectModPeer(baseModId);
 
             } else {
                 // PLAYER INITIALIZATION
@@ -906,9 +928,12 @@
             startSyncHeartbeat();
         }
 
-        function connectPlayerToMod(roomCode) {
+        function connectPlayerToMod(roomCode, targetId) {
             if (!peerInstance || peerInstance.destroyed) return;
-            const targetModId = getModPeerId(roomCode);
+            const params = new URLSearchParams(window.location.search);
+            const midParam = params.get('mid');
+            const targetModId = targetId || midParam || currentModPeerId || getModPeerId(roomCode);
+
             console.log('Player connecting to Mod ID:', targetModId);
             updatePlayerConnBadge(false, '🟡 กำลังจับคู่กับ Game Master...');
 
@@ -922,7 +947,7 @@
                     console.log('Player successfully connected to Mod!');
                     updatePlayerConnBadge(true, '🟢 เชื่อมต่อห้องสำเร็จ');
 
-                    // If player already submitted their name, register with Mod immediately
+                    // Register name if available
                     if (myPlayerName) {
                         playerModConn.send({
                             type: 'PLAYER_JOIN',
@@ -943,7 +968,7 @@
                     updatePlayerConnBadge(false, '🟡 สัญญาณหลุด กำลังเชื่อมต่อใหม่...');
                     setTimeout(() => {
                         if (!isMod && activeRoomCode === roomCode) {
-                            connectPlayerToMod(roomCode);
+                            connectPlayerToMod(roomCode, targetModId);
                         }
                     }, 2000);
                 });
@@ -953,7 +978,7 @@
                     updatePlayerConnBadge(false, '🟡 กำลังเชื่อมต่อใหม่...');
                     setTimeout(() => {
                         if (!isMod && activeRoomCode === roomCode) {
-                            connectPlayerToMod(roomCode);
+                            connectPlayerToMod(roomCode, targetModId);
                         }
                     }, 2000);
                 });
@@ -1339,7 +1364,11 @@
             if (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 base = 'https://pramukch-alt.github.io/game/werewolf-modulator/';
             }
-            return `${base}?room=${activeRoomCode}`;
+            let url = `${base}?room=${activeRoomCode}`;
+            if (currentModPeerId) {
+                url += `&mid=${encodeURIComponent(currentModPeerId)}`;
+            }
+            return url;
         }
 
         function generateLobbyQRCode() {
