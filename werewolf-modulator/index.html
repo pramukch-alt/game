@@ -540,9 +540,13 @@
             { id: 'apprentice_seer', name: 'Apprentice Seer', thai: 'ผู้ช่วยหยั่งรู้', icon: '🔮', team: 'good', points: 4, multi: false, defaultCount: 0, desc: 'หาก Seer ตัวจริงเสียชีวิต ผู้ช่วยหยั่งรู้จะได้รับพลังและกลายร่างเป็น Seer คนใหม่ทันที' },
             { id: 'bodyguard', name: 'Bodyguard', thai: 'บอดี้การ์ด', icon: '🛡️', team: 'good', points: 3, multi: false, defaultCount: 1, desc: 'ตื่นขึ้นมาในตอนกลางคืนเพื่อเลือกปกป้องผู้เล่น 1 คนจากการถูกหมาป่าฆ่า' },
             { id: 'hunter', name: 'Hunter', thai: 'นายพราน', icon: '🏹', team: 'good', points: 3, multi: false, defaultCount: 1, desc: 'หากนายพรานเสียชีวิต จะสามารถใช้พลังยิงผู้เล่น 1 คนให้ตายตามทันที' },
+            { id: 'spellcaster', name: 'Spellcaster', thai: 'ผู้ร่ายมนตร์', icon: '🪄', team: 'good', points: 1, multi: false, defaultCount: 0, desc: 'เป็นฝ่ายชาวบ้าน ตื่นตอนกลางคืนเพื่อเลือกผู้เล่น 1 คนให้ติดสถานะใบ้ (ห้ามพูดตลอดช่วงกลางวันถัดไป)' },
             { id: 'tough_guy', name: 'Tough Guy', thai: 'คนอึด', icon: '💪', team: 'good', points: 3, multi: false, defaultCount: 0, desc: 'หากถูกหมาป่ากัดในตอนกลางคืน จะยังไม่ตายในวันรุ่งขึ้น แต่จะไปเสียชีวิตในวันถัดไป' },
-            { id: 'disease', name: 'Disease', thai: 'คนแพร่เชื้อ', icon: '🦠', team: 'good', points: 3, multi: false, defaultCount: 0, desc: 'หากถูกหมาป่ากัด ตัวเองจะรอดชีวิต และหมาป่าจะติดเชื้อทำให้คืนต่อไปไม่สามารถฆ่าใครได้' },
+            { id: 'disease', name: 'Disease', thai: 'คนแพร่เชื้อ', icon: '🦠', team: 'good', points: 3, multi: false, defaultCount: 0, desc: 'หากถูกหมาป่าฆ่า ตัวเองจะเสียชีวิต แต่หมาป่าจะติดเชื้อ ทำให้การสังหารในคืนถัดไปจะไม่มีใครตาย!' },
+            { id: 'lycan', name: 'Lycan', thai: 'ไลแคน', icon: '🐺', team: 'good', points: -1, multi: false, defaultCount: 0, desc: 'เป็นฝ่ายชาวบ้าน แต่มีสายเลือดหมาป่าแฝง เมื่อ Seer ส่องตรวจ จะเห็นว่าเป็นมนุษย์หมาป่า' },
             { id: 'cursed', name: 'Cursed', thai: 'คนต้องสาป', icon: '🧑', team: 'good', points: -3, multi: false, defaultCount: 0, desc: 'เริ่มต้นเป็นชาวบ้าน แต่ถ้าถูกหมาป่ากัด จะไม่ตายและกลายร่างเป็นหมาป่าทันที' },
+            { id: 'mad_bomber', name: 'Mad Bomber', thai: 'มือระเบิดบ้าคลั่ง', icon: '💣', team: 'special', points: -2, multi: false, defaultCount: 0, desc: 'หากถูกหมาป่ากัดตาย หรือถูกชาวบ้านโหวตประหารชีวิต ระเบิดจะทำงานทำให้ผู้เล่นทางซ้ายและขวาตายตามทันที!' },
+            { id: 'tanner', name: 'Tanner', thai: 'คนฟอกหนัง', icon: '🎭', team: 'special', points: -2, multi: false, defaultCount: 0, desc: 'เป็นฝ่ายอิสระ หากถูกชาวบ้านโหวตประหารชีวิต จะเป็นฝ่ายชนะเกมทันที!' },
             { id: 'cupid', name: 'Cupid', thai: 'กามเทพ', icon: '💘', team: 'special', points: -3, multi: false, defaultCount: 0, desc: 'ในคืนแรก เลือกผู้เล่น 2 คนเป็นคู่รัก (Lovers) หากคนใดคนหนึ่งตาย อีกคนจะตายตามทันที' },
             { id: 'villager', name: 'Villager', thai: 'ชาวบ้าน', icon: '🧑', team: 'good', points: 1, multi: true, defaultCount: 2, desc: 'ชาวบ้านผู้บริสุทธิ์ ไม่มีพลังพิเศษ ตื่นตอนกลางวันเพื่อร่วมจับพิรุธและโหวตหาหมาป่า' }
         ];
@@ -575,6 +579,9 @@
             bodyguardTarget: '',
             cursedTurned: [],
             toughGuyInjured: null,
+            wolvesInfected: false,
+            wolvesInfectedNext: false,
+            silencedTarget: '',
             lastNightResultText: '- เริ่มต้นเกมคืนแรก -'
         };
 
@@ -1184,6 +1191,9 @@
             gameState.bodyguardTarget = '';
             gameState.cursedTurned = [];
             gameState.toughGuyInjured = null;
+            gameState.wolvesInfected = false;
+            gameState.wolvesInfectedNext = false;
+            gameState.silencedTarget = '';
             gameState.lastNightResultText = '- เริ่มต้นเกมคืนแรก -';
 
             const playerRoleAssignments = {};
@@ -1239,7 +1249,15 @@
                 teamBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800";
                 teamBadge.innerText = "🐺 ฝั่งมนุษย์หมาป่า";
                 glow.className = "absolute -top-20 -left-20 w-56 h-56 rounded-full blur-3xl opacity-30 bg-rose-500 pointer-events-none";
-            } else if (roleInfo.team === 'special') {
+            } else if (roleInfo.roleId === 'tanner') {
+                teamBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-950 text-purple-300 border border-purple-800";
+                teamBadge.innerText = "🎭 ฝ่ายอิสระ (Tanner)";
+                glow.className = "absolute -top-20 -left-20 w-56 h-56 rounded-full blur-3xl opacity-30 bg-purple-500 pointer-events-none";
+            } else if (roleInfo.roleId === 'mad_bomber') {
+                teamBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800";
+                teamBadge.innerText = "💣 ฝ่ายพิเศษ (Mad Bomber)";
+                glow.className = "absolute -top-20 -left-20 w-56 h-56 rounded-full blur-3xl opacity-30 bg-amber-500 pointer-events-none";
+            } else if (roleInfo.roleId === 'cupid') {
                 teamBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-pink-950 text-pink-300 border border-pink-800";
                 teamBadge.innerText = "💘 ฝ่ายพิเศษ (กามเทพ)";
                 glow.className = "absolute -top-20 -left-20 w-56 h-56 rounded-full blur-3xl opacity-30 bg-pink-500 pointer-events-none";
@@ -1374,6 +1392,9 @@
             gameState.bodyguardTarget = '';
             gameState.cursedTurned = [];
             gameState.toughGuyInjured = null;
+            gameState.wolvesInfected = false;
+            gameState.wolvesInfectedNext = false;
+            gameState.silencedTarget = '';
             gameState.lastNightResultText = '- เริ่มต้นเกมคืนแรก -';
 
             selects.forEach(sel => {
@@ -1409,6 +1430,13 @@
                 playerOpts += `<option value="${p}">${p}</option>`;
             });
 
+            let livingPlayerOpts = '';
+            gameState.players.forEach(p => {
+                if (gameState.playerStatus[p] && gameState.playerStatus[p].alive) {
+                    livingPlayerOpts += `<option value="${p}">${p}</option>`;
+                }
+            });
+
             if (gameState.gamePhase === 'night') {
                 timerCard.classList.add('hidden');
                 stopTimer();
@@ -1420,11 +1448,12 @@
 
                 const nightSteps = [
                     { id: 'cupid', name: '1. Cupid เลือก Lovers (เฉพาะคืนแรก)', show: gameState.selectedRoles.includes('cupid') && gameState.dayCount === 1 },
-                    { id: 'wolf', name: '2. Werewolf เลือกเหยื่อ', show: true },
+                    { id: 'wolf', name: '2. Werewolf เลือกเหยื่อสังหาร', show: true },
                     { id: 'bodyguard', name: '3. Bodyguard เลือกป้องกัน', show: gameState.selectedRoles.includes('bodyguard') },
-                    { id: 'seer', name: '4. Seer ตรวจผู้เล่น', show: gameState.selectedRoles.includes('seer') },
-                    { id: 'sorcerer', name: '5. Sorcerer ตรวจหา Seer', show: gameState.selectedRoles.includes('sorcerer') },
-                    { id: 'apprentice', name: '6. Apprentice Seer ทำงาน', show: gameState.selectedRoles.includes('apprentice_seer') }
+                    { id: 'seer', name: '4. Seer ส่องตรวจดูผู้เล่น', show: gameState.selectedRoles.includes('seer') },
+                    { id: 'spellcaster', name: '5. Spellcaster เลือกเสกใบ้ (ห้ามพูดวันรุ่งขึ้น)', show: gameState.selectedRoles.includes('spellcaster') },
+                    { id: 'sorcerer', name: '6. Sorcerer ตรวจหา Seer', show: gameState.selectedRoles.includes('sorcerer') },
+                    { id: 'apprentice', name: '7. Apprentice Seer ทำงาน', show: gameState.selectedRoles.includes('apprentice_seer') }
                 ];
 
                 checklistContainer.innerHTML = '';
@@ -1489,6 +1518,43 @@
                                     </div>
                                 </div>
                             `;
+                        } else if (step.id === 'seer') {
+                            checklistContainer.innerHTML += `
+                                <div class="bg-slate-900/40 p-2.5 rounded border border-slate-700/50 space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" id="seer-cb" class="w-4 h-4 text-indigo-500 rounded bg-slate-900 border-slate-700" onchange="toggleSeerDropdown()">
+                                        <span class="text-slate-300 font-semibold">${step.name}</span>
+                                    </label>
+                                    <div id="seer-dropdown" class="hidden pl-6 space-y-2">
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="text-slate-400">เลือกคนที่ Seer ชี้ส่อง:</span>
+                                            <select id="seer-target-select" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100" onchange="inspectSeerTarget()">
+                                                <option value="">-- เลือกผู้เล่นเพื่อส่อง --</option>
+                                                ${playerOpts}
+                                            </select>
+                                        </div>
+                                        <div id="seer-result-display" class="hidden text-xs p-2.5 rounded-lg border font-medium"></div>
+                                    </div>
+                                </div>
+                            `;
+                        } else if (step.id === 'spellcaster') {
+                            checklistContainer.innerHTML += `
+                                <div class="bg-slate-900/40 p-2.5 rounded border border-slate-700/50 space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" id="spellcaster-cb" class="w-4 h-4 text-indigo-500 rounded bg-slate-900 border-slate-700" onchange="toggleSpellcasterDropdown()">
+                                        <span class="text-slate-300 font-semibold">${step.name}</span>
+                                    </label>
+                                    <div id="spellcaster-dropdown" class="hidden pl-6">
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="text-slate-400">เลือกคนที่ถูกเสกใบ้:</span>
+                                            <select id="spellcaster-target-select" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100" onchange="updateSpellcasterTarget()">
+                                                <option value="">-- ไม่เสก / ข้าม --</option>
+                                                ${playerOpts}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
                         } else {
                             checklistContainer.innerHTML += `
                                 <label class="flex items-center space-x-2 bg-slate-900/40 p-2 rounded border border-slate-700/50 cursor-pointer">
@@ -1526,6 +1592,15 @@
                             document.getElementById('bg-target-select').value = gameState.bodyguardTarget;
                         }
                     }
+                    if (gameState.silencedTarget) {
+                        const spCb = document.getElementById('spellcaster-cb');
+                        if (spCb) {
+                            spCb.checked = true;
+                            toggleSpellcasterDropdown();
+                            const spSel = document.getElementById('spellcaster-target-select');
+                            if (spSel) spSel.value = gameState.silencedTarget;
+                        }
+                    }
                 }, 50);
 
             } else {
@@ -1554,6 +1629,20 @@
                     `;
                 }
 
+                let silencedCheckHtml = '';
+                if (gameState.silencedTarget) {
+                    silencedCheckHtml = `
+                        <div class="bg-purple-950/70 p-3 rounded-xl border border-purple-800 space-y-1 shadow">
+                            <span class="text-purple-300 font-bold text-xs flex items-center gap-1.5">
+                                <span>🤐</span> ผู้เล่นถูกเสกใบ้: <b>${gameState.silencedTarget}</b>
+                            </span>
+                            <div class="text-[11px] text-slate-300">
+                                • ผู้เล่นนี้ถูก <b>Spellcaster</b> ร่ายมนตร์ใบ้ใส่! <b>ห้ามพูด ออกเสียง หรือทำสัญญาณใดๆ ตลอดทั้งวัน</b>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 checklistContainer.innerHTML = `
                     <div class="space-y-2">
                         <div class="bg-indigo-950/50 p-3 rounded-xl border border-indigo-900/60 space-y-1 shadow">
@@ -1566,19 +1655,33 @@
                         </div>
 
                         ${hunterCheckHtml}
+                        ${silencedCheckHtml}
 
                         <label class="flex items-center space-x-2 bg-slate-900/40 p-2 rounded border border-slate-700/50 cursor-pointer">
                             <input type="checkbox" class="w-4 h-4 text-amber-500 rounded bg-slate-900 border-slate-700">
-                            <span class="text-slate-300">1. หาก Hunter ถูกหมาป่าฆ่า: เรียกถาม Hunter เพื่อเลือกยิงเป้าหมาย</span>
+                            <span class="text-slate-300">1. เปิดโอกาสให้ผู้เล่นพูดคุย อภิปราย และจับพิรุธร่วมกัน</span>
                         </label>
-                        <label class="flex items-center space-x-2 bg-slate-900/40 p-2 rounded border border-slate-700/50 cursor-pointer">
-                            <input type="checkbox" class="w-4 h-4 text-amber-500 rounded bg-slate-900 border-slate-700">
-                            <span class="text-slate-300">2. เปิดโอกาสให้ผู้เล่นพูดคุย อภิปราย และจับพิรุธร่วมกัน</span>
-                        </label>
-                        <label class="flex items-center space-x-2 bg-slate-900/40 p-2 rounded border border-slate-700/50 cursor-pointer">
-                            <input type="checkbox" class="w-4 h-4 text-amber-500 rounded bg-slate-900 border-slate-700">
-                            <span class="text-slate-300">3. ดำเนินการ Vote Out ประจำวันเพื่อโหวตผู้เล่นออก</span>
-                        </label>
+
+                        <!-- Day Vote Box -->
+                        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700 space-y-2.5">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                                    <span>⚖️</span> 2. ดำเนินการ Vote Out ประจำวัน (โหวตประหารชีวิต)
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <select id="day-vote-target-select" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100">
+                                    <option value="">-- เลือกผู้เล่นที่ถูกโหวตสูงสุด --</option>
+                                    ${livingPlayerOpts}
+                                </select>
+                                <button onclick="executeDayVote()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition shadow whitespace-nowrap">
+                                    ประหารชีวิต
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-slate-400 italic">
+                                * หากโหวต Tanner จะชนะเกมทันที | หากโหวต Mad Bomber ผู้เล่นซ้าย-ขวาจะระเบิดตายด้วย
+                            </p>
+                        </div>
                     </div>
                 `;
             }
@@ -1604,6 +1707,8 @@
                 const wolfTurnBadge = isTurnedWolf ? '<span class="text-amber-500 font-bold ml-1" title="Cursed กลายร่างเป็น Werewolf แล้ว">🐺</span>' : '';
                 const isInjuredTG = gameState.toughGuyInjured && gameState.toughGuyInjured.player === p && status.alive;
                 const toughGuyBadge = isInjuredTG ? '<span class="text-rose-400 font-bold ml-1 animate-pulse" title="Tough Guy ได้รับบาดเจ็บ (จะเสียชีวิตในวันถัดไป)">🩸</span>' : '';
+                const isSilenced = gameState.silencedTarget === p && status.alive;
+                const silencedBadge = isSilenced ? '<span class="text-purple-400 font-bold ml-1 animate-pulse" title="ถูก Spellcaster เสกใบ้ (ห้ามพูดในวันนี้)">🤐</span>' : '';
 
                 statusList.innerHTML += `
                     <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700 flex items-center justify-between ${opacityClass}">
@@ -1613,6 +1718,7 @@
                                 ${loverBadge}
                                 ${wolfTurnBadge}
                                 ${toughGuyBadge}
+                                ${silencedBadge}
                                 <span class="text-[10px] text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-900/50">${roleObj ? (roleObj.icon + ' ' + roleObj.name) : role}</span>
                             </div>
                             <input type="text" placeholder="จดโน้ตย่อ..." class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-[11px] text-slate-300 focus:outline-none focus:border-amber-500" value="${status.note}" onchange="updatePlayerNote('${p}', this.value)">
@@ -1687,6 +1793,170 @@
             calculateNightResult();
         }
 
+        function toggleSeerDropdown() {
+            const cb = document.getElementById('seer-cb');
+            const dropdown = document.getElementById('seer-dropdown');
+            if (cb && dropdown) {
+                if (cb.checked) {
+                    dropdown.classList.remove('hidden');
+                } else {
+                    dropdown.classList.add('hidden');
+                }
+            }
+        }
+
+        function inspectSeerTarget() {
+            const sel = document.getElementById('seer-target-select');
+            const disp = document.getElementById('seer-result-display');
+            if (!sel || !disp) return;
+            const target = sel.value;
+            if (!target) {
+                disp.classList.add('hidden');
+                return;
+            }
+            disp.classList.remove('hidden');
+            const roleId = gameState.rolePlayerMap[target];
+            const isTurnedWolf = gameState.cursedTurned && gameState.cursedTurned.includes(target);
+            const isLycan = roleId === 'lycan';
+            const isWolfRole = roleId === 'werewolf' || roleId === 'wolf_cub' || isTurnedWolf;
+
+            if (isWolfRole) {
+                disp.className = "text-xs p-2.5 rounded-lg border border-rose-700 bg-rose-950/80 text-rose-300 space-y-1";
+                disp.innerHTML = `<div>🐺 ผลการส่อง: <b>เป็นมนุษย์หมาป่า (Werewolf)</b></div><div class="text-[10px] text-slate-400">👉 ให้สัญญาณ Seer: คว่ำนิ้วโป้งลง หรือพยักหน้า</div>`;
+            } else if (isLycan) {
+                disp.className = "text-xs p-2.5 rounded-lg border border-rose-700 bg-rose-950/80 text-rose-300 space-y-1";
+                disp.innerHTML = `<div>🐺 ผลการส่อง: <b>เห็นเป็นมนุษย์หมาป่า (Werewolf)</b></div><div class="text-[10px] text-amber-300">👉 แท้จริงคือ <b>Lycan (ฝ่ายชาวบ้าน)</b> แต่ Seer จะมองเห็นเป็นหมาป่า!</div><div class="text-[10px] text-slate-400">👉 ให้สัญญาณ Seer: คว่ำนิ้วโป้งลง หรือพยักหน้า</div>`;
+            } else {
+                disp.className = "text-xs p-2.5 rounded-lg border border-emerald-700 bg-emerald-950/80 text-emerald-300 space-y-1";
+                disp.innerHTML = `<div>🟢 ผลการส่อง: <b>เป็นคนดี (ไม่ใช่หมาป่า)</b></div><div class="text-[10px] text-slate-400">👉 ให้สัญญาณ Seer: ชูนิ้วโป้งขึ้น หรือส่ายหน้า</div>`;
+            }
+        }
+
+        function toggleSpellcasterDropdown() {
+            const cb = document.getElementById('spellcaster-cb');
+            const dropdown = document.getElementById('spellcaster-dropdown');
+            if (cb && dropdown) {
+                if (cb.checked) {
+                    dropdown.classList.remove('hidden');
+                } else {
+                    dropdown.classList.add('hidden');
+                    gameState.silencedTarget = '';
+                }
+            }
+        }
+
+        function updateSpellcasterTarget() {
+            const sel = document.getElementById('spellcaster-target-select');
+            gameState.silencedTarget = sel ? sel.value : '';
+        }
+
+        function getAdjacentLivingPlayers(targetPlayer) {
+            const living = gameState.players.filter(p => gameState.playerStatus[p] && gameState.playerStatus[p].alive);
+            if (living.length <= 1) return [];
+
+            const idx = living.indexOf(targetPlayer);
+            if (idx !== -1) {
+                if (living.length === 2) {
+                    const other = living[(idx + 1) % 2];
+                    return [other];
+                }
+                const left = living[(idx - 1 + living.length) % living.length];
+                const right = living[(idx + 1) % living.length];
+                return [left, right];
+            } else {
+                const total = gameState.players.length;
+                const pIdx = gameState.players.indexOf(targetPlayer);
+                if (pIdx === -1) return [];
+
+                let left = null, right = null;
+                for (let i = 1; i < total; i++) {
+                    const checkIdx = (pIdx - i + total) % total;
+                    const p = gameState.players[checkIdx];
+                    if (gameState.playerStatus[p] && gameState.playerStatus[p].alive) {
+                        left = p;
+                        break;
+                    }
+                }
+                for (let i = 1; i < total; i++) {
+                    const checkIdx = (pIdx + i) % total;
+                    const p = gameState.players[checkIdx];
+                    if (gameState.playerStatus[p] && gameState.playerStatus[p].alive) {
+                        right = p;
+                        break;
+                    }
+                }
+                const res = [];
+                if (left) res.push(left);
+                if (right && right !== left) res.push(right);
+                return res;
+            }
+        }
+
+        function executeDayVote() {
+            const select = document.getElementById('day-vote-target-select');
+            if (!select) return;
+            const victim = select.value;
+            if (!victim) {
+                alert('กรุณาเลือกผู้เล่นที่ได้รับคะแนนโหวตสูงสุด');
+                return;
+            }
+            if (!confirm(`คุณต้องการยืนยันผลโหวตประหารชีวิต "${victim}" ใช่หรือไม่?`)) {
+                return;
+            }
+
+            const roleId = gameState.rolePlayerMap[victim];
+
+            // 1. Tanner Victory check!
+            if (roleId === 'tanner') {
+                if (gameState.playerStatus[victim]) gameState.playerStatus[victim].alive = false;
+                renderPlayerStatusList();
+                alert(`🎉🏆 จบเกมทันที!\n\nผู้เล่น "${victim}" คือ Tanner (คนฟอกหนัง)!\nถูกชาวบ้านโหวตประหารชีวิตสำเร็จตามเป้าหมาย ทำให้ "Tanner เป็นฝ่ายชนะเกมทันที!" 🎭✨`);
+                return;
+            }
+
+            // 2. Mad Bomber check!
+            if (roleId === 'mad_bomber') {
+                if (gameState.playerStatus[victim]) gameState.playerStatus[victim].alive = false;
+                const adjacent = getAdjacentLivingPlayers(victim);
+                adjacent.forEach(adj => {
+                    if (gameState.playerStatus[adj]) gameState.playerStatus[adj].alive = false;
+                    if (gameState.lovers.includes(adj)) {
+                        const partner = gameState.lovers.find(p => p !== adj);
+                        if (partner && gameState.playerStatus[partner]) gameState.playerStatus[partner].alive = false;
+                    }
+                });
+                if (gameState.lovers.includes(victim)) {
+                    const partner = gameState.lovers.find(p => p !== victim);
+                    if (partner && gameState.playerStatus[partner]) gameState.playerStatus[partner].alive = false;
+                }
+                renderPlayerStatusList();
+                const adjText = adjacent.length > 0 ? adjacent.join(', ') : 'ไม่มี';
+                alert(`💥 ระเบิดทำงาน!\n\nผู้เล่น "${victim}" คือ Mad Bomber (มือระเบิดบ้าคลั่ง)!\nเมื่อถูกโหวตประหารชีวิต ระเบิดจะทำงานสังหารผู้เล่นทางซ้ายและขวา (${adjText}) เสียชีวิตตามทันที! 💣💀`);
+                renderGameplay();
+                return;
+            }
+
+            // 3. Normal Vote Execution
+            if (gameState.playerStatus[victim]) gameState.playerStatus[victim].alive = false;
+
+            // Lover check
+            if (gameState.lovers.includes(victim)) {
+                const partner = gameState.lovers.find(p => p !== victim);
+                if (partner && gameState.playerStatus[partner]) {
+                    gameState.playerStatus[partner].alive = false;
+                    alert(`💘 เงื่อนไข Lover: ${partner} เสียชีวิตตาม ${victim} ทันที!`);
+                }
+            }
+
+            // Hunter check
+            if (roleId === 'hunter') {
+                alert(`🏹 Hunter (${victim}) ถูกโหวตประหารชีวิต!\nให้ Mod สอบถาม Hunter เพื่อใช้สิทธิ์ยิงผู้เล่น 1 คนให้ตายตามทันที`);
+            }
+
+            renderPlayerStatusList();
+            renderGameplay();
+        }
+
         function calculateNightResult() {
             const wolf = gameState.wolfTarget;
             const bg = gameState.bodyguardTarget;
@@ -1701,18 +1971,37 @@
             const targetRole = gameState.rolePlayerMap[wolf];
             const isLoverTarget = gameState.lovers.includes(wolf);
 
+            // 1. Bodyguard protection
             if (bg && wolf === bg) {
                 gameState.lastNightResultText = `🛡️ Bodyguard ป้องกัน <b>${wolf}</b> สำเร็จ!<br>👉 <b>ผลลัพธ์: ไม่มีใครตาย</b> (การโจมตีถูกบล็อก)`;
                 renderPlayerStatusList();
                 return;
             }
 
-            if (targetRole === 'disease') {
-                gameState.lastNightResultText = `🦠 Disease (<b>${wolf}</b>) ถูกหมาป่าโจมตี!<br>👉 <b>ผลลัพธ์: ไม่มีใครตาย</b> (โรคระบาดทำให้หมาป่าไม่สามารถฆ่าได้ในคืนนี้ และ Disease ยังรอดชีวิต)`;
+            // 2. Wolves infected by Disease from previous night
+            if (gameState.wolvesInfected) {
+                gameState.lastNightResultText = `🐺 หมาป่าพยายามสังหาร <b>${wolf}</b>!<br>👉 <b>ผลลัพธ์: ไม่มีใครตาย</b> (เชื้อโรคระบาดจาก Disease ในคืนก่อนหน้าทำให้หมาป่าอ่อนแรง ไม่สามารถสังหารใครได้ในคืนนี้) 🦠🚫`;
+                gameState.wolvesInfected = false; // Infection is consumed
                 renderPlayerStatusList();
                 return;
             }
 
+            // 3. Target is Disease: dies, wolves get infected for next night
+            if (targetRole === 'disease') {
+                gameState.wolvesInfectedNext = true;
+                if (gameState.playerStatus[wolf]) gameState.playerStatus[wolf].alive = false;
+                if (isLoverTarget) {
+                    const partner = gameState.lovers.find(p => p !== wolf);
+                    if (partner && gameState.playerStatus[partner]) gameState.playerStatus[partner].alive = false;
+                    gameState.lastNightResultText = `🦠 Disease (<b>${wolf}</b>) ถูกหมาป่าสังหาร และเป็นหนึ่งในคู่รัก (Lovers)!<br>👉 <b>ผลลัพธ์: Disease และคู่รัก (${partner}) เสียชีวิตในคืนนี้</b> และ <b>หมาป่าติดเชื้อโรคระบาด</b> (การสังหารในคืนถัดไปจะไม่มีใครตาย 🐺🚫)`;
+                } else {
+                    gameState.lastNightResultText = `🦠 Disease (<b>${wolf}</b>) ถูกหมาป่าสังหาร!<br>👉 <b>ผลลัพธ์: Disease เสียชีวิตในคืนนี้</b> และ <b>หมาป่าติดเชื้อโรคระบาด</b> (การสังหารในคืนถัดไปจะไม่มีใครตาย 🐺🚫)`;
+                }
+                renderPlayerStatusList();
+                return;
+            }
+
+            // 4. Target is Cursed: turns into Werewolf!
             if (targetRole === 'cursed') {
                 gameState.cursedTurned.push(wolf);
                 gameState.lastNightResultText = `🧑 Cursed (<b>${wolf}</b>) ถูกหมาป่าโจมตี<br>👉 <b>ผลลัพธ์: ไม่มีใครตาย และ Cursed กลายร่างเป็นหมาป่า 🐺</b>`;
@@ -1720,6 +2009,28 @@
                 return;
             }
 
+            // 5. Target is Mad Bomber: dies, and adjacent living players also die!
+            if (targetRole === 'mad_bomber') {
+                if (gameState.playerStatus[wolf]) gameState.playerStatus[wolf].alive = false;
+                const adjacent = getAdjacentLivingPlayers(wolf);
+                adjacent.forEach(adj => {
+                    if (gameState.playerStatus[adj]) gameState.playerStatus[adj].alive = false;
+                    if (gameState.lovers.includes(adj)) {
+                        const partner = gameState.lovers.find(p => p !== adj);
+                        if (partner && gameState.playerStatus[partner]) gameState.playerStatus[partner].alive = false;
+                    }
+                });
+                if (isLoverTarget) {
+                    const partner = gameState.lovers.find(p => p !== wolf);
+                    if (partner && gameState.playerStatus[partner]) gameState.playerStatus[partner].alive = false;
+                }
+                const adjText = adjacent.length > 0 ? adjacent.join(', ') : 'ไม่มี';
+                gameState.lastNightResultText = `💣 Mad Bomber (<b>${wolf}</b>) ถูกหมาป่าสังหาร!<br>👉 <b>ผลลัพธ์: ระเบิดทำงาน!</b> ผู้เล่นซ้าย-ขวา (<b>${adjText}</b>) เสียชีวิตตามไปด้วยทันที! 💥`;
+                renderPlayerStatusList();
+                return;
+            }
+
+            // 6. Target is Tough Guy: delayed death
             if (targetRole === 'tough_guy') {
                 gameState.toughGuyInjured = {
                     player: wolf,
@@ -1743,6 +2054,42 @@
         function toggleLife(playerName) {
             const currentStatus = gameState.playerStatus[playerName].alive;
             const newStatus = !currentStatus;
+
+            if (!newStatus) {
+                const roleId = gameState.rolePlayerMap[playerName];
+
+                // If Tanner dies during day phase, check if voted out
+                if (roleId === 'tanner' && gameState.gamePhase === 'day') {
+                    const isVote = confirm(`คุณกำลังเปลี่ยนสถานะของ ${playerName} (Tanner) เป็นเสียชีวิต\n\nเป็นการเสียชีวิตจากการโหวตของชาวบ้านใช่หรือไม่?\n\n- กด OK: หากเกิดจากการโหวต (Tanner เป็นฝ่ายชนะเกมทันที! 🎭)\n- กด Cancel: หากตายจากสาเหตุอื่น`);
+                    if (isVote) {
+                        gameState.playerStatus[playerName].alive = false;
+                        renderPlayerStatusList();
+                        alert(`🎉🏆 จบเกมทันที!\n\nผู้เล่น "${playerName}" คือ Tanner (คนฟอกหนัง)!\nถูกชาวบ้านโหวตประหารชีวิตสำเร็จตามเป้าหมาย ทำให้ "Tanner เป็นฝ่ายชนะเกมทันที!" 🎭✨`);
+                        return;
+                    }
+                }
+
+                // If Mad Bomber dies, ask if bomb triggers
+                if (roleId === 'mad_bomber') {
+                    const triggerBomb = confirm(`ผู้เล่น ${playerName} คือ Mad Bomber (มือระเบิดบ้าคลั่ง)!\n\nต้องการให้ระเบิดทำงานสังหารผู้เล่นทางซ้ายและขวาด้วยหรือไม่? 💣`);
+                    if (triggerBomb) {
+                        gameState.playerStatus[playerName].alive = false;
+                        const adjacent = getAdjacentLivingPlayers(playerName);
+                        adjacent.forEach(adj => {
+                            if (gameState.playerStatus[adj]) gameState.playerStatus[adj].alive = false;
+                            if (gameState.lovers.includes(adj)) {
+                                const partner = gameState.lovers.find(p => p !== adj);
+                                if (partner && gameState.playerStatus[partner]) gameState.playerStatus[partner].alive = false;
+                            }
+                        });
+                        renderPlayerStatusList();
+                        const adjText = adjacent.length > 0 ? adjacent.join(', ') : 'ไม่มี';
+                        alert(`💥 ระเบิดทำงาน!\n\nMad Bomber (${playerName}) เสียชีวิต ทำให้ผู้เล่นทางซ้ายและขวา (${adjText}) เสียชีวิตตามทันที! 💣💀`);
+                        return;
+                    }
+                }
+            }
+
             gameState.playerStatus[playerName].alive = newStatus;
 
             if (!newStatus && gameState.lovers.includes(playerName)) {
@@ -1765,6 +2112,19 @@
             } else {
                 gameState.gamePhase = 'night';
                 gameState.dayCount++;
+
+                // Reset silenced effect for the new night/day
+                gameState.silencedTarget = '';
+
+                // Activate wolf disease infection for this night if infected from earlier
+                if (gameState.wolvesInfectedNext) {
+                    gameState.wolvesInfected = true;
+                    gameState.wolvesInfectedNext = false;
+                }
+
+                // Reset night targets
+                gameState.wolfTarget = '';
+                gameState.bodyguardTarget = '';
 
                 // ตรวจสอบเงื่อนไข Tough Guy เสียชีวิตในวันถัดไป
                 if (gameState.toughGuyInjured && gameState.dayCount > gameState.toughGuyInjured.night) {
@@ -1840,6 +2200,9 @@
                     bodyguardTarget: '',
                     cursedTurned: [],
                     toughGuyInjured: null,
+                    wolvesInfected: false,
+                    wolvesInfectedNext: false,
+                    silencedTarget: '',
                     lastNightResultText: ''
                 };
                 showScreen('screen-home');
