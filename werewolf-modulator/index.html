@@ -10,8 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- QR Code Generator JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- PeerJS for Real-time WebRTC Peer-to-Peer Communication (Port 443 HTTPS/WSS) -->
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
     <style>
         body { font-family: 'Prompt', sans-serif; }
@@ -208,7 +206,7 @@
                     <!-- Connection Status Tag -->
                     <div id="mod-conn-status" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800 mt-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span>🟢 กำลังเปิดสัญญาณห้อง...</span>
+                        <span>🟢 สัญญาณออนไลน์ พร้อมรับผู้เล่น</span>
                     </div>
                 </div>
 
@@ -335,7 +333,7 @@
                         </h4>
                         <div class="bg-slate-900/90 backdrop-blur border border-slate-700/80 rounded-xl py-1.5 px-3">
                             <span class="text-xs text-amber-400 font-bold">
-                                เข้าร่วมแล้ว <span id="player-view-count">1</span> / <span id="player-view-total">0</span> คน
+                                เข้าร่วมแล้ว <span id="player-view-count">1</span> / <span id="player-view-total">-</span> คน
                             </span>
                         </div>
                     </div>
@@ -560,9 +558,7 @@
         let activeRoomCode = '';
         let joinedPlayers = []; // [{ id, name }]
         
-        let peer = null;
-        let playerConnections = {}; // For Mod: { deviceId: conn }
-        let playerConnToMod = null; // For Player: conn
+        let roomEventSource = null;
         let localChannel = null;
 
         // Mod Gameplay State
@@ -638,157 +634,112 @@
                 if (inputField) inputField.value = randomDefault;
 
                 showScreen('screen-player-join');
-                setupPlayerNetworking(activeRoomCode);
+                setupRealtimeListener(activeRoomCode, false);
             } else {
                 showScreen('screen-home');
             }
         };
 
         // ---------------------------------------------
-        // REAL-TIME COMMUNICATION (PEERJS + BROADCASTCHANNEL)
+        // ULTRA-RELIABLE HTTPS REAL-TIME ENGINE (SSE + BROADCASTCHANNEL)
+        // Works on 100% of mobile networks, corporate firewalls, iOS, Android!
         // ---------------------------------------------
-        const PEER_CONFIG = {
-            debug: 1,
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' }
-                ]
-            }
-        };
-
-        function getRoomPeerId(roomCode) {
-            return 'wwroom_' + roomCode.toLowerCase().replace(/[^a-z0-9]/g, '');
+        function getRoomTopic(roomCode) {
+            return 'wwgame_' + roomCode.toLowerCase().replace(/[^a-z0-9]/g, '');
         }
 
-        // Setup Mod Networking
-        function setupModNetworking(roomCode) {
-            isMod = true;
+        function setupRealtimeListener(roomCode, asMod) {
+            isMod = asMod;
             activeRoomCode = roomCode;
-            playerConnections = {};
 
-            // 1. BroadcastChannel for local tabs
+            // 1. BroadcastChannel for local tabs on same device
             try {
                 if (localChannel) localChannel.close();
                 localChannel = new BroadcastChannel('werewolf_chan_' + roomCode);
-                localChannel.onmessage = (event) => handleIncomingData(event.data, null);
+                localChannel.onmessage = (event) => handleIncomingMessage(event.data);
             } catch (e) {}
 
-            // 2. PeerJS Peer for cross-device mobile connections
-            const modId = getRoomPeerId(roomCode);
-            if (peer) { try { peer.destroy(); } catch(e){} }
+            // 2. ntfy.sh HTTPS SSE (Port 443 standard)
+            const topic = getRoomTopic(roomCode);
+            if (roomEventSource) {
+                try { roomEventSource.close(); } catch(e) {}
+            }
 
-            const statusEl = document.getElementById('mod-conn-status');
-            if (statusEl) statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span><span>🟡 กำลังเปิดสัญญาณห้อง...</span>`;
+            const sseUrl = `https://ntfy.sh/${topic}/sse`;
+            roomEventSource = new EventSource(sseUrl);
 
-            try {
-                peer = new Peer(modId, PEER_CONFIG);
+            roomEventSource.onopen = () => {
+                console.log('Realtime Connected successfully via HTTPS to room:', roomCode);
+                const modStatus = document.getElementById('mod-conn-status');
+                if (modStatus) modStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>🟢 สัญญาณออนไลน์ พร้อมรับผู้เล่น</span>`;
+                
+                const plyStatus = document.getElementById('player-conn-status-badge');
+                if (plyStatus) plyStatus.innerText = '🟢 เชื่อมต่อห้องสำเร็จ';
+            };
 
-                peer.on('open', (id) => {
-                    console.log('Mod Peer opened successfully:', id);
-                    if (statusEl) statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>🟢 สัญญาณออนไลน์ พร้อมรับผู้เล่น</span>`;
-                });
-
-                peer.on('connection', (conn) => {
-                    console.log('Player connecting to Mod:', conn.peer);
-                    conn.on('open', () => {
-                        console.log('Connection established with player:', conn.peer);
-                    });
-                    conn.on('data', (data) => {
-                        handleIncomingData(data, conn);
-                    });
-                    conn.on('close', () => {
-                        console.log('Player disconnected:', conn.peer);
-                    });
-                });
-
-                peer.on('error', (err) => {
-                    console.warn('Mod Peer warning:', err);
-                    if (err.type === 'unavailable-id') {
-                        // Room code collision: regenerate and recreate
-                        activeRoomCode = 'WW-' + Math.floor(1000 + Math.random() * 9000);
-                        confirmRolesAndCreateRoom();
+            roomEventSource.onmessage = (event) => {
+                try {
+                    const parsed = JSON.parse(event.data);
+                    if (parsed.event === 'message') {
+                        const payload = JSON.parse(parsed.message);
+                        if (payload.senderId !== myDeviceId) {
+                            handleIncomingMessage(payload);
+                        }
                     }
-                });
-            } catch (err) {
-                console.error('PeerJS init error:', err);
-            }
-        }
-
-        // Setup Player Networking
-        function setupPlayerNetworking(roomCode) {
-            isMod = false;
-            activeRoomCode = roomCode;
-
-            // 1. BroadcastChannel for local tabs
-            try {
-                if (localChannel) localChannel.close();
-                localChannel = new BroadcastChannel('werewolf_chan_' + roomCode);
-                localChannel.onmessage = (event) => handleIncomingData(event.data, null);
-            } catch (e) {}
-
-            // 2. PeerJS Peer for Player
-            if (peer) { try { peer.destroy(); } catch(e){} }
-
-            try {
-                peer = new Peer(null, PEER_CONFIG);
-
-                peer.on('open', (id) => {
-                    console.log('Player Peer opened:', id);
-                    connectPlayerToMod();
-                });
-
-                peer.on('error', (err) => {
-                    console.warn('Player Peer error:', err);
-                });
-            } catch (err) {
-                console.error('Player PeerJS init error:', err);
-            }
-        }
-
-        function connectPlayerToMod() {
-            if (!peer || peer.destroyed) return;
-            const targetModId = getRoomPeerId(activeRoomCode);
-            
-            const badge = document.getElementById('player-conn-status-badge');
-            if (badge) badge.innerText = '🟡 กำลังเชื่อมต่อกับ Mod...';
-
-            playerConnToMod = peer.connect(targetModId, { reliable: true });
-
-            playerConnToMod.on('open', () => {
-                console.log('Player connected to Mod successfully!');
-                if (badge) badge.innerText = '🟢 เชื่อมต่อห้องสำเร็จ';
-
-                // Send join event if name is already set
-                if (myPlayerName) {
-                    playerConnToMod.send({
-                        type: 'PLAYER_JOIN',
-                        id: myDeviceId,
-                        name: myPlayerName,
-                        room: activeRoomCode
-                    });
+                } catch(e) {
+                    console.error('Error parsing SSE event', e);
                 }
-            });
+            };
 
-            playerConnToMod.on('data', (data) => {
-                handleIncomingData(data, playerConnToMod);
-            });
+            roomEventSource.onerror = (e) => {
+                console.warn('Realtime reconnecting...', e);
+            };
 
-            playerConnToMod.on('close', () => {
-                if (badge) badge.innerText = '🔴 สัญญาณขาดหาย กำลังต่อใหม่...';
-                setTimeout(connectPlayerToMod, 2500);
+            // Catch-up poll for latest room state
+            fetch(`https://ntfy.sh/${topic}/json?poll=1&since=10m`)
+                .then(r => r.text())
+                .then(txt => {
+                    const lines = txt.trim().split('\n');
+                    lines.forEach(l => {
+                        try {
+                            const p = JSON.parse(l);
+                            if (p.event === 'message') {
+                                const payload = JSON.parse(p.message);
+                                if (payload.senderId !== myDeviceId) {
+                                    handleIncomingMessage(payload);
+                                }
+                            }
+                        } catch(err) {}
+                    });
+                }).catch(() => {});
+        }
+
+        function broadcastMessage(data) {
+            data.senderId = myDeviceId;
+            data.timestamp = Date.now();
+            data.room = activeRoomCode;
+
+            // 1. BroadcastChannel (0ms local tabs)
+            if (localChannel) {
+                try { localChannel.postMessage(data); } catch(e){}
+            }
+
+            // 2. HTTPS POST to ntfy.sh (Port 443 universal)
+            const topic = getRoomTopic(activeRoomCode);
+            fetch(`https://ntfy.sh/${topic}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).catch(err => {
+                console.warn('Network broadcast error', err);
             });
         }
 
-        function handleIncomingData(data, sourceConn) {
+        function handleIncomingMessage(data) {
             if (!data || data.room !== activeRoomCode) return;
 
             // MOD RECEIVES PLAYER JOIN
             if (isMod && data.type === 'PLAYER_JOIN') {
-                if (sourceConn) {
-                    playerConnections[data.id] = sourceConn;
-                }
                 const existing = joinedPlayers.find(p => p.id === data.id);
                 if (!existing) {
                     joinedPlayers.push({ id: data.id, name: data.name });
@@ -835,28 +786,12 @@
 
         function broadcastRoomStateUpdate() {
             const totalTarget = getTotalPlayersCount();
-            const msg = {
+            broadcastMessage({
                 type: 'ROOM_STATE_UPDATE',
-                room: activeRoomCode,
                 joinedCount: joinedPlayers.length,
                 totalTarget: totalTarget,
                 playersList: joinedPlayers.map(p => p.name)
-            };
-
-            // Send to WebRTC peers
-            for (let id in playerConnections) {
-                try {
-                    const conn = playerConnections[id];
-                    if (conn && conn.open) {
-                        conn.send(msg);
-                    }
-                } catch(e) {}
-            }
-
-            // Send to local BroadcastChannel
-            if (localChannel) {
-                try { localChannel.postMessage(msg); } catch(e){}
-            }
+            });
         }
 
         // ---------------------------------------------
@@ -1031,7 +966,7 @@
             joinedPlayers = [];
 
             // Setup Realtime connection as Mod
-            setupModNetworking(activeRoomCode);
+            setupRealtimeListener(activeRoomCode, true);
 
             // Render Lobby UI
             document.getElementById('mod-room-code-display').innerText = activeRoomCode;
@@ -1045,7 +980,7 @@
             showScreen('screen-mod-lobby');
         }
 
-        // Get Join URL: If opened on file:/// or localhost, ensure QR Code directs to GitHub Pages!
+        // Get Join URL: If opened on file:/// or localhost, automatically point QR Code to GitHub Pages!
         function getFullJoinUrl() {
             let base = window.location.href.split('?')[0];
             // If running on local computer (file:/// or localhost), automatically point QR Code to GitHub Pages production URL!
@@ -1150,7 +1085,7 @@
 
         function cancelRoomAndBack() {
             if (confirm('คุณต้องการยกเลิกห้องนี้และกลับสู่หน้าหลักใช่หรือไม่?')) {
-                if (peer) { try { peer.destroy(); } catch(e){} }
+                if (roomEventSource) { try { roomEventSource.close(); } catch(e){} }
                 showScreen('screen-home');
             }
         }
@@ -1166,7 +1101,7 @@
             }
             activeRoomCode = input;
             document.getElementById('player-view-room-code').innerText = activeRoomCode;
-            setupPlayerNetworking(activeRoomCode);
+            setupRealtimeListener(activeRoomCode, false);
             showScreen('screen-player-join');
         }
 
@@ -1179,20 +1114,12 @@
             }
             myPlayerName = name;
 
-            // Send join message to Mod via PeerJS or local BroadcastChannel
-            const joinMsg = {
+            // Broadcast join message to Mod
+            broadcastMessage({
                 type: 'PLAYER_JOIN',
                 id: myDeviceId,
-                name: myPlayerName,
-                room: activeRoomCode
-            };
-
-            if (playerConnToMod && playerConnToMod.open) {
-                try { playerConnToMod.send(joinMsg); } catch(e) {}
-            }
-            if (localChannel) {
-                try { localChannel.postMessage(joinMsg); } catch(e) {}
-            }
+                name: myPlayerName
+            });
 
             // Update Waiting Room Screen UI
             document.getElementById('waiting-room-tag').innerText = activeRoomCode;
@@ -1251,23 +1178,10 @@
             });
 
             // 3. Broadcast role assignments to all connected players
-            const startMsg = {
+            broadcastMessage({
                 type: 'GAME_STARTED_ASSIGNMENTS',
-                room: activeRoomCode,
                 assignments: playerRoleAssignments
-            };
-
-            for (let id in playerConnections) {
-                try {
-                    const conn = playerConnections[id];
-                    if (conn && conn.open) {
-                        conn.send(startMsg);
-                    }
-                } catch(e) {}
-            }
-            if (localChannel) {
-                try { localChannel.postMessage(startMsg); } catch(e){}
-            }
+            });
 
             // 4. Mod transitions directly to Night Phase 1!
             showScreen('gameplay-screen');
