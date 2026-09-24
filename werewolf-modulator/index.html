@@ -397,44 +397,44 @@
         <!-- ========================================== -->
         <section id="screen-player-card" class="space-y-4 hidden">
             <!-- 3D Card Container -->
-            <div class="card-perspective max-w-[280px] sm:max-w-[300px] mx-auto aspect-[3/4.6]">
+            <div class="card-perspective w-full max-w-[340px] sm:max-w-sm mx-auto aspect-[3/4.6]">
                 <div id="player-card-inner" class="card-inner flipped">
                     
                     <!-- Card Back (Shown initially before flip) -->
-                    <div class="card-back border-2 border-amber-500/40 shadow-2xl bg-slate-900">
+                    <div class="card-back border-2 border-amber-500/40 shadow-2xl bg-slate-900 rounded-2xl overflow-hidden">
                         <img src="./Werewolf2.png" onerror="this.onerror=null; this.src='./WerewolfCard2.PNG';" alt="Werewolf Card Back" class="w-full h-full object-cover">
                     </div>
 
                     <!-- Card Front (Revealed Role) -->
-                    <div id="card-front-content" class="card-front border-2 border-amber-500/60 shadow-2xl bg-slate-900 flex flex-col justify-between p-5 text-center relative overflow-hidden">
+                    <div id="card-front-content" class="card-front border-2 border-amber-500/60 shadow-2xl bg-slate-900 rounded-2xl flex flex-col justify-between p-5 sm:p-6 text-center relative overflow-hidden">
                         <!-- Atmospheric background glow -->
                         <div id="role-bg-glow" class="absolute -top-20 -left-20 w-56 h-56 rounded-full blur-3xl opacity-30 bg-amber-500 pointer-events-none"></div>
 
                         <!-- Top Team Banner -->
                         <div class="relative z-10 flex justify-between items-center">
-                            <span id="card-team-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                            <span id="card-team-badge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 shadow">
                                 ฝั่งชาวบ้าน
                             </span>
-                            <span class="text-[10px] text-slate-400 font-mono" id="card-player-name-tag">ชื่อผู้เล่น</span>
+                            <span class="text-xs text-slate-400 font-mono" id="card-player-name-tag">ชื่อผู้เล่น</span>
                         </div>
 
                         <!-- Middle Role Icon & Title -->
                         <div class="relative z-10 my-auto space-y-2">
-                            <div id="card-role-icon" class="text-6xl sm:text-7xl drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+                            <div id="card-role-icon" class="text-7xl sm:text-8xl drop-shadow-[0_0_20px_rgba(245,158,11,0.5)] transform hover:scale-110 transition-transform">
                                 🔮
                             </div>
-                            <h2 id="card-role-name" class="text-2xl font-black text-white tracking-wide">
+                            <h2 id="card-role-name" class="text-3xl sm:text-4xl font-black text-white tracking-wide drop-shadow-md">
                                 Seer
                             </h2>
-                            <p id="card-role-thai" class="text-xs text-amber-400 font-medium">
+                            <p id="card-role-thai" class="text-sm text-amber-400 font-medium">
                                 ผู้หยั่งรู้
                             </p>
                         </div>
 
                         <!-- Bottom Role Ability Details -->
-                        <div class="relative z-10 bg-slate-950/80 backdrop-blur border border-slate-800 rounded-xl p-3 text-left space-y-1">
-                            <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">ความสามารถของคุณ:</span>
-                            <p id="card-role-desc" class="text-[11px] text-slate-300 leading-relaxed">
+                        <div class="relative z-10 bg-slate-950/80 backdrop-blur border border-slate-800 rounded-xl p-4 text-left space-y-1.5 shadow-inner">
+                            <span class="text-xs text-amber-400 font-bold uppercase tracking-wider">ความสามารถของคุณ:</span>
+                            <p id="card-role-desc" class="text-[13px] text-slate-300 leading-relaxed">
                                 ตื่นขึ้นมาในตอนกลางคืนเพื่อตรวจสอบบทบาทของผู้เล่น 1 คนว่าเป็นหมาป่าหรือไม่
                             </p>
                         </div>
@@ -443,10 +443,10 @@
             </div>
 
             <!-- Toggle Hide / Show button for privacy -->
-            <div class="max-w-[280px] sm:max-w-[300px] mx-auto space-y-2">
-                <button onclick="toggleCardFlipPrivacy()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-2.5 px-4 rounded-xl border border-slate-700 transition flex items-center justify-center gap-1.5 shadow">
+            <div class="w-full max-w-[340px] sm:max-w-sm mx-auto space-y-2">
+                <button onclick="toggleCardFlipPrivacy()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold py-3 px-4 rounded-xl border border-slate-700 transition flex items-center justify-center gap-1.5 shadow">
                     <span>👁️</span>
-                    <span id="btn-toggle-privacy-text">แตะเพื่อซ่อนการ์ด (ป้องกันคนข้างๆ แอบดู)</span>
+                    <span id="btn-toggle-privacy-text">แตะเพื่อซ่อนการ์ด (ป้องกันแอบดู)</span>
                 </button>
                 <p class="text-[11px] text-slate-500 text-center">
                     รักษาบทบาทของคุณเป็นความลับจนกว่าเกมจะจบ
