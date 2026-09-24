@@ -78,18 +78,18 @@
         }
     </style>
 </head>
-<body class="bg-[#420212] text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
+<body class="bg-[#140305] text-rose-50 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
 
     <!-- Header -->
-    <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 p-3 sm:p-4 text-center sticky top-0 z-50 relative">
-        <a href="../" class="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-amber-400 flex items-center gap-1 transition" title="กลับสู่หน้าหลัก Game Hub">
+    <header class="bg-[#24070c]/95 backdrop-blur border-b border-rose-950 p-3 sm:p-4 text-center sticky top-0 z-50 relative">
+        <a href="../" class="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-xs text-rose-300/60 hover:text-amber-400 flex items-center gap-1 transition" title="กลับสู่หน้าหลัก Game Hub">
             <span>&larr;</span> <span class="hidden sm:inline">หน้าหลัก Hub</span>
         </a>
         <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent flex items-center justify-center gap-2">
             <img src="./WolfIcon.png" alt="Wolf Icon" class="w-6 h-6 object-contain inline-block">
             <span>Werewolf Modulator</span>
         </h1>
-        <div id="game-status" class="text-[11px] sm:text-xs text-slate-400 mt-0.5">ยินดีต้อนรับเข้าสู่ Game Werewolf</div>
+        <div id="game-status" class="text-[11px] sm:text-xs text-rose-300/60 mt-0.5">ยินดีต้อนรับเข้าสู่ Game Werewolf</div>
     </header>
 
     <!-- Main Container -->
@@ -99,13 +99,13 @@
         <!-- SCREEN 0: MOD HOME (เลือกโหมดเปิดห้อง) -->
         <!-- ========================================== -->
         <section id="screen-home" class="space-y-4">
-            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center space-y-4 shadow-xl">
-                <div class="w-24 h-24 mx-auto rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/40 p-1.5 bg-slate-950/70 flex items-center justify-center">
+            <div class="bg-[#24070c] border border-rose-950 p-6 rounded-2xl text-center space-y-4 shadow-xl">
+                <div class="w-24 h-24 mx-auto rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/40 p-1.5 bg-[#140305]/70 flex items-center justify-center">
                     <img src="./WolfIcon.png" alt="Wolf Icon" class="w-full h-full object-contain rounded-2xl drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
                 </div>
                 <div>
-                    <h2 class="text-xl font-bold text-slate-100">ยินดีต้อนรับเข้าสู่ Game Werewolf</h2>
-                    <p class="text-xs text-slate-400 mt-1">เลือกรูปแบบการดำเนินเกม Werewolf ที่คุณต้องการ</p>
+                    <h2 class="text-xl font-bold text-rose-50">ยินดีต้อนรับเข้าสู่ Game Werewolf</h2>
+                    <p class="text-xs text-rose-300/60 mt-1">เลือกรูปแบบการดำเนินเกม Werewolf ที่คุณต้องการ</p>
                 </div>
 
                 <div class="space-y-3 pt-2">
@@ -114,15 +114,15 @@
                         <span class="text-lg">📱</span>
                         <span>สร้างห้องใหม่ (สแกน QR Code รับการ์ด)</span>
                     </button>
-                    <p class="text-[11px] text-slate-400">สแกนมือถือ สุ่มการ์ดอัตโนมัติ ไม่ต้องเลือก Dropdown</p>
+                    <p class="text-[11px] text-rose-300/60">สแกนมือถือ สุ่มการ์ดอัตโนมัติ ไม่ต้องเลือก Dropdown</p>
 
                     <div class="relative py-2">
-                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-800"></div></div>
-                        <div class="relative flex justify-center text-xs"><span class="bg-slate-900 px-2 text-slate-500">หรือ</span></div>
+                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-rose-950"></div></div>
+                        <div class="relative flex justify-center text-xs"><span class="bg-[#24070c] px-2 text-rose-400/50">หรือ</span></div>
                     </div>
 
                     <!-- ปุ่มโหมดเล่นเครื่องเดียว (Manual Offline Mode) -->
-                    <button onclick="startSingleDeviceMode()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2.5 px-4 rounded-xl transition border border-slate-700 text-xs flex items-center justify-center gap-2">
+                    <button onclick="startSingleDeviceMode()" class="w-full bg-[#380d15] hover:bg-rose-900 text-rose-100/90 font-medium py-2.5 px-4 rounded-xl transition border border-rose-900/40 text-xs flex items-center justify-center gap-2">
                         <span>🕹️</span>
                         <span>โหมดเล่นเครื่องเดียว (Mod จัดการเอง / ออฟไลน์)</span>
                     </button>
@@ -130,11 +130,11 @@
             </div>
 
             <!-- Join room manually card (กรณีมีรหัสห้อง) -->
-            <div class="bg-indigo-950/80 border border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.2)] p-4 rounded-xl text-center space-y-2">
-                <span class="text-xs text-indigo-200">ต้องการเข้าร่วมห้องที่เพื่อนสร้างไว้?</span>
+            <div class="bg-[#380d15]/80 border border-amber-600/50 shadow-[0_0_15px_rgba(217,119,6,0.15)] p-4 rounded-xl text-center space-y-2">
+                <span class="text-xs text-amber-200">ต้องการเข้าร่วมห้องที่เพื่อนสร้างไว้?</span>
                 <div class="flex gap-2">
-                    <input type="text" id="manual-room-input" placeholder="กรอกรหัสห้อง เช่น WW-1234" class="w-full bg-slate-950 border border-indigo-800 rounded-lg px-3 py-2 text-xs text-slate-100 uppercase focus:outline-none focus:border-indigo-400 font-mono placeholder:text-slate-500">
-                    <button onclick="joinManualRoom()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-colors shadow-lg shadow-indigo-500/30">
+                    <input type="text" id="manual-room-input" placeholder="กรอกรหัสห้อง เช่น WW-1234" class="w-full bg-[#140305] border border-amber-900/50 rounded-lg px-3 py-2 text-xs text-rose-50 uppercase focus:outline-none focus:border-amber-400 font-mono placeholder:text-rose-400/50">
+                    <button onclick="joinManualRoom()" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-colors shadow-lg shadow-amber-600/30">
                         เข้าร่วม
                     </button>
                 </div>
@@ -146,15 +146,15 @@
         <!-- ========================================== -->
         <section id="screen-role-select" class="space-y-4 hidden">
             <!-- Balance Indicator Card -->
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3 shadow-lg">
+            <div class="bg-[#24070c] border border-rose-950 p-4 rounded-2xl space-y-3 shadow-lg">
                 <div class="flex items-center justify-between">
                     <div>
-                        <span class="text-[11px] text-slate-400">จำนวนผู้เล่นที่ต้องใช้</span>
+                        <span class="text-[11px] text-rose-300/60">จำนวนผู้เล่นที่ต้องใช้</span>
                         <div class="text-2xl font-black text-amber-400">
-                            <span id="calc-total-players">0</span> <span class="text-sm font-normal text-slate-400">คน</span>
+                            <span id="calc-total-players">0</span> <span class="text-sm font-normal text-rose-300/60">คน</span>
                         </div>
                     </div>
-                    <div id="balance-status-badge" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 text-center">
+                    <div id="balance-status-badge" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#380d15] text-rose-200/80 border border-rose-900/40 text-center">
                         ⚖️ เลือกบทบาท
                     </div>
                 </div>
@@ -163,24 +163,24 @@
                 <div class="space-y-1">
                     <div class="flex justify-between text-[11px] font-mono">
                         <span class="text-rose-400 font-semibold">🐺 หมาป่า: <span id="calc-wolf-points">0</span></span>
-                        <span class="text-slate-400">ดัชนีสมดุล: <span id="calc-balance-score" class="font-bold text-white">0</span></span>
-                        <span class="text-emerald-400 font-semibold">🧑 ชาวบ้าน: <span id="calc-village-points">0</span></span>
+                        <span class="text-rose-300/60">ดัชนีสมดุล: <span id="calc-balance-score" class="font-bold text-white">0</span></span>
+                        <span class="text-amber-500 font-semibold">🧑 ชาวบ้าน: <span id="calc-village-points">0</span></span>
                     </div>
-                    <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden flex">
-                        <div id="bar-wolf" class="bg-rose-500 h-full transition-all duration-300" style="width: 50%;"></div>
-                        <div id="bar-village" class="bg-emerald-500 h-full transition-all duration-300" style="width: 50%;"></div>
+                    <div class="w-full h-2 bg-[#380d15] rounded-full overflow-hidden flex">
+                        <div id="bar-wolf" class="bg-[#991b1b] h-full transition-all duration-300" style="width: 50%;"></div>
+                        <div id="bar-village" class="bg-[#7c2d12] h-full transition-all duration-300" style="width: 50%;"></div>
                     </div>
                 </div>
-                <p id="balance-advice" class="text-[11px] text-slate-400 leading-relaxed italic">
+                <p id="balance-advice" class="text-[11px] text-rose-300/60 leading-relaxed italic">
                     💡 เลือกบทบาทให้คะแนนดัชนีใกล้เคียง 0 เพื่อความสมดุลสูงสุด
                 </p>
             </div>
 
             <!-- Roles Selection List -->
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div class="bg-[#24070c] border border-rose-950 p-4 rounded-2xl space-y-3">
+                <div class="flex items-center justify-between border-b border-rose-950 pb-2">
                     <h3 class="text-sm font-bold text-amber-300">เลือกบทบาทในเกม (Role Selection)</h3>
-                    <span class="text-[11px] text-slate-400">1 Role = ผู้เล่น 1 คน</span>
+                    <span class="text-[11px] text-rose-300/60">1 Role = ผู้เล่น 1 คน</span>
                 </div>
                 
                 <div id="roles-builder-list" class="space-y-2 max-h-[22rem] overflow-y-auto pr-1">
@@ -190,7 +190,7 @@
 
             <!-- Action buttons -->
             <div class="flex gap-2">
-                <button onclick="showScreen('screen-home')" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-3 rounded-xl transition text-xs">
+                <button onclick="showScreen('screen-home')" class="w-1/3 bg-[#380d15] hover:bg-rose-900 text-rose-200/80 font-semibold py-3 rounded-xl transition text-xs">
                     ย้อนกลับ
                 </button>
                 <button onclick="confirmRolesAndCreateRoom()" class="w-2/3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-amber-500/20 text-xs sm:text-sm flex items-center justify-center gap-1.5">
@@ -205,38 +205,38 @@
         <!-- ========================================== -->
         <section id="screen-mod-lobby" class="space-y-4 hidden">
             <!-- Room Info & QR Code Card -->
-            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl text-center space-y-4 shadow-xl">
+            <div class="bg-[#24070c] border border-rose-950 p-5 rounded-2xl text-center space-y-4 shadow-xl">
                 <div>
-                    <span class="text-xs text-slate-400 uppercase tracking-wider">รหัสห้อง (Room Code)</span>
+                    <span class="text-xs text-rose-300/60 uppercase tracking-wider">รหัสห้อง (Room Code)</span>
                     <div id="mod-room-code-display" class="text-3xl font-black text-amber-400 font-mono tracking-widest mt-0.5">
                         WW-0000
                     </div>
                     <!-- Connection Status Tag -->
-                    <div id="mod-conn-status" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800 mt-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <div id="mod-conn-status" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-950/60 text-amber-500 border border-amber-900/40 mt-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                         <span>🟢 สัญญาณออนไลน์ พร้อมรับผู้เล่น</span>
                     </div>
                 </div>
 
                 <!-- QR Code Box -->
-                <div class="bg-white p-3.5 rounded-2xl inline-block mx-auto shadow-2xl border-4 border-slate-800">
+                <div class="bg-white p-3.5 rounded-2xl inline-block mx-auto shadow-2xl border-4 border-rose-950">
                     <div id="qrcode-container" class="w-48 h-48 flex items-center justify-center">
                         <!-- QR Code Canvas / Img renders here -->
                     </div>
                 </div>
 
                 <div class="space-y-1">
-                    <p class="text-xs font-semibold text-slate-200">ให้ผู้เล่นสแกน QR Code ด้วยกล้องมือถือ</p>
-                    <p id="qr-target-url-display" class="text-[10px] text-slate-400 font-mono break-all px-2"></p>
+                    <p class="text-xs font-semibold text-rose-100/90">ให้ผู้เล่นสแกน QR Code ด้วยกล้องมือถือ</p>
+                    <p id="qr-target-url-display" class="text-[10px] text-rose-300/60 font-mono break-all px-2"></p>
                 </div>
 
                 <!-- Copy Link Button -->
                 <div class="flex gap-2 justify-center">
-                    <button onclick="copyJoinLink()" id="btn-copy-link" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                    <button onclick="copyJoinLink()" id="btn-copy-link" class="bg-[#380d15] hover:bg-rose-900 text-rose-200/80 text-xs px-3 py-1.5 rounded-lg border border-rose-900/40 transition flex items-center gap-1.5">
                         <span>📋</span>
                         <span id="btn-copy-link-text">คัดลอกลิงก์ห้อง</span>
                     </button>
-                    <button onclick="simulatePlayerBot()" class="bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 text-xs px-3 py-1.5 rounded-lg border border-indigo-800 transition flex items-center gap-1">
+                    <button onclick="simulatePlayerBot()" class="bg-[#380d15]/70 hover:bg-indigo-900 text-indigo-300 text-xs px-3 py-1.5 rounded-lg border border-amber-900/50 transition flex items-center gap-1">
                         <span>⚡</span>
                         <span>+ จำลองผู้เล่น (Test Bot)</span>
                     </button>
@@ -244,11 +244,11 @@
             </div>
 
             <!-- Joined Players List Card -->
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div class="bg-[#24070c] border border-rose-950 p-4 rounded-2xl space-y-3">
+                <div class="flex items-center justify-between border-b border-rose-950 pb-2">
                     <div class="flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-                        <h4 class="text-xs font-bold text-slate-200">รายชื่อผู้เล่นที่เข้าร่วมแล้ว</h4>
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+                        <h4 class="text-xs font-bold text-rose-100/90">รายชื่อผู้เล่นที่เข้าร่วมแล้ว</h4>
                     </div>
                     <span class="text-xs font-bold text-amber-400">
                         <span id="mod-joined-count">0</span> / <span id="mod-target-count">0</span> คน
@@ -256,7 +256,7 @@
                 </div>
 
                 <!-- Progress bar -->
-                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div class="w-full bg-[#380d15] h-1.5 rounded-full overflow-hidden">
                     <div id="mod-lobby-progress" class="bg-amber-500 h-full transition-all duration-300" style="width: 0%;"></div>
                 </div>
 
@@ -272,7 +272,7 @@
                     <span>🚀</span>
                     <span>สุ่มบทบาทและเริ่มเกมทันที (Start Game)</span>
                 </button>
-                <button onclick="cancelRoomAndBack()" class="w-full text-slate-500 hover:text-rose-400 text-xs py-1 transition text-center">
+                <button onclick="cancelRoomAndBack()" class="w-full text-rose-400/50 hover:text-rose-400 text-xs py-1 transition text-center">
                     ยกเลิกห้องและกลับหน้าหลัก
                 </button>
             </div>
@@ -282,18 +282,18 @@
         <!-- SCREEN 3: PLAYER JOIN FORM (Player Screen) -->
         <!-- ========================================== -->
         <section id="screen-player-join" class="space-y-4 hidden">
-            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center space-y-4 shadow-xl">
-                <div class="w-16 h-16 mx-auto rounded-2xl overflow-hidden shadow-lg border border-amber-500/30 p-1 bg-slate-950/60 flex items-center justify-center">
+            <div class="bg-[#24070c] border border-rose-950 p-6 rounded-2xl text-center space-y-4 shadow-xl">
+                <div class="w-16 h-16 mx-auto rounded-2xl overflow-hidden shadow-lg border border-amber-500/30 p-1 bg-[#140305]/60 flex items-center justify-center">
                     <img src="./WolfIcon.png" alt="Wolf Icon" class="w-full h-full object-contain rounded-xl">
                 </div>
                 <div>
                     <span class="text-xs text-amber-400 font-mono font-bold uppercase tracking-wider">ห้องเล่นเกม: <span id="player-view-room-code">WW-XXXX</span></span>
-                    <h3 class="text-lg font-bold text-slate-100 mt-1">กรอกชื่อของคุณเพื่อรับไพ่</h3>
-                    <p class="text-xs text-slate-400 mt-1">ชื่อนี้จะปรากฏบนจอของ Game Master และเพื่อนร่วมห้อง</p>
+                    <h3 class="text-lg font-bold text-rose-50 mt-1">กรอกชื่อของคุณเพื่อรับไพ่</h3>
+                    <p class="text-xs text-rose-300/60 mt-1">ชื่อนี้จะปรากฏบนจอของ Game Master และเพื่อนร่วมห้อง</p>
                     
                     <!-- Real-time Status Badge & Room Info -->
                     <div class="mt-2.5 flex flex-col items-center gap-1.5">
-                        <span id="player-join-conn-status" class="px-2.5 py-1 rounded-full text-[11px] bg-slate-950 text-slate-400 border border-slate-800 flex items-center gap-1.5 inline-flex">
+                        <span id="player-join-conn-status" class="px-2.5 py-1 rounded-full text-[11px] bg-[#140305] text-rose-300/60 border border-rose-950 flex items-center gap-1.5 inline-flex">
                             <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                             <span>กำลังเชื่อมต่อห้อง...</span>
                         </span>
@@ -304,7 +304,7 @@
                 </div>
 
                 <div class="space-y-3 pt-2">
-                    <input type="text" id="player-name-input-field" placeholder="พิมพ์ชื่อเล่นของคุณ..." maxlength="20" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 text-center font-semibold focus:outline-none focus:border-amber-500 transition shadow-inner">
+                    <input type="text" id="player-name-input-field" placeholder="พิมพ์ชื่อเล่นของคุณ..." maxlength="20" class="w-full bg-[#140305] border border-rose-900/40 rounded-xl px-4 py-3 text-sm text-rose-50 text-center font-semibold focus:outline-none focus:border-amber-500 transition shadow-inner">
                     <button onclick="submitPlayerJoin()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-amber-500/20 text-sm active:scale-95">
                         เข้าร่วมห้อง & รอรับการ์ด 🃏
                     </button>
@@ -317,7 +317,7 @@
         <!-- ========================================== -->
         <section id="screen-player-waiting" class="space-y-4 hidden">
             <!-- Card Container -->
-            <div class="max-w-[280px] sm:max-w-[300px] mx-auto aspect-[3/4.6] relative rounded-3xl overflow-hidden border-2 border-amber-500/40 shadow-2xl shadow-amber-500/20 bg-slate-900">
+            <div class="max-w-[280px] sm:max-w-[300px] mx-auto aspect-[3/4.6] relative rounded-3xl overflow-hidden border-2 border-amber-500/40 shadow-2xl shadow-amber-500/20 bg-[#24070c]">
                 <!-- Werewolf Card Back Image -->
                 <img src="./Werewolf2.png" onerror="this.onerror=null; this.src='./WerewolfCard2.PNG';" alt="Werewolf Card Back" class="w-full h-full object-cover">
                 
@@ -325,7 +325,7 @@
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-slate-950/70 flex flex-col items-center justify-between p-5 text-center">
                     
                     <!-- Top Badge -->
-                    <div class="px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur border border-amber-500/40 text-[11px] text-amber-300 font-semibold flex items-center gap-1.5">
+                    <div class="px-3 py-1 rounded-full bg-[#24070c]/80 backdrop-blur border border-amber-500/40 text-[11px] text-amber-300 font-semibold flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
                         ห้อง: <span id="waiting-room-tag" class="font-mono">WW-0000</span>
                     </div>
@@ -350,7 +350,7 @@
                         <h4 class="text-sm font-bold text-white tracking-wide">
                             รอสมาชิกให้ครบทีม...
                         </h4>
-                        <div class="bg-slate-900/90 backdrop-blur border border-slate-700/80 rounded-xl py-1.5 px-3">
+                        <div class="bg-[#24070c]/90 backdrop-blur border border-rose-900/40/80 rounded-xl py-1.5 px-3">
                             <span class="text-xs text-amber-400 font-bold">
                                 เข้าร่วมแล้ว <span id="player-view-count">1</span> / <span id="player-view-total">-</span> คน
                             </span>
@@ -360,14 +360,14 @@
             </div>
 
             <!-- Joined Player Info Box -->
-            <div class="bg-slate-900 border border-slate-800 p-3 rounded-xl text-center space-y-2">
+            <div class="bg-[#24070c] border border-rose-950 p-3 rounded-xl text-center space-y-2">
                 <div class="flex items-center justify-center gap-2">
-                    <span id="player-conn-status-badge" class="px-2 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800">
+                    <span id="player-conn-status-badge" class="px-2 py-0.5 rounded text-[10px] bg-rose-950/60 text-amber-500 border border-amber-900/40">
                         🟢 เชื่อมต่อห้องสำเร็จ
                     </span>
-                    <span class="text-xs text-slate-300">คุณ: <b id="player-my-name-display" class="text-amber-400">ผู้เล่น</b></span>
+                    <span class="text-xs text-rose-200/80">คุณ: <b id="player-my-name-display" class="text-amber-400">ผู้เล่น</b></span>
                 </div>
-                <div id="player-friends-preview" class="text-[11px] text-slate-400">
+                <div id="player-friends-preview" class="text-[11px] text-rose-300/60">
                     เมื่อสมาชิกครบทีม ระบบจะสุ่มบทบาทและพลิกการ์ดให้อัตโนมัติทันที
                 </div>
                 <div class="pt-1 flex justify-center gap-2">
@@ -391,21 +391,21 @@
                 <div id="player-card-inner" class="card-inner flipped">
                     
                     <!-- Card Back (Shown initially before flip) -->
-                    <div class="card-back border-2 border-amber-500/40 shadow-2xl bg-slate-900">
+                    <div class="card-back border-2 border-amber-500/40 shadow-2xl bg-[#24070c]">
                         <img src="./Werewolf2.png" onerror="this.onerror=null; this.src='./WerewolfCard2.PNG';" alt="Werewolf Card Back" class="w-full h-full object-cover">
                     </div>
 
                     <!-- Card Front (Revealed Role) -->
-                    <div id="card-front-content" class="card-front border-2 border-amber-500/60 shadow-2xl bg-slate-900 flex flex-col justify-between p-5 text-center relative overflow-hidden">
+                    <div id="card-front-content" class="card-front border-2 border-amber-500/60 shadow-2xl bg-[#24070c] flex flex-col justify-between p-5 text-center relative overflow-hidden">
                         <!-- Atmospheric background glow -->
                         <div id="role-bg-glow" class="absolute -top-20 -left-20 w-56 h-56 rounded-full blur-3xl opacity-30 bg-amber-500 pointer-events-none"></div>
 
                         <!-- Top Team Banner -->
                         <div class="relative z-10 flex justify-between items-center">
-                            <span id="card-team-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                            <span id="card-team-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-950/60 text-amber-500 border border-amber-900/40">
                                 ฝั่งชาวบ้าน
                             </span>
-                            <span class="text-[10px] text-slate-400 font-mono" id="card-player-name-tag">ชื่อผู้เล่น</span>
+                            <span class="text-[10px] text-rose-300/60 font-mono" id="card-player-name-tag">ชื่อผู้เล่น</span>
                         </div>
 
                         <!-- Middle Role Icon & Title -->
@@ -422,9 +422,9 @@
                         </div>
 
                         <!-- Bottom Role Ability Details -->
-                        <div class="relative z-10 bg-slate-950/80 backdrop-blur border border-slate-800 rounded-xl p-3 text-left space-y-1">
+                        <div class="relative z-10 bg-[#140305]/80 backdrop-blur border border-rose-950 rounded-xl p-3 text-left space-y-1">
                             <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">ความสามารถของคุณ:</span>
-                            <p id="card-role-desc" class="text-[11px] text-slate-300 leading-relaxed">
+                            <p id="card-role-desc" class="text-[11px] text-rose-200/80 leading-relaxed">
                                 ตื่นขึ้นมาในตอนกลางคืนเพื่อตรวจสอบบทบาทของผู้เล่น 1 คนว่าเป็นหมาป่าหรือไม่
                             </p>
                         </div>
@@ -434,11 +434,11 @@
 
             <!-- Toggle Hide / Show button for privacy -->
             <div class="max-w-[280px] sm:max-w-[300px] mx-auto space-y-2">
-                <button onclick="toggleCardFlipPrivacy()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-2.5 px-4 rounded-xl border border-slate-700 transition flex items-center justify-center gap-1.5 shadow">
+                <button onclick="toggleCardFlipPrivacy()" class="w-full bg-[#380d15] hover:bg-rose-900 text-rose-100/90 text-xs font-semibold py-2.5 px-4 rounded-xl border border-rose-900/40 transition flex items-center justify-center gap-1.5 shadow">
                     <span>👁️</span>
                     <span id="btn-toggle-privacy-text">แตะเพื่อซ่อนการ์ด (ป้องกันคนข้างๆ แอบดู)</span>
                 </button>
-                <p class="text-[11px] text-slate-500 text-center">
+                <p class="text-[11px] text-rose-400/50 text-center">
                     รักษาบทบาทของคุณเป็นความลับจนกว่าเกมจะจบ
                 </p>
             </div>
@@ -450,46 +450,46 @@
         <section id="screen-offline-setup" class="space-y-4 hidden">
             <!-- STEP 1: เลือก Role -->
             <div id="step-1" class="space-y-4">
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <div class="bg-[#380d15] p-4 rounded-xl border border-rose-900/40">
                     <h2 class="text-lg font-semibold text-amber-300 mb-2">ขั้นตอนที่ 1: เลือกบทบาทในเกม</h2>
-                    <p class="text-xs text-slate-400 mb-4">เลือก Role ที่ต้องการใช้ในรอบนี้</p>
+                    <p class="text-xs text-rose-300/60 mb-4">เลือก Role ที่ต้องการใช้ในรอบนี้</p>
                     <div id="role-checkboxes-offline" class="grid grid-cols-2 gap-2"></div>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="showScreen('screen-home')" class="w-1/3 bg-slate-700 text-slate-200 py-3 rounded-xl text-xs font-semibold">หน้าหลัก</button>
+                    <button onclick="showScreen('screen-home')" class="w-1/3 bg-rose-900 text-rose-100/90 py-3 rounded-xl text-xs font-semibold">หน้าหลัก</button>
                     <button onclick="goToOfflineStep(2)" class="w-2/3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl transition text-xs shadow-lg">ถัดไป: ใส่ชื่อผู้เล่น</button>
                 </div>
             </div>
 
             <!-- STEP 2: กรอกชื่อผู้เล่น -->
             <div id="step-2" class="space-y-4 hidden">
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <div class="bg-[#380d15] p-4 rounded-xl border border-rose-900/40">
                     <div class="flex items-center justify-between mb-1">
                         <h2 class="text-lg font-semibold text-amber-300">ขั้นตอนที่ 2: กรอกชื่อผู้เล่น</h2>
-                        <span class="text-xs text-slate-400">(<span id="player-count-display-offline">0</span> คน)</span>
+                        <span class="text-xs text-rose-300/60">(<span id="player-count-display-offline">0</span> คน)</span>
                     </div>
-                    <p class="text-xs text-slate-400 mb-3">พิมพ์ชื่อผู้เล่นแต่ละคน (หากเว้นว่างไว้ ระบบจะตั้งชื่อ "ผู้เล่น 1, 2, ..." ให้อัตโนมัติ)</p>
+                    <p class="text-xs text-rose-300/60 mb-3">พิมพ์ชื่อผู้เล่นแต่ละคน (หากเว้นว่างไว้ ระบบจะตั้งชื่อ "ผู้เล่น 1, 2, ..." ให้อัตโนมัติ)</p>
                     <div class="flex gap-2 mb-3">
-                        <button type="button" onclick="autoFillPlayerNamesOffline()" class="text-xs bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-600">⚡ เติมชื่ออัตโนมัติ</button>
-                        <button type="button" onclick="clearPlayerNamesOffline()" class="text-xs bg-slate-700 text-rose-300 px-3 py-1.5 rounded-lg border border-slate-600">🗑️ ล้างทั้งหมด</button>
+                        <button type="button" onclick="autoFillPlayerNamesOffline()" class="text-xs bg-rose-900 text-rose-100/90 px-3 py-1.5 rounded-lg border border-rose-800/40">⚡ เติมชื่ออัตโนมัติ</button>
+                        <button type="button" onclick="clearPlayerNamesOffline()" class="text-xs bg-rose-900 text-rose-300 px-3 py-1.5 rounded-lg border border-rose-800/40">🗑️ ล้างทั้งหมด</button>
                     </div>
                     <div id="player-inputs-offline" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="goToOfflineStep(1)" class="w-1/3 bg-slate-700 text-slate-200 py-3 rounded-xl text-xs font-semibold">ย้อนกลับ</button>
+                    <button onclick="goToOfflineStep(1)" class="w-1/3 bg-rose-900 text-rose-100/90 py-3 rounded-xl text-xs font-semibold">ย้อนกลับ</button>
                     <button onclick="goToOfflineStep(3)" class="w-2/3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl transition text-xs shadow-lg">ถัดไป: จัดคู่ Role (Matching)</button>
                 </div>
             </div>
 
             <!-- STEP 3: Matching Role กับผู้เล่น -->
             <div id="step-3" class="space-y-4 hidden">
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <div class="bg-[#380d15] p-4 rounded-xl border border-rose-900/40">
                     <h2 class="text-lg font-semibold text-amber-300 mb-2">ขั้นตอนที่ 3: จับคู่ผู้เล่นกับบทบาท</h2>
-                    <p class="text-xs text-slate-400 mb-4">กำหนดว่าใครได้รับบทบาทไหน</p>
+                    <p class="text-xs text-rose-300/60 mb-4">กำหนดว่าใครได้รับบทบาทไหน</p>
                     <div id="matching-list-offline" class="space-y-3"></div>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="goToOfflineStep(2)" class="w-1/3 bg-slate-700 text-slate-200 py-3 rounded-xl text-xs font-semibold">ย้อนกลับ</button>
+                    <button onclick="goToOfflineStep(2)" class="w-1/3 bg-rose-900 text-rose-100/90 py-3 rounded-xl text-xs font-semibold">ย้อนกลับ</button>
                     <button onclick="startOfflineGame()" class="w-2/3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 rounded-xl transition text-xs shadow-lg">🚀 เริ่มเกม (Start Game)</button>
                 </div>
             </div>
@@ -500,46 +500,46 @@
         <!-- ========================================== -->
         <section id="gameplay-screen" class="space-y-4 hidden">
             <!-- Game Info Card -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center shadow-lg">
+            <div class="bg-[#380d15] p-4 rounded-xl border border-rose-900/40 flex justify-between items-center shadow-lg">
                 <div>
                     <span id="day-night-indicator" class="text-xs px-2.5 py-1 rounded bg-indigo-900 text-indigo-300 font-semibold">🌙 คืนที่ 1</span>
-                    <h3 id="phase-title" class="text-base font-bold text-slate-200 mt-1">ช่วงเวลากลางคืน (Night Phase)</h3>
+                    <h3 id="phase-title" class="text-base font-bold text-rose-100/90 mt-1">ช่วงเวลากลางคืน (Night Phase)</h3>
                 </div>
-                <button onclick="nextPhase()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
+                <button onclick="nextPhase()" class="bg-amber-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
                     เปลี่ยนรอบ ➡️
                 </button>
             </div>
 
             <!-- Timer Card (แสดงเฉพาะตอนกลางวัน) -->
-            <div id="timer-card" class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3 hidden">
+            <div id="timer-card" class="bg-[#380d15] p-4 rounded-xl border border-rose-900/40 space-y-3 hidden">
                 <div class="flex justify-between items-center">
                     <h4 class="text-xs font-semibold text-amber-400">⏱️ ตัวจับเวลาอภิปราย / โหวต</h4>
-                    <span id="timer-display" class="text-lg font-bold text-slate-100 font-mono">00:00</span>
+                    <span id="timer-display" class="text-lg font-bold text-rose-50 font-mono">00:00</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <input type="range" id="timer-range" min="10" max="300" step="10" value="60" class="w-full accent-amber-500 bg-slate-700 h-2 rounded cursor-pointer" oninput="updateTimerRange(this.value)">
-                    <span id="timer-range-label" class="text-[11px] text-slate-400 w-12 text-right">60s</span>
+                    <input type="range" id="timer-range" min="10" max="300" step="10" value="60" class="w-full accent-amber-500 bg-rose-900 h-2 rounded cursor-pointer" oninput="updateTimerRange(this.value)">
+                    <span id="timer-range-label" class="text-[11px] text-rose-300/60 w-12 text-right">60s</span>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="startTimer()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-1.5 rounded-lg transition">Start</button>
                     <button onclick="stopTimer()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold py-1.5 rounded-lg transition">Stop</button>
-                    <button onclick="resetTimer()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-semibold py-1.5 rounded-lg transition">Reset</button>
+                    <button onclick="resetTimer()" class="flex-1 bg-rose-900 hover:bg-slate-600 text-rose-200/80 text-xs font-semibold py-1.5 rounded-lg transition">Reset</button>
                 </div>
             </div>
 
             <!-- Actions Checklist Card -->
-            <div id="actions-container" class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3 shadow-lg">
-                <h4 id="actions-card-title" class="text-sm font-semibold text-amber-400 border-b border-slate-700 pb-2">ลำดับการทำงานตอนกลางคืน</h4>
+            <div id="actions-container" class="bg-[#380d15] p-4 rounded-xl border border-rose-900/40 space-y-3 shadow-lg">
+                <h4 id="actions-card-title" class="text-sm font-semibold text-amber-400 border-b border-rose-900/40 pb-2">ลำดับการทำงานตอนกลางคืน</h4>
                 <div class="space-y-2 text-xs" id="actions-checklist">
                     <!-- Checklist generated via JS -->
                 </div>
             </div>
 
             <!-- Player Status Management List -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3 shadow-lg">
-                <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+            <div class="bg-[#380d15] p-4 rounded-xl border border-rose-900/40 space-y-3 shadow-lg">
+                <div class="flex items-center justify-between border-b border-rose-900/40 pb-2">
                     <h4 class="text-sm font-semibold text-amber-400">สถานะผู้เล่นทั้งหมด</h4>
-                    <span class="text-[11px] text-slate-400">คลิกปุ่มเพื่อเปลี่ยนสถานะ รอด/ตาย</span>
+                    <span class="text-[11px] text-rose-300/60">คลิกปุ่มเพื่อเปลี่ยนสถานะ รอด/ตาย</span>
                 </div>
                 <div id="player-status-list" class="space-y-2 max-h-96 overflow-y-auto pr-0.5">
                     <!-- Player list with status -->
@@ -768,8 +768,8 @@
             badges.forEach(badge => {
                 if (!badge) return;
                 if (isConnected) {
-                    badge.className = "px-2.5 py-1 rounded-full text-[11px] bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center gap-1.5 inline-flex";
-                    badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>${message || '🟢 เชื่อมต่อห้องสำเร็จ'}</span>`;
+                    badge.className = "px-2.5 py-1 rounded-full text-[11px] bg-rose-950/60 text-amber-500 border border-amber-900/40 flex items-center gap-1.5 inline-flex";
+                    badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span><span>${message || '🟢 เชื่อมต่อห้องสำเร็จ'}</span>`;
                 } else {
                     badge.className = "px-2.5 py-1 rounded-full text-[11px] bg-amber-950 text-amber-300 border border-amber-800 flex items-center gap-1.5 inline-flex";
                     badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span><span>${message || '🟡 กำลังเชื่อมต่อห้อง...'}</span>`;
@@ -828,7 +828,7 @@
                         console.log('Mod Peer opened successfully with ID:', id);
                         currentModPeerId = id;
                         if (modStatus) {
-                            modStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>🟢 สัญญาณออนไลน์ พร้อมรับผู้เล่น</span>`;
+                            modStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span><span>🟢 สัญญาณออนไลน์ พร้อมรับผู้เล่น</span>`;
                         }
                         const lobbyScreen = document.getElementById('screen-mod-lobby');
                         if (lobbyScreen && !lobbyScreen.classList.contains('hidden')) {
@@ -1148,7 +1148,7 @@
 
                 const friendsEl = document.getElementById('player-friends-preview');
                 if (friendsEl && data.playersList && data.playersList.length > 0) {
-                    friendsEl.innerHTML = `<span class="text-slate-400">เพื่อนในห้อง: </span>` + data.playersList.map(n => `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 mr-1 inline-block text-[10px]">${n}</span>`).join('');
+                    friendsEl.innerHTML = `<span class="text-rose-300/60">เพื่อนในห้อง: </span>` + data.playersList.map(n => `<span class="px-1.5 py-0.5 rounded bg-[#380d15] text-amber-300 mr-1 inline-block text-[10px]">${n}</span>`).join('');
                 }
 
                 // Also update join screen count preview
@@ -1241,16 +1241,16 @@
             ROLES_DATABASE.forEach(role => {
                 const count = currentRoleCounts[role.id] || 0;
                 const isSelected = count > 0;
-                const borderClass = isSelected ? 'border-amber-500/50 bg-slate-900/90' : 'border-slate-800 bg-slate-950/40 opacity-70';
+                const borderClass = isSelected ? 'border-amber-500/50 bg-[#24070c]/90' : 'border-rose-950 bg-[#140305]/40 opacity-70';
                 
                 let controlsHtml = '';
                 if (role.multi) {
                     // Multi-role (Villager, Werewolf) with +/- controls
                     controlsHtml = `
                         <div class="flex items-center space-x-2">
-                            <button onclick="changeRoleCount('${role.id}', -1)" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center border border-slate-700 active:scale-95 text-xs">-</button>
+                            <button onclick="changeRoleCount('${role.id}', -1)" class="w-7 h-7 rounded-lg bg-[#380d15] hover:bg-rose-900 text-rose-100/90 font-bold flex items-center justify-center border border-rose-900/40 active:scale-95 text-xs">-</button>
                             <span class="w-5 text-center text-xs font-bold text-amber-400 font-mono">${count}</span>
-                            <button onclick="changeRoleCount('${role.id}', 1)" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center border border-slate-700 active:scale-95 text-xs">+</button>
+                            <button onclick="changeRoleCount('${role.id}', 1)" class="w-7 h-7 rounded-lg bg-[#380d15] hover:bg-rose-900 text-rose-100/90 font-bold flex items-center justify-center border border-rose-900/40 active:scale-95 text-xs">+</button>
                         </div>
                     `;
                 } else {
@@ -1259,12 +1259,12 @@
                     controlsHtml = `
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" ${checkedAttr} onchange="toggleSingleRole('${role.id}', this.checked)" class="sr-only peer">
-                            <div class="w-10 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                            <div class="w-10 h-5 bg-[#380d15] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
                         </label>
                     `;
                 }
 
-                const teamColor = role.team === 'wolf' ? 'text-rose-400' : (role.team === 'good' ? 'text-emerald-400' : 'text-amber-400');
+                const teamColor = role.team === 'wolf' ? 'text-rose-400' : (role.team === 'good' ? 'text-amber-500' : 'text-amber-400');
                 const pointsText = role.points > 0 ? `+${role.points}` : `${role.points}`;
 
                 container.innerHTML += `
@@ -1273,13 +1273,13 @@
                             <span class="text-2xl">${role.icon}</span>
                             <div>
                                 <div class="flex items-center gap-1.5">
-                                    <span class="text-xs font-bold text-slate-100">${role.name}</span>
-                                    <span class="text-[10px] text-slate-400">(${role.thai})</span>
+                                    <span class="text-xs font-bold text-rose-50">${role.name}</span>
+                                    <span class="text-[10px] text-rose-300/60">(${role.thai})</span>
                                 </div>
-                                <div class="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                                <div class="flex items-center gap-2 text-[10px] text-rose-300/60 mt-0.5">
                                     <span class="${teamColor} font-semibold">${role.team.toUpperCase()}</span>
                                     <span>&bull;</span>
-                                    <span class="font-mono">คะแนน: <b class="${role.points >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${pointsText}</b></span>
+                                    <span class="font-mono">คะแนน: <b class="${role.points >= 0 ? 'text-amber-500' : 'text-rose-400'}">${pointsText}</b></span>
                                 </div>
                             </div>
                         </div>
@@ -1344,15 +1344,15 @@
             const advice = document.getElementById('balance-advice');
 
             if (totalPlayers === 0) {
-                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700";
+                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-[#380d15] text-rose-300/60 border border-rose-900/40";
                 badge.innerText = "⚠️ ยังไม่ได้เลือก Role";
                 advice.innerText = "กรุณาเลือกบทบาทอย่างน้อย 3 ตัวละครเพื่อเริ่มเล่น";
             } else if (totalScore >= -2 && totalScore <= 2) {
-                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-700";
+                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-950/60 text-emerald-300 border border-emerald-700";
                 badge.innerText = "⚖️ สมดุลยอดเยี่ยม";
                 advice.innerText = "✨ ทั้งสองฝ่ายมีโอกาสชนะสูสีกัน กติกาพร้อมเล่นอย่างสมบูรณ์แบบ";
             } else if (totalScore > 2 && totalScore <= 5) {
-                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-950/70 text-emerald-400 border border-emerald-800";
+                badge.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-950/60/70 text-amber-500 border border-amber-900/40";
                 badge.innerText = "🟢 ชาวบ้านได้เปรียบเล็กน้อย";
                 advice.innerText = "💡 ชาวบ้านมีพลังสืบหาค่อนข้างดี อาจเพิ่มหมาป่าหรือ Cursed อีก 1 ใบ";
             } else if (totalScore > 5) {
@@ -1514,20 +1514,20 @@
             listContainer.innerHTML = '';
 
             if (joinedPlayers.length === 0) {
-                listContainer.innerHTML = `<p class="text-[11px] text-slate-500 text-center py-2">กำลังรอให้ผู้เล่นสแกนเข้าร่วมห้อง...</p>`;
+                listContainer.innerHTML = `<p class="text-[11px] text-rose-400/50 text-center py-2">กำลังรอให้ผู้เล่นสแกนเข้าร่วมห้อง...</p>`;
                 return;
             }
 
             joinedPlayers.forEach((p, idx) => {
                 listContainer.innerHTML += `
-                    <div class="flex items-center justify-between bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800 text-xs">
+                    <div class="flex items-center justify-between bg-[#140305]/60 px-3 py-1.5 rounded-lg border border-rose-950 text-xs">
                         <div class="flex items-center space-x-2">
                             <span class="text-amber-400 font-mono text-[10px]">#${idx+1}</span>
-                            <span class="font-semibold text-slate-200">${p.name}</span>
+                            <span class="font-semibold text-rose-100/90">${p.name}</span>
                         </div>
                         <div class="flex items-center space-x-1.5">
-                            <span class="text-[10px] text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-900">พร้อม</span>
-                            <button onclick="removePlayerFromLobby('${p.id}')" title="ลบผู้เล่นนี้ออกจากห้อง" class="text-xs text-slate-500 hover:text-rose-400 p-1 hover:bg-slate-800 rounded transition">❌</button>
+                            <span class="text-[10px] text-amber-500 bg-rose-950/60 px-2 py-0.5 rounded border border-emerald-900">พร้อม</span>
+                            <button onclick="removePlayerFromLobby('${p.id}')" title="ลบผู้เล่นนี้ออกจากห้อง" class="text-xs text-rose-400/50 hover:text-rose-400 p-1 hover:bg-[#380d15] rounded transition">❌</button>
                         </div>
                     </div>
                 `;
@@ -1776,7 +1776,7 @@
                 teamBadge.innerText = "💘 ฝ่ายพิเศษ (กามเทพ)";
                 glow.className = "absolute -top-20 -left-20 w-56 h-56 rounded-full blur-3xl opacity-30 bg-pink-500 pointer-events-none";
             } else {
-                teamBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800";
+                teamBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-950/60 text-amber-500 border border-amber-900/40";
                 teamBadge.innerText = "🧑 ฝั่งชาวบ้าน";
                 glow.className = "absolute -top-20 -left-20 w-56 h-56 rounded-full blur-3xl opacity-30 bg-emerald-500 pointer-events-none";
             }
@@ -1804,8 +1804,8 @@
             container.innerHTML = '';
             ROLES_DATABASE.forEach(r => {
                 container.innerHTML += `
-                    <label class="flex items-center space-x-2 bg-slate-900/50 p-2.5 rounded-lg border border-slate-700 cursor-pointer hover:border-amber-500/50 transition">
-                        <input type="checkbox" value="${r.id}" class="role-cb-offline w-4 h-4 text-amber-500 rounded bg-slate-900 border-slate-700" checked onchange="updateRequiredCountOffline()">
+                    <label class="flex items-center space-x-2 bg-[#24070c]/50 p-2.5 rounded-lg border border-rose-900/40 cursor-pointer hover:border-amber-500/50 transition">
+                        <input type="checkbox" value="${r.id}" class="role-cb-offline w-4 h-4 text-amber-500 rounded bg-[#24070c] border-rose-900/40" checked onchange="updateRequiredCountOffline()">
                         <span class="text-xs font-medium">${r.icon} ${r.name}</span>
                     </label>
                 `;
@@ -1855,8 +1855,8 @@
                     const existingVal = prevValues[i] !== undefined ? prevValues[i] : '';
                     container.innerHTML += `
                         <div class="flex items-center space-x-2">
-                            <span class="text-xs text-slate-400 w-6 font-mono">#${i+1}</span>
-                            <input type="text" placeholder="ชื่อผู้เล่น ${i+1}" class="player-name-input-offline w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500" value="${existingVal}">
+                            <span class="text-xs text-rose-300/60 w-6 font-mono">#${i+1}</span>
+                            <input type="text" placeholder="ชื่อผู้เล่น ${i+1}" class="player-name-input-offline w-full bg-[#24070c] border border-rose-900/40 rounded-lg px-3 py-2 text-xs text-rose-50 placeholder-slate-500 focus:outline-none focus:border-amber-500" value="${existingVal}">
                         </div>
                     `;
                 }
@@ -1884,9 +1884,9 @@
                     });
 
                     matchingContainer.innerHTML += `
-                        <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-700 flex items-center justify-between">
+                        <div class="bg-[#24070c]/50 p-3 rounded-lg border border-rose-900/40 flex items-center justify-between">
                             <span class="text-xs font-semibold text-amber-300 w-1/2">${roleObj.icon} ${roleObj.name}</span>
-                            <select class="match-select-offline w-1/2 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-100 focus:outline-none focus:border-amber-500" data-role="${roleId}">
+                            <select class="match-select-offline w-1/2 bg-[#380d15] border border-rose-900/40 rounded-lg px-2 py-1 text-xs text-rose-50 focus:outline-none focus:border-amber-500" data-role="${roleId}">
                                 ${optionsHtml}
                             </select>
                         </div>
@@ -1975,21 +1975,21 @@
                     if (step.show) {
                         if (step.id === 'cupid') {
                             checklistContainer.innerHTML += `
-                                <div class="bg-slate-900/40 p-2.5 rounded border border-slate-700/50 space-y-2">
+                                <div class="bg-[#24070c]/40 p-2.5 rounded border border-rose-900/40/50 space-y-2">
                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                        <input type="checkbox" id="cupid-cb" class="w-4 h-4 text-indigo-500 rounded bg-slate-900 border-slate-700" onchange="toggleCupidDropdown()">
-                                        <span class="text-slate-300 font-semibold">${step.name}</span>
+                                        <input type="checkbox" id="cupid-cb" class="w-4 h-4 text-indigo-500 rounded bg-[#24070c] border-rose-900/40" onchange="toggleCupidDropdown()">
+                                        <span class="text-rose-200/80 font-semibold">${step.name}</span>
                                     </label>
                                     <div id="cupid-dropdowns" class="hidden pl-6 space-y-1.5">
                                         <div class="flex items-center justify-between text-[11px]">
-                                            <span class="text-slate-400">Lover คนที่ 1:</span>
-                                            <select id="lover-1" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100" onchange="updateLovers()">
+                                            <span class="text-rose-300/60">Lover คนที่ 1:</span>
+                                            <select id="lover-1" class="bg-[#380d15] border border-rose-900/40 rounded px-2 py-1 text-rose-50" onchange="updateLovers()">
                                                 ${playerOpts}
                                             </select>
                                         </div>
                                         <div class="flex items-center justify-between text-[11px]">
-                                            <span class="text-slate-400">Lover คนที่ 2:</span>
-                                            <select id="lover-2" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100" onchange="updateLovers()">
+                                            <span class="text-rose-300/60">Lover คนที่ 2:</span>
+                                            <select id="lover-2" class="bg-[#380d15] border border-rose-900/40 rounded px-2 py-1 text-rose-50" onchange="updateLovers()">
                                                 ${playerOpts}
                                             </select>
                                         </div>
@@ -1998,15 +1998,15 @@
                             `;
                         } else if (step.id === 'wolf') {
                             checklistContainer.innerHTML += `
-                                <div class="bg-slate-900/40 p-2.5 rounded border border-slate-700/50 space-y-2">
+                                <div class="bg-[#24070c]/40 p-2.5 rounded border border-rose-900/40/50 space-y-2">
                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                        <input type="checkbox" id="wolf-cb" class="w-4 h-4 text-indigo-500 rounded bg-slate-900 border-slate-700" onchange="toggleWolfDropdown()">
-                                        <span class="text-slate-300 font-semibold">${step.name}</span>
+                                        <input type="checkbox" id="wolf-cb" class="w-4 h-4 text-indigo-500 rounded bg-[#24070c] border-rose-900/40" onchange="toggleWolfDropdown()">
+                                        <span class="text-rose-200/80 font-semibold">${step.name}</span>
                                     </label>
                                     <div id="wolf-dropdown" class="hidden pl-6">
                                         <div class="flex items-center justify-between text-[11px]">
-                                            <span class="text-slate-400">เลือกเหยื่อที่จะฆ่า:</span>
-                                            <select id="wolf-target-select" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100" onchange="updateWolfTarget()">
+                                            <span class="text-rose-300/60">เลือกเหยื่อที่จะฆ่า:</span>
+                                            <select id="wolf-target-select" class="bg-[#380d15] border border-rose-900/40 rounded px-2 py-1 text-rose-50" onchange="updateWolfTarget()">
                                                 <option value="">-- เลือกผู้เล่น --</option>
                                                 ${playerOpts}
                                             </select>
@@ -2016,15 +2016,15 @@
                             `;
                         } else if (step.id === 'bodyguard') {
                             checklistContainer.innerHTML += `
-                                <div class="bg-slate-900/40 p-2.5 rounded border border-slate-700/50 space-y-2">
+                                <div class="bg-[#24070c]/40 p-2.5 rounded border border-rose-900/40/50 space-y-2">
                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                        <input type="checkbox" id="bg-cb" class="w-4 h-4 text-indigo-500 rounded bg-slate-900 border-slate-700" onchange="toggleBgDropdown()">
-                                        <span class="text-slate-300 font-semibold">${step.name}</span>
+                                        <input type="checkbox" id="bg-cb" class="w-4 h-4 text-indigo-500 rounded bg-[#24070c] border-rose-900/40" onchange="toggleBgDropdown()">
+                                        <span class="text-rose-200/80 font-semibold">${step.name}</span>
                                     </label>
                                     <div id="bg-dropdown" class="hidden pl-6">
                                         <div class="flex items-center justify-between text-[11px]">
-                                            <span class="text-slate-400">เลือกคนที่จะป้องกัน:</span>
-                                            <select id="bg-target-select" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100" onchange="updateBgTarget()">
+                                            <span class="text-rose-300/60">เลือกคนที่จะป้องกัน:</span>
+                                            <select id="bg-target-select" class="bg-[#380d15] border border-rose-900/40 rounded px-2 py-1 text-rose-50" onchange="updateBgTarget()">
                                                 <option value="">-- เลือกผู้เล่น --</option>
                                                 ${playerOpts}
                                             </select>
@@ -2034,15 +2034,15 @@
                             `;
                         } else if (step.id === 'seer') {
                             checklistContainer.innerHTML += `
-                                <div class="bg-slate-900/40 p-2.5 rounded border border-slate-700/50 space-y-2">
+                                <div class="bg-[#24070c]/40 p-2.5 rounded border border-rose-900/40/50 space-y-2">
                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                        <input type="checkbox" id="seer-cb" class="w-4 h-4 text-indigo-500 rounded bg-slate-900 border-slate-700" onchange="toggleSeerDropdown()">
-                                        <span class="text-slate-300 font-semibold">${step.name}</span>
+                                        <input type="checkbox" id="seer-cb" class="w-4 h-4 text-indigo-500 rounded bg-[#24070c] border-rose-900/40" onchange="toggleSeerDropdown()">
+                                        <span class="text-rose-200/80 font-semibold">${step.name}</span>
                                     </label>
                                     <div id="seer-dropdown" class="hidden pl-6 space-y-2">
                                         <div class="flex items-center justify-between text-[11px]">
-                                            <span class="text-slate-400">เลือกคนที่ Seer ชี้ส่อง:</span>
-                                            <select id="seer-target-select" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100" onchange="inspectSeerTarget()">
+                                            <span class="text-rose-300/60">เลือกคนที่ Seer ชี้ส่อง:</span>
+                                            <select id="seer-target-select" class="bg-[#380d15] border border-rose-900/40 rounded px-2 py-1 text-rose-50" onchange="inspectSeerTarget()">
                                                 <option value="">-- เลือกผู้เล่นเพื่อส่อง --</option>
                                                 ${playerOpts}
                                             </select>
@@ -2053,15 +2053,15 @@
                             `;
                         } else if (step.id === 'spellcaster') {
                             checklistContainer.innerHTML += `
-                                <div class="bg-slate-900/40 p-2.5 rounded border border-slate-700/50 space-y-2">
+                                <div class="bg-[#24070c]/40 p-2.5 rounded border border-rose-900/40/50 space-y-2">
                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                        <input type="checkbox" id="spellcaster-cb" class="w-4 h-4 text-indigo-500 rounded bg-slate-900 border-slate-700" onchange="toggleSpellcasterDropdown()">
-                                        <span class="text-slate-300 font-semibold">${step.name}</span>
+                                        <input type="checkbox" id="spellcaster-cb" class="w-4 h-4 text-indigo-500 rounded bg-[#24070c] border-rose-900/40" onchange="toggleSpellcasterDropdown()">
+                                        <span class="text-rose-200/80 font-semibold">${step.name}</span>
                                     </label>
                                     <div id="spellcaster-dropdown" class="hidden pl-6">
                                         <div class="flex items-center justify-between text-[11px]">
-                                            <span class="text-slate-400">เลือกคนที่ถูกเสกใบ้:</span>
-                                            <select id="spellcaster-target-select" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100" onchange="updateSpellcasterTarget()">
+                                            <span class="text-rose-300/60">เลือกคนที่ถูกเสกใบ้:</span>
+                                            <select id="spellcaster-target-select" class="bg-[#380d15] border border-rose-900/40 rounded px-2 py-1 text-rose-50" onchange="updateSpellcasterTarget()">
                                                 <option value="">-- ไม่เสก / ข้าม --</option>
                                                 ${playerOpts}
                                             </select>
@@ -2071,9 +2071,9 @@
                             `;
                         } else {
                             checklistContainer.innerHTML += `
-                                <label class="flex items-center space-x-2 bg-slate-900/40 p-2 rounded border border-slate-700/50 cursor-pointer">
-                                    <input type="checkbox" class="w-4 h-4 text-indigo-500 rounded bg-slate-900 border-slate-700">
-                                    <span class="text-slate-300">${step.name}</span>
+                                <label class="flex items-center space-x-2 bg-[#24070c]/40 p-2 rounded border border-rose-900/40/50 cursor-pointer">
+                                    <input type="checkbox" class="w-4 h-4 text-indigo-500 rounded bg-[#24070c] border-rose-900/40">
+                                    <span class="text-rose-200/80">${step.name}</span>
                                 </label>
                             `;
                         }
@@ -2136,7 +2136,7 @@
                             <span class="text-rose-400 font-bold text-xs flex items-center gap-1.5">
                                 <span>⚠️</span> Hunter (${wolf}) ถูกหมาป่าสังหาร!
                             </span>
-                            <div class="text-[11px] text-slate-300">
+                            <div class="text-[11px] text-rose-200/80">
                                 • ให้ Mod สอบถาม Hunter เพื่อใช้ความสามารถ <b>ยิงผู้เล่น 1 คน</b> ให้ตายตามทันที
                             </div>
                         </div>
@@ -2150,7 +2150,7 @@
                             <span class="text-purple-300 font-bold text-xs flex items-center gap-1.5">
                                 <span>🤐</span> ผู้เล่นถูกเสกใบ้: <b>${gameState.silencedTarget}</b>
                             </span>
-                            <div class="text-[11px] text-slate-300">
+                            <div class="text-[11px] text-rose-200/80">
                                 • ผู้เล่นนี้ถูก <b>Spellcaster</b> ร่ายมนตร์ใบ้ใส่! <b>ห้ามพูด ออกเสียง หรือทำสัญญาณใดๆ ตลอดทั้งวัน</b>
                             </div>
                         </div>
@@ -2159,7 +2159,7 @@
 
                 checklistContainer.innerHTML = `
                     <div class="space-y-2">
-                        <div class="bg-indigo-950/50 p-3 rounded-xl border border-indigo-900/60 space-y-1 shadow">
+                        <div class="bg-[#380d15]/50 p-3 rounded-xl border border-indigo-900/60 space-y-1 shadow">
                             <span class="text-indigo-300 font-bold text-xs flex items-center gap-1.5">
                                 <span>📊</span> สรุปผลการโจมตีเมื่อคืน (Auto Monitor)
                             </span>
@@ -2171,20 +2171,20 @@
                         ${hunterCheckHtml}
                         ${silencedCheckHtml}
 
-                        <label class="flex items-center space-x-2 bg-slate-900/40 p-2 rounded border border-slate-700/50 cursor-pointer">
-                            <input type="checkbox" class="w-4 h-4 text-amber-500 rounded bg-slate-900 border-slate-700">
-                            <span class="text-slate-300">1. เปิดโอกาสให้ผู้เล่นพูดคุย อภิปราย และจับพิรุธร่วมกัน</span>
+                        <label class="flex items-center space-x-2 bg-[#24070c]/40 p-2 rounded border border-rose-900/40/50 cursor-pointer">
+                            <input type="checkbox" class="w-4 h-4 text-amber-500 rounded bg-[#24070c] border-rose-900/40">
+                            <span class="text-rose-200/80">1. เปิดโอกาสให้ผู้เล่นพูดคุย อภิปราย และจับพิรุธร่วมกัน</span>
                         </label>
 
                         <!-- Day Vote Box -->
-                        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700 space-y-2.5">
-                            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                        <div class="bg-[#24070c]/60 p-3 rounded-xl border border-rose-900/40 space-y-2.5">
+                            <div class="flex items-center justify-between border-b border-rose-950 pb-1.5">
                                 <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
                                     <span>⚖️</span> 2. ดำเนินการ Vote Out ประจำวัน (โหวตประหารชีวิต)
                                 </span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <select id="day-vote-target-select" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100">
+                                <select id="day-vote-target-select" class="flex-1 bg-[#380d15] border border-rose-900/40 rounded-lg px-2.5 py-1.5 text-xs text-rose-50">
                                     <option value="">-- เลือกผู้เล่นที่ถูกโหวตสูงสุด --</option>
                                     ${livingPlayerOpts}
                                 </select>
@@ -2192,7 +2192,7 @@
                                     ประหารชีวิต
                                 </button>
                             </div>
-                            <p class="text-[10px] text-slate-400 italic">
+                            <p class="text-[10px] text-rose-300/60 italic">
                                 * หากโหวต Tanner จะชนะเกมทันที | หากโหวต Mad Bomber ผู้เล่นซ้าย-ขวาจะระเบิดตายด้วย
                             </p>
                         </div>
@@ -2211,9 +2211,9 @@
                 const role = gameState.rolePlayerMap[p] || 'unknown';
                 const roleObj = ROLES_DATABASE.find(r => r.id === role);
                 const status = gameState.playerStatus[p] || { alive: true, note: '' };
-                const opacityClass = status.alive ? '' : 'opacity-50 bg-slate-900/80';
+                const opacityClass = status.alive ? '' : 'opacity-50 bg-[#24070c]/80';
                 const statusBtnText = status.alive ? '🟢 <span>รอด</span>' : '💀 <span>ตาย</span>';
-                const statusBtnClass = status.alive ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-rose-950 text-rose-400 border-rose-800';
+                const statusBtnClass = status.alive ? 'bg-rose-950/60 text-amber-500 border-amber-900/40' : 'bg-rose-950 text-rose-400 border-rose-800';
 
                 const isLover = gameState.lovers.includes(p);
                 const loverBadge = isLover ? '<span class="text-rose-400 font-bold ml-1" title="Lovers (คู่รัก)">❤️</span>' : '';
@@ -2225,17 +2225,17 @@
                 const silencedBadge = isSilenced ? '<span class="text-purple-400 font-bold ml-1 animate-pulse" title="ถูก Spellcaster เสกใบ้ (ห้ามพูดในวันนี้)">🤐</span>' : '';
 
                 statusList.innerHTML += `
-                    <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700 flex items-center justify-between ${opacityClass}">
+                    <div class="bg-[#24070c]/60 p-2.5 rounded-lg border border-rose-900/40 flex items-center justify-between ${opacityClass}">
                         <div class="space-y-0.5 flex-1">
                             <div class="flex items-center space-x-1.5 flex-wrap">
-                                <span class="font-semibold text-slate-100 text-xs">${p}</span>
+                                <span class="font-semibold text-rose-50 text-xs">${p}</span>
                                 ${loverBadge}
                                 ${wolfTurnBadge}
                                 ${toughGuyBadge}
                                 ${silencedBadge}
                                 <span class="text-[10px] text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-900/50">${roleObj ? (roleObj.icon + ' ' + roleObj.name) : role}</span>
                             </div>
-                            <input type="text" placeholder="จดโน้ตย่อ..." class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-[11px] text-slate-300 focus:outline-none focus:border-amber-500" value="${status.note}" onchange="updatePlayerNote('${p}', this.value)">
+                            <input type="text" placeholder="จดโน้ตย่อ..." class="w-full bg-[#140305] border border-rose-950 rounded px-2 py-0.5 text-[11px] text-rose-200/80 focus:outline-none focus:border-amber-500" value="${status.note}" onchange="updatePlayerNote('${p}', this.value)">
                         </div>
                         <button onclick="toggleLife('${p}')" class="text-[11px] font-semibold px-2.5 py-1 rounded border ${statusBtnClass} transition ml-2">
                             ${statusBtnText}
@@ -2336,13 +2336,13 @@
 
             if (isWolfRole) {
                 disp.className = "text-xs p-2.5 rounded-lg border border-rose-700 bg-rose-950/80 text-rose-300 space-y-1";
-                disp.innerHTML = `<div>🐺 ผลการส่อง: <b>เป็นมนุษย์หมาป่า (Werewolf)</b></div><div class="text-[10px] text-slate-400">👉 ให้สัญญาณ Seer: คว่ำนิ้วโป้งลง หรือพยักหน้า</div>`;
+                disp.innerHTML = `<div>🐺 ผลการส่อง: <b>เป็นมนุษย์หมาป่า (Werewolf)</b></div><div class="text-[10px] text-rose-300/60">👉 ให้สัญญาณ Seer: คว่ำนิ้วโป้งลง หรือพยักหน้า</div>`;
             } else if (isLycan) {
                 disp.className = "text-xs p-2.5 rounded-lg border border-rose-700 bg-rose-950/80 text-rose-300 space-y-1";
-                disp.innerHTML = `<div>🐺 ผลการส่อง: <b>เห็นเป็นมนุษย์หมาป่า (Werewolf)</b></div><div class="text-[10px] text-amber-300">👉 แท้จริงคือ <b>Lycan (ฝ่ายชาวบ้าน)</b> แต่ Seer จะมองเห็นเป็นหมาป่า!</div><div class="text-[10px] text-slate-400">👉 ให้สัญญาณ Seer: คว่ำนิ้วโป้งลง หรือพยักหน้า</div>`;
+                disp.innerHTML = `<div>🐺 ผลการส่อง: <b>เห็นเป็นมนุษย์หมาป่า (Werewolf)</b></div><div class="text-[10px] text-amber-300">👉 แท้จริงคือ <b>Lycan (ฝ่ายชาวบ้าน)</b> แต่ Seer จะมองเห็นเป็นหมาป่า!</div><div class="text-[10px] text-rose-300/60">👉 ให้สัญญาณ Seer: คว่ำนิ้วโป้งลง หรือพยักหน้า</div>`;
             } else {
-                disp.className = "text-xs p-2.5 rounded-lg border border-emerald-700 bg-emerald-950/80 text-emerald-300 space-y-1";
-                disp.innerHTML = `<div>🟢 ผลการส่อง: <b>เป็นคนดี (ไม่ใช่หมาป่า)</b></div><div class="text-[10px] text-slate-400">👉 ให้สัญญาณ Seer: ชูนิ้วโป้งขึ้น หรือส่ายหน้า</div>`;
+                disp.className = "text-xs p-2.5 rounded-lg border border-emerald-700 bg-rose-950/80 text-emerald-300 space-y-1";
+                disp.innerHTML = `<div>🟢 ผลการส่อง: <b>เป็นคนดี (ไม่ใช่หมาป่า)</b></div><div class="text-[10px] text-rose-300/60">👉 ให้สัญญาณ Seer: ชูนิ้วโป้งขึ้น หรือส่ายหน้า</div>`;
             }
         }
 
