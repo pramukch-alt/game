@@ -78,10 +78,11 @@
         <a href="../" class="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-amber-400 flex items-center gap-1 transition" title="กลับสู่หน้าหลัก Game Hub">
             <span>&larr;</span> <span class="hidden sm:inline">หน้าหลัก Hub</span>
         </a>
-        <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
-            🐺 Werewolf Modulator
+        <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent flex items-center justify-center gap-2">
+            <img src="./WolfIcon.png" alt="Wolf Icon" class="w-6 h-6 object-contain inline-block">
+            <span>Werewolf Modulator</span>
         </h1>
-        <div id="game-status" class="text-[11px] sm:text-xs text-slate-400 mt-0.5">ระบบควบคุมและสุ่มการ์ดเกมหมาป่า</div>
+        <div id="game-status" class="text-[11px] sm:text-xs text-slate-400 mt-0.5">ยินดีต้อนรับเข้าสู่ Game Werewolf</div>
     </header>
 
     <!-- Main Container -->
@@ -92,11 +93,11 @@
         <!-- ========================================== -->
         <section id="screen-home" class="space-y-4">
             <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center space-y-4 shadow-xl">
-                <div class="w-20 h-20 mx-auto rounded-3xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-4xl shadow-inner">
-                    🐺
+                <div class="w-24 h-24 mx-auto rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/40 p-1.5 bg-slate-950/70 flex items-center justify-center">
+                    <img src="./WolfIcon.png" alt="Wolf Icon" class="w-full h-full object-contain rounded-2xl drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
                 </div>
                 <div>
-                    <h2 class="text-xl font-bold text-slate-100">ยินดีต้อนรับ Game Master</h2>
+                    <h2 class="text-xl font-bold text-slate-100">ยินดีต้อนรับเข้าสู่ Game Werewolf</h2>
                     <p class="text-xs text-slate-400 mt-1">เลือกรูปแบบการดำเนินเกม Werewolf ที่คุณต้องการ</p>
                 </div>
 
@@ -275,8 +276,8 @@
         <!-- ========================================== -->
         <section id="screen-player-join" class="space-y-4 hidden">
             <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center space-y-4 shadow-xl">
-                <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-3xl">
-                    🐺
+                <div class="w-16 h-16 mx-auto rounded-2xl overflow-hidden shadow-lg border border-amber-500/30 p-1 bg-slate-950/60 flex items-center justify-center">
+                    <img src="./WolfIcon.png" alt="Wolf Icon" class="w-full h-full object-contain rounded-xl">
                 </div>
                 <div>
                     <span class="text-xs text-amber-400 font-mono font-bold uppercase tracking-wider">ห้องเล่นเกม: <span id="player-view-room-code">WW-XXXX</span></span>
@@ -611,7 +612,7 @@
             if (target) target.classList.remove('hidden');
 
             const statusEl = document.getElementById('game-status');
-            if (screenId === 'screen-home') statusEl.innerText = 'ระบบควบคุมและสุ่มการ์ดเกมหมาป่า';
+            if (screenId === 'screen-home') statusEl.innerText = 'ยินดีต้อนรับเข้าสู่ Game Werewolf';
             if (screenId === 'screen-role-select') statusEl.innerText = 'เลือกบทบาท & คำนวณความสมดุล';
             if (screenId === 'screen-mod-lobby') statusEl.innerText = 'ห้องรอ: สแกน QR Code เพื่อรับบทบาท';
             if (screenId === 'screen-player-join') statusEl.innerText = 'เข้าร่วมห้อง Werewolf';
