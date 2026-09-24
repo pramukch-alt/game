@@ -370,9 +370,12 @@
                 <div id="player-friends-preview" class="text-[11px] text-slate-400">
                     เมื่อสมาชิกครบทีม ระบบจะสุ่มบทบาทและพลิกการ์ดให้อัตโนมัติทันที
                 </div>
-                <div class="pt-1">
+                <div class="pt-1 flex justify-center gap-2">
+                    <button onclick="forceRetryConnection()" class="text-[11px] text-amber-400 hover:text-amber-300 bg-amber-950/40 hover:bg-amber-950 px-3 py-1 rounded-lg border border-amber-900/60 transition inline-flex items-center gap-1">
+                        <span>🔄</span><span>รีเฟรชการเชื่อมต่อ</span>
+                    </button>
                     <button onclick="leavePlayerWaitingRoom()" class="text-[11px] text-rose-400 hover:text-rose-300 bg-rose-950/40 hover:bg-rose-950 px-3 py-1 rounded-lg border border-rose-900/60 transition inline-flex items-center gap-1">
-                        <span>🚪</span><span>เปลี่ยนชื่อ / ออกจากห้อง</span>
+                        <span>🚪</span><span>ออก</span>
                     </button>
                 </div>
             </div>
@@ -744,10 +747,6 @@
         }
 
         const PEER_SERVER_CONFIG = {
-            host: '0.peerjs.com',
-            port: 443,
-            path: '/',
-            secure: true,
             debug: 1,
             config: {
                 iceServers: [
@@ -1202,6 +1201,18 @@
                 } catch(e) {}
                 showScreen('screen-player-waiting');
             }
+
+            // PLAYERS RECEIVE KICK
+            if (!isMod && data.type === 'PLAYER_KICKED') {
+                if (data.targetId === myDeviceId) {
+                    try {
+                        sessionStorage.removeItem('ww_joined_room');
+                        sessionStorage.removeItem('ww_assigned_role');
+                    } catch(e) {}
+                    alert('คุณถูกเชิญออกจากห้อง');
+                    showScreen('screen-player-join');
+                }
+            }
         }
 
         function broadcastRoomStateUpdate() {
@@ -1526,6 +1537,10 @@
         function removePlayerFromLobby(playerId) {
             joinedPlayers = joinedPlayers.filter(p => p.id !== playerId);
             updateModLobbyUI();
+            broadcastMessage({
+                type: 'PLAYER_KICKED',
+                targetId: playerId
+            });
             broadcastRoomStateUpdate();
         }
 
@@ -1605,6 +1620,15 @@
                 sessionStorage.removeItem('ww_joined_room');
             } catch(e){}
             showScreen('screen-player-join');
+        }
+
+        function forceRetryConnection() {
+            if (activeRoomCode) {
+                updatePlayerConnBadge(false, '🟡 กำลังรีเฟรชการเชื่อมต่อ...');
+                setupRealtimeListener(activeRoomCode, false);
+                setTimeout(sendPlayerJoinMessage, 800);
+                setTimeout(sendPlayerJoinMessage, 2000);
+            }
         }
 
         // ---------------------------------------------
