@@ -712,9 +712,10 @@
                 // Normal Join: Show join form
                 const defaultNames = ['พรานป่า', 'ชาวบ้านใจกล้า', 'เงาจันทร์', 'ดาวเหนือ', 'อินทรี', 'พายุ', 'หมอกจาง', 'แสงเทียน', 'รุ่งอรุณ', 'สายลม'];
                 const randomDefault = defaultNames[Math.floor(Math.random() * defaultNames.length)];
+                myPlayerName = savedName || randomDefault;
                 const inputField = document.getElementById('player-name-input-field');
                 if (inputField) {
-                    inputField.value = savedName || randomDefault;
+                    inputField.value = myPlayerName;
                 }
 
                 showScreen('screen-player-join');
@@ -998,8 +999,7 @@
                         broadcastRoomStateUpdate();
                     }
                 } else {
-                    const waitingScreen = document.getElementById('screen-player-waiting');
-                    if (waitingScreen && !waitingScreen.classList.contains('hidden') && myPlayerName && !myAssignedRole) {
+                    if (myPlayerName && !myAssignedRole) {
                         if (!playerModConn || !playerModConn.open) {
                             connectPlayerToMod(activeRoomCode);
                         } else {
@@ -1011,7 +1011,7 @@
                         }
                     }
                 }
-            }, 2500);
+            }, 2000);
         }
 
         function broadcastMessage(data) {
@@ -1073,6 +1073,19 @@
 
                 // Broadcast current room state back to all players
                 broadcastRoomStateUpdate();
+
+                // Direct reply back on conn to ensure newly joined player receives room state instantly
+                if (conn && conn.open) {
+                    try {
+                        conn.send({
+                            type: 'ROOM_STATE_UPDATE',
+                            room: activeRoomCode,
+                            joinedCount: joinedPlayers.length,
+                            totalTarget: getTotalPlayersCount(),
+                            playersList: joinedPlayers.map(p => p.name)
+                        });
+                    } catch(e) {}
+                }
 
                 // Auto-start if all players joined!
                 const totalTarget = getTotalPlayersCount();
