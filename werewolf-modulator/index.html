@@ -842,31 +842,45 @@
                         console.log('Player connection initiated:', conn.peer);
                         connectedPeers[conn.peer] = conn;
 
+                    const sendRoomStateToConn = (conn) => {
+                        if (conn && conn.open) {
+                            try {
+                                conn.send({
+                                    type: 'ROOM_STATE_UPDATE',
+                                    room: activeRoomCode,
+                                    joinedCount: joinedPlayers.length,
+                                    totalTarget: getTotalPlayersCount(),
+                                    playersList: joinedPlayers.map(p => p.name)
+                                });
+                                if (isGameStarted && activeRoleAssignments && Object.keys(activeRoleAssignments).length > 0) {
+                                    conn.send({
+                                        type: 'GAME_STARTED_ASSIGNMENTS',
+                                        room: activeRoomCode,
+                                        assignments: activeRoleAssignments,
+                                        gameSessionId: currentGameSessionId
+                                    });
+                                }
+                            } catch(e) {}
+                        }
+                    };
+
+                    peerInstance.on('connection', (conn) => {
+                        console.log('Player connection initiated:', conn.peer);
+                        connectedPeers[conn.peer] = conn;
+
                         conn.on('open', () => {
                             console.log('Player DataChannel open:', conn.peer);
-                            // Immediately send current room state to newly connected player
-                            conn.send({
-                                type: 'ROOM_STATE_UPDATE',
-                                room: activeRoomCode,
-                                joinedCount: joinedPlayers.length,
-                                totalTarget: getTotalPlayersCount(),
-                                playersList: joinedPlayers.map(p => p.name)
-                            });
-
-                            // If game already started, send assignments
-                            if (isGameStarted && activeRoleAssignments && Object.keys(activeRoleAssignments).length > 0) {
-                                conn.send({
-                                    type: 'GAME_STARTED_ASSIGNMENTS',
-                                    room: activeRoomCode,
-                                    assignments: activeRoleAssignments,
-                                    gameSessionId: currentGameSessionId
-                                });
-                            }
+                            sendRoomStateToConn(conn);
+                            setTimeout(() => sendRoomStateToConn(conn), 400);
+                            setTimeout(() => sendRoomStateToConn(conn), 1200);
+                            setTimeout(() => sendRoomStateToConn(conn), 2500);
                         });
 
                         conn.on('data', (data) => {
                             console.log('Mod received data:', data);
                             handleIncomingMessage(data, conn);
+                            setTimeout(() => sendRoomStateToConn(conn), 200);
+                            setTimeout(() => sendRoomStateToConn(conn), 800);
                         });
 
                         conn.on('close', () => {
@@ -929,6 +943,16 @@
             startSyncHeartbeat();
         }
 
+        function sendPlayerJoinMessage() {
+            if (!myPlayerName || !activeRoomCode) return;
+            broadcastMessage({
+                type: 'PLAYER_JOIN',
+                room: activeRoomCode,
+                id: myDeviceId,
+                name: myPlayerName
+            });
+        }
+
         function connectPlayerToMod(roomCode, targetId) {
             if (!peerInstance || peerInstance.destroyed) return;
             const params = new URLSearchParams(window.location.search);
@@ -942,21 +966,15 @@
                 if (playerModConn) {
                     try { playerModConn.close(); } catch(e) {}
                 }
-                playerModConn = peerInstance.connect(targetModId, { reliable: true });
+                playerModConn = peerInstance.connect(targetModId);
 
                 playerModConn.on('open', () => {
                     console.log('Player successfully connected to Mod!');
                     updatePlayerConnBadge(true, '🟢 เชื่อมต่อห้องสำเร็จ');
 
-                    // Register name if available
-                    if (myPlayerName) {
-                        playerModConn.send({
-                            type: 'PLAYER_JOIN',
-                            room: activeRoomCode,
-                            id: myDeviceId,
-                            name: myPlayerName
-                        });
-                    }
+                    sendPlayerJoinMessage();
+                    setTimeout(sendPlayerJoinMessage, 400);
+                    setTimeout(sendPlayerJoinMessage, 1200);
                 });
 
                 playerModConn.on('data', (data) => {
@@ -988,6 +1006,22 @@
             }
         }
 
+        // iOS WebKit Lifecycle Listeners for instant wake-up
+        const triggerPlayerReconnect = () => {
+            if (!isMod && activeRoomCode && myPlayerName && !myAssignedRole) {
+                if (!playerModConn || !playerModConn.open) {
+                    connectPlayerToMod(activeRoomCode);
+                } else {
+                    sendPlayerJoinMessage();
+                }
+            }
+        };
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') triggerPlayerReconnect();
+        });
+        window.addEventListener('focus', triggerPlayerReconnect);
+        window.addEventListener('pageshow', triggerPlayerReconnect);
+
         let syncHeartbeatInterval = null;
         function startSyncHeartbeat() {
             if (syncHeartbeatInterval) clearInterval(syncHeartbeatInterval);
@@ -1003,15 +1037,11 @@
                         if (!playerModConn || !playerModConn.open) {
                             connectPlayerToMod(activeRoomCode);
                         } else {
-                            broadcastMessage({
-                                type: 'PLAYER_JOIN',
-                                id: myDeviceId,
-                                name: myPlayerName
-                            });
+                            sendPlayerJoinMessage();
                         }
                     }
                 }
-            }, 2000);
+            }, 1800);
         }
 
         function broadcastMessage(data) {
