@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avalon Online & Game Room</title>
+    <!-- Favicon: iconmerlin.png -->
+    <link rel="icon" type="image/png" href="/pics/iconmerlin.png">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- QR Code Generator JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <style>
+        body { font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* 3D Card Flip Animation (Werewolf Modulator Pattern) */
+        .card-perspective {
+            perspective: 1000px;
+            -webkit-perspective: 1000px;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+        }
+        .card-inner.flipped {
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute !important;
+            inset: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            -webkit-backface-visibility: hidden !important;
+            backface-visibility: hidden !important;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+        }
+        .card-back {
+            transform: rotateY(0deg);
+            -webkit-transform: rotateY(0deg);
+        }
+        .card-front {
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
+        }
+
+        /* Pulsing Glow Animation for Waiting Room */
+        @keyframes pulse-glow {
+            0%, 100% {
+                opacity: 0.6;
+                transform: scale(0.96);
+                filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.5));
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.08);
+                filter: drop-shadow(0 0 25px rgba(245, 158, 11, 0.95)) drop-shadow(0 0 40px rgba(234, 88, 12, 0.6));
+            }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 2.2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 0.3; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+        .animate-pulse-ring {
+            animation: pulse-ring 2.5s infinite ease-in-out;
+        }
+
+        /* Custom Scrollbar for Roles List */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5); 
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+        .vote-mark.active {
+            background-color: #ef4444 !important; /* red-500 */
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
+    
+    <!-- Top Sticky Header (Consistent with Werewolf Modulator) -->
+    <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 p-3 sm:p-4 text-center sticky top-0 z-50 relative">
+        <button id="header-back-btn" onclick="handleHeaderBack()" class="hidden absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-amber-400 flex items-center gap-1 transition">
+            <span>&larr;</span> <span class="hidden sm:inline">ย้อนกลับ</span>
+        </button>
+        <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent flex items-center justify-center gap-2">
+            <img src="/pics/iconmerlin.png" alt="Avalon Icon" class="w-7 h-7 object-cover inline-block rounded-full border border-amber-500/50 shadow-md">
+            <span>Avalon Modulator</span>
+        </h1>
+        <div id="game-status" class="text-[11px] sm:text-xs text-slate-400 mt-0.5">ยินดีต้อนรับเข้าสู่ Game Avalon</div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-md w-full mx-auto p-4 pb-20 space-y-4">
+        
+        <!-- ========================================== -->
+        <!-- SCREEN 0: HOME SCREEN (เลือกโหมดเปิดห้อง) -->
+        <!-- ========================================== -->
+        <section id="screen-home" class="space-y-4">
+            <div class="relative bg-slate-900 border border-slate-800 rounded-2xl text-center shadow-xl overflow-hidden">
+                <!-- Background Image -->
+                <div class="absolute inset-0 z-0">
+                    <img src="/pics/Merlin_BG.png" alt="Background" class="w-full h-full object-cover opacity-25">
+                </div>
+                <!-- Gradients for readability -->
+                <div class="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-slate-900/95 to-transparent z-0"></div>
+                <div class="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-slate-900 via-slate-900/90 to-transparent z-0"></div>
+
+                <div class="relative z-10 p-6 space-y-4">
+                    <div class="w-24 h-24 mx-auto rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/40 p-1 bg-slate-950/70 flex items-center justify-center backdrop-blur-sm">
+                        <img src="/pics/iconmerlin.png" alt="Avalon Logo" class="w-full h-full object-cover rounded-2xl drop-shadow-[0_0_15px_rgba(245,158,11,0.6)]">
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-100 drop-shadow-md">ยินดีต้อนรับเข้าสู่ Game Avalon</h2>
+                        <p class="text-xs text-slate-300 mt-1 drop-shadow">เลือกรูปแบบการดำเนินเกม Avalon ที่คุณต้องการ</p>
+                    </div>
+
+                    <div class="space-y-3 pt-2">
+                        <!-- ปุ่มเปิดห้องแบบ QR Code -->
+                        <button id="btn-create-room" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-3.5 px-4 rounded-xl transition shadow-[0_0_15px_rgba(245,158,11,0.2)] flex items-center justify-center gap-2 group active:scale-[0.99]">
+                            <span class="text-lg">📱</span>
+                            <span>สร้างห้องใหม่ (สแกน QR Code รับการ์ด)</span>
+                        </button>
+                        <p class="text-[11px] text-slate-400 drop-shadow">สแกนมือถือ สุ่มการ์ดอัตโนมัติ ระบบจัดการให้</p>
+
+                        <div class="relative py-2">
+                            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-700/50"></div></div>
+                            <div class="relative flex justify-center text-xs"><span class="bg-slate-900/80 px-2 text-slate-400 rounded-full backdrop-blur-sm">หรือ</span></div>
+                        </div>
+
+                        <!-- ปุ่มโหมดเล่นเครื่องเดียว (Manual Offline Mode) -->
+                        <button class="w-full bg-slate-800/80 hover:bg-slate-700 backdrop-blur-sm text-slate-200 font-medium py-2.5 px-4 rounded-xl transition border border-slate-700 text-xs flex items-center justify-center gap-2 shadow-lg">
+                            <span>🕹️</span>
+                            <span>โหมดเล่นเครื่องเดียว (Mod จัดการเอง / ออฟไลน์)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Join room manually card -->
+            <div class="bg-slate-900/60 border border-slate-800/80 p-4 rounded-xl text-center space-y-2">
+                <span class="text-xs text-slate-400">ต้องการเข้าร่วมห้องที่เพื่อนสร้างไว้?</span>
+                <div class="flex flex-col space-y-2">
+                    <input type="text" id="input-player-name" placeholder="กรอกชื่อของคุณ" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                    <div class="flex gap-2">
+                        <input type="text" id="input-room-code" placeholder="กรอกรหัสห้อง เช่น AV-1234" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 uppercase focus:outline-none focus:border-amber-500 font-mono">
+                        <button id="btn-join-submit" class="bg-slate-800 hover:bg-slate-700 text-amber-400 px-4 py-2 rounded-lg text-xs font-semibold border border-slate-700 whitespace-nowrap">
+                            เข้าร่วม
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SCREEN 1: ROLE SELECTION & BALANCE (Mod)   -->
+        <!-- ========================================== -->
+        <section id="screen-role-select" class="space-y-4 hidden">
+            <!-- Player Count Card -->
+            <div class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                <h3 class="text-slate-400 text-xs mb-3">จำนวนผู้เล่นที่ต้องใช้</h3>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-baseline space-x-2">
+                        <span id="player-count-display" class="text-4xl font-black text-amber-400">5</span>
+                        <span class="text-slate-400 text-sm">คน</span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="btn-decrease-players" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center text-xl hover:bg-slate-700 transition">-</button>
+                        <button id="btn-increase-players" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center text-xl hover:bg-slate-700 transition">+</button>
+                    </div>
+                </div>
+                
+                <!-- Balance Description -->
+                <div class="w-full bg-slate-950 rounded-xl p-2.5 mb-3 flex items-center justify-between border border-slate-800">
+                    <div class="flex items-center space-x-2 text-xs">
+                        <span class="text-blue-400 font-bold">🔵 ฝ่ายคนดี (Good):</span>
+                        <span id="good-required-desc" class="font-bold text-slate-100">3</span>
+                    </div>
+                    <div class="flex items-center space-x-2 text-xs">
+                        <span class="text-rose-400 font-bold">🔴 ฝ่ายร้าย (Evil):</span>
+                        <span id="evil-required-desc" class="font-bold text-slate-100">2</span>
+                    </div>
+                </div>
+                
+                <!-- Selection Tracker -->
+                <div class="flex space-x-2">
+                    <div class="flex-1 bg-slate-800 border border-slate-700 rounded-xl p-2 flex flex-col items-center shadow-inner">
+                        <span class="text-[11px] text-slate-400 mb-0.5">Good ที่เลือก</span>
+                        <span class="text-xl font-bold text-blue-400"><span id="good-selected-count">0</span><span class="text-slate-500 text-sm">/<span id="good-required-count">3</span></span></span>
+                    </div>
+                    <div class="flex-1 bg-slate-800 border border-slate-700 rounded-xl p-2 flex flex-col items-center shadow-inner">
+                        <span class="text-[11px] text-slate-400 mb-0.5">Evil ที่เลือก</span>
+                        <span class="text-xl font-bold text-rose-400"><span id="evil-selected-count">0</span><span class="text-slate-500 text-sm">/<span id="evil-required-count">2</span></span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role List (Scrollable Area) -->
+            <div class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <h3 class="text-amber-400 font-bold text-xs uppercase tracking-wider">เลือกบทบาทในเกม (Role Selection)</h3>
+                    <span class="text-[11px] text-slate-400">1 Role = ผู้เล่น 1 คน</span>
+                </div>
+                <div id="roles-container" class="space-y-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+                    <!-- Injected via app.js -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2 pt-1">
+                <button onclick="showScreen('screen-home')" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-3 rounded-xl transition text-xs">
+                    ย้อนกลับ
+                </button>
+                <button id="btn-confirm-roles" class="w-2/3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-amber-500/20 text-xs sm:text-sm flex items-center justify-center gap-1.5 opacity-50 cursor-not-allowed">
+                    <span>ตกลง & รับ QR Code</span>
+                    <span>➡️</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SCREEN 2: MOD LOBBY & QR CODE (QR Screen)  -->
+        <!-- ========================================== -->
+        <section id="screen-mod-lobby" class="space-y-4 hidden">
+            <!-- Room Info & QR Code Card -->
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl text-center space-y-4 shadow-xl">
+                <div>
+                    <span class="text-xs text-slate-400 uppercase tracking-wider">รหัสห้อง (Room Code)</span>
+                    <div id="mod-room-code-display" class="text-3xl sm:text-4xl font-black text-amber-400 font-mono tracking-widest mt-0.5">
+                        AV-0000
+                    </div>
+                    <!-- Connection Status Tag -->
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800 mt-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>🟢 สัญญาณออนไลน์ พร้อมรับผู้เล่น</span>
+                    </div>
+                </div>
+
+                <!-- QR Code Box -->
+                <div class="bg-white p-3.5 rounded-2xl inline-block mx-auto shadow-2xl border-4 border-slate-800">
+                    <div id="qrcode-container" class="w-48 h-48 flex items-center justify-center">
+                        <!-- QR Code renders here -->
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <p class="text-xs font-semibold text-slate-200">ให้ผู้เล่นสแกน QR Code ด้วยกล้องมือถือ</p>
+                    <p id="qr-target-url-display" class="text-[10px] text-slate-400 font-mono break-all px-2"></p>
+                </div>
+
+                <!-- Action Buttons: Copy Link & Test Bot -->
+                <div class="flex gap-2 justify-center">
+                    <button id="btn-copy-link" onclick="copyJoinLink()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                        <span>📋</span>
+                        <span id="btn-copy-link-text">คัดลอกลิงก์ห้อง</span>
+                    </button>
+                    <button id="btn-simulate-bot" onclick="simulatePlayerBot()" class="bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 text-xs px-3 py-1.5 rounded-lg border border-indigo-800 transition flex items-center gap-1">
+                        <span>⚡</span>
+                        <span>+ จำลองผู้เล่น (Test Bot)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Joined Players List Card -->
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                        <h4 class="text-xs font-bold text-slate-200">รายชื่อผู้เล่นที่เข้าร่วมแล้ว</h4>
+                    </div>
+                    <span class="text-xs font-bold text-amber-400">
+                        <span id="mod-joined-count">0</span> / <span id="mod-target-count">5</span> คน
+                    </span>
+                </div>
+
+                <!-- Progress bar -->
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div id="mod-lobby-progress" class="bg-amber-500 h-full transition-all duration-300" style="width: 0%;"></div>
+                </div>
+
+                <!-- Live Member Tags -->
+                <div id="mod-players-list" class="space-y-1.5 max-h-56 overflow-y-auto">
+                    <!-- Populated via JS -->
+                </div>
+                
+                <p id="mod-waiting-text" class="text-xs text-slate-500 text-center italic pt-1">กำลังรอให้ผู้เล่นสแกนเข้าร่วมห้อง...</p>
+            </div>
+
+            <!-- Start Game & Cancel Buttons -->
+            <div class="space-y-2">
+                <button id="btn-start-game" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-emerald-600/20 text-xs sm:text-sm flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
+                    <span>🚀</span>
+                    <span>สุ่มบทบาทและเริ่มเกมทันที (Start Game)</span>
+                </button>
+                <button onclick="cancelRoomAndBack()" class="w-full text-slate-500 hover:text-rose-400 text-xs py-1 transition text-center">
+                    ยกเลิกห้องและกลับหน้าหลัก
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SCREEN 3: MOD GAMEPLAY (QUEST BOARD)       -->
+        <!-- ========================================== -->
+        <section id="screen-mod-game" class="space-y-4 hidden">
+            <!-- Quest Board Container -->
+            <div class="w-full relative border-2 border-amber-600/50 rounded-2xl overflow-hidden shadow-2xl min-h-[380px] bg-slate-900">
+                <img src="/pics/Merlin_BG.png" class="absolute inset-0 w-full h-full object-cover opacity-25" alt="Avalon Board">
+                
+                <div class="relative z-10 p-5 flex flex-col items-center bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/60 w-full h-full">
+                    <div class="flex items-center justify-between w-full mb-4">
+                        <span class="text-xs text-amber-400 font-mono uppercase tracking-wider">ห้อง: <span id="game-board-room-code">AV-0000</span></span>
+                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">กระดานหลัก</span>
+                    </div>
+
+                    <h3 class="text-2xl text-amber-400 font-black mb-6 tracking-wide drop-shadow">QUEST BOARD</h3>
+                    
+                    <!-- 5 Quest Cards -->
+                    <div id="quest-tracker" class="flex space-x-2 sm:space-x-3 mb-6 w-full justify-center">
+                        <!-- Populated by JS -->
+                    </div>
+                    
+                    <!-- Vote Track (5 Fails = Evil Wins) -->
+                    <div class="bg-slate-900/90 border border-rose-900/80 rounded-xl p-3 flex flex-col items-center w-full max-w-xs mb-5 shadow-lg">
+                        <div class="flex justify-between items-center w-full mb-1.5 px-1">
+                            <span class="text-rose-400 font-semibold text-xs uppercase tracking-wide">Vote Track (Failed Votes)</span>
+                            <span class="text-[10px] text-rose-500">ครบ 5 = ฝ่ายร้ายชนะ</span>
+                        </div>
+                        <div id="vote-track" class="flex space-x-2">
+                            <div class="vote-mark w-7 h-7 rounded-full border border-rose-700/60 bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">1</div>
+                            <div class="vote-mark w-7 h-7 rounded-full border border-rose-700/60 bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">2</div>
+                            <div class="vote-mark w-7 h-7 rounded-full border border-rose-700/60 bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">3</div>
+                            <div class="vote-mark w-7 h-7 rounded-full border border-rose-700/60 bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">4</div>
+                            <div class="vote-mark w-7 h-7 rounded-full border border-rose-500 bg-rose-950 flex items-center justify-center text-xs text-rose-300 font-bold">5</div>
+                        </div>
+                    </div>
+
+                    <!-- Current Status Banner -->
+                    <div id="mod-status" class="w-full bg-slate-900/95 border-l-4 border-amber-500 p-3 rounded-xl text-center text-sm text-slate-200 font-semibold shadow-lg">
+                        กำลังรอผู้เล่นเสนอทีม...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Players on Board -->
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-2 shadow-lg">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">ผู้เล่นในเกม</h4>
+                <div id="game-players-list" class="grid grid-cols-2 gap-2 text-xs font-medium"></div>
+            </div>
+
+            <!-- Manual End Game & Reset Button for Mod -->
+            <button onclick="confirmGameOverAndReturnHome()" class="w-full bg-slate-900 hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-slate-800 hover:border-rose-800/80 text-xs py-2.5 rounded-xl transition text-center flex items-center justify-center gap-1.5 shadow">
+                <span>🔄</span>
+                <span>จบเกม / รีเซ็ตกลับสู่หน้าแรก</span>
+            </button>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SCREEN 4: PLAYER JOIN FORM                 -->
+        <!-- ========================================== -->
+        <section id="screen-player-join" class="space-y-4 hidden">
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center space-y-4 shadow-xl">
+                <div class="w-16 h-16 mx-auto rounded-2xl overflow-hidden shadow-lg border border-amber-500/30 p-1 bg-slate-950/60 flex items-center justify-center">
+                    <img src="/pics/iconmerlin.png" alt="Avalon Logo" class="w-full h-full object-cover rounded-xl shadow">
+                </div>
+                <div>
+                    <span class="text-xs text-amber-400 font-mono font-bold uppercase tracking-wider">ห้องเล่นเกม: <span id="player-view-room-code">AV-XXXX</span></span>
+                    <h3 class="text-lg font-bold text-slate-100 mt-1">กรอกชื่อของคุณเพื่อรับไพ่</h3>
+                    <p class="text-xs text-slate-400 mt-1">ชื่อนี้จะปรากฏบนจอของ Mod และเพื่อนร่วมห้อง</p>
+                </div>
+
+                <div class="space-y-3 pt-2">
+                    <input type="text" id="player-direct-name" placeholder="พิมพ์ชื่อเล่นของคุณ..." maxlength="20" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 text-center font-semibold focus:outline-none focus:border-amber-500 transition shadow-inner">
+                    <button onclick="submitDirectPlayerJoin()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-amber-500/20 text-sm active:scale-95">
+                        เข้าร่วมห้อง & รอรับการ์ด 🃏
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SCREEN 5: PLAYER WAITING ROOM (Card Back)  -->
+        <!-- ========================================== -->
+        <section id="screen-player-waiting" class="space-y-4 hidden">
+            <div class="max-w-[280px] sm:max-w-[300px] mx-auto aspect-[3/4.6] relative rounded-3xl overflow-hidden border-2 border-amber-500/40 shadow-2xl shadow-amber-500/20 bg-slate-900">
+                <!-- MerlinCard.png Card Artwork -->
+                <img src="/pics/MerlinCard.png" alt="Merlin Card Back" class="w-full h-full object-cover">
+                
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-slate-950/70 flex flex-col items-center justify-between p-5 text-center">
+                    <!-- Top Badge -->
+                    <div class="px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur border border-amber-500/40 text-[11px] text-amber-300 font-semibold flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                        ห้อง: <span id="waiting-room-tag" class="font-mono">AV-0000</span>
+                    </div>
+
+                    <!-- Glowing Hourglass Effect -->
+                    <div class="relative flex flex-col items-center justify-center my-auto">
+                        <div class="absolute w-28 h-28 rounded-full border border-amber-500/30 animate-pulse-ring pointer-events-none"></div>
+                        <div class="absolute w-20 h-20 rounded-full bg-amber-500/10 blur-md pointer-events-none"></div>
+                        <div class="text-5xl sm:text-6xl animate-pulse-glow drop-shadow-[0_0_20px_rgba(245,158,11,0.8)]">
+                            ⏳
+                        </div>
+                        <h4 class="text-sm font-bold text-amber-400 mt-4">เชื่อมต่อสำเร็จแล้ว</h4>
+                        <p class="text-xs text-slate-300 mt-1">กำลังรอ Mod แจกบทบาทและเริ่มเกม...</p>
+                        <span id="player-my-name-display" class="mt-2 text-xs font-semibold px-3 py-1 rounded-full bg-slate-800/80 text-slate-200 border border-slate-700"></span>
+                    </div>
+
+                    <p class="text-[10px] text-slate-400">กรุณาอย่าปิดหน้านี้จนกว่าเกมจะจบ</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SCREEN 6: PLAYER GAME SCREEN (Secret Role) -->
+        <!-- ========================================== -->
+        <section id="screen-player-game" class="space-y-4 hidden">
+            <!-- Status & Secret Role Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-center shadow-xl space-y-4">
+                <div id="player-status-banner" class="bg-slate-950 text-amber-400 text-xs sm:text-sm py-2 px-3 rounded-xl font-semibold border border-slate-800">
+                    กำลังเริ่มเกม...
+                </div>
+
+                <!-- 3D Card Container (Matching Werewolf Modulator) -->
+                <div class="card-perspective max-w-[260px] sm:max-w-[280px] w-full mx-auto aspect-[3/4.5] cursor-pointer select-none" onclick="toggleCardFlipPrivacy()">
+                    <div id="player-card-inner" class="card-inner">
+                        
+                        <!-- Card Back (Shown initially before flip: MerlinCard Cover) -->
+                        <div class="card-back border-2 border-amber-500/40 shadow-2xl bg-slate-900 rounded-2xl overflow-hidden">
+                            <img src="/pics/MerlinCard.png" alt="Merlin Card Cover" class="w-full h-full object-cover">
+                            <!-- Overlay with Tap to reveal -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/35 to-slate-950/65 flex flex-col items-center justify-between p-4 text-center pointer-events-none">
+                                <span class="px-2.5 py-0.5 rounded-full bg-slate-900/80 border border-amber-500/40 text-[10px] text-amber-300 font-semibold tracking-wider">
+                                    AVALON SECRET ROLE
+                                </span>
+                                <div class="flex flex-col items-center justify-center my-auto space-y-1">
+                                    <span class="text-4xl drop-shadow-[0_0_12px_rgba(245,158,11,0.6)]">🛡️</span>
+                                    <span class="text-sm font-bold text-amber-400 drop-shadow">แตะเพื่อดูบทบาท</span>
+                                    <span class="text-[10px] text-slate-300 tracking-widest drop-shadow font-mono">TAP TO REVEAL</span>
+                                </div>
+                                <span class="text-[10px] text-slate-400">รักษาความลับบทบาทของคุณ 🤫</span>
+                            </div>
+                        </div>
+
+                        <!-- Card Front (Revealed Role) -->
+                        <div id="card-front-content" class="card-front border-2 border-amber-500/60 shadow-2xl bg-slate-900 rounded-2xl flex flex-col justify-between p-4 sm:p-5 text-center overflow-hidden">
+                            <!-- Atmospheric background image (MerlinCard.png) -->
+                            <div class="absolute inset-0 z-0 opacity-20 pointer-events-none">
+                                <img src="/pics/MerlinCard.png" alt="Card BG" class="w-full h-full object-cover">
+                            </div>
+                            
+                            <!-- Atmospheric background glow -->
+                            <div id="role-bg-glow" class="absolute -top-16 -left-16 w-52 h-52 rounded-full blur-3xl opacity-30 bg-blue-500 pointer-events-none"></div>
+
+                            <!-- Top Team Banner & Name Tag -->
+                            <div class="relative z-10 flex justify-between items-center">
+                                <span id="player-team-text" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-950 text-blue-400 border border-blue-800 shadow">
+                                    🔵 ฝ่ายคนดี
+                                </span>
+                                <span class="text-[10px] text-slate-400 font-mono" id="card-player-name-tag">ชื่อผู้เล่น</span>
+                            </div>
+
+                            <!-- Middle Role Icon & Title -->
+                            <div class="relative z-10 my-auto space-y-1 sm:space-y-1.5 py-2">
+                                <div id="card-role-icon" class="my-1 flex items-center justify-center transform hover:scale-105 transition-transform">
+                                    <img src="/pics/iconmerlin.png" alt="Merlin" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-amber-400/80 shadow-[0_0_15px_rgba(245,158,11,0.6)] mx-auto">
+                                </div>
+                                <h2 id="player-role-text" class="text-xl sm:text-2xl font-black text-amber-400 tracking-wide drop-shadow">
+                                    Merlin
+                                </h2>
+                                <p id="card-role-thai" class="text-xs text-amber-300 font-medium">
+                                    เมอร์ลิน (ผู้วิเศษ)
+                                </p>
+                            </div>
+
+                            <!-- Bottom Role Ability Details -->
+                            <div class="relative z-10 bg-slate-950/85 backdrop-blur border border-slate-800 rounded-xl p-2.5 sm:p-3 text-left space-y-0.5 shadow-inner">
+                                <span class="text-[9px] sm:text-[10px] text-amber-400 font-bold uppercase tracking-wider block">ความสามารถของคุณ:</span>
+                                <p id="card-role-desc" class="text-[10px] sm:text-[11px] text-slate-300 leading-relaxed">
+                                    รู้ว่าใครเป็นฝ่ายร้าย (ยกเว้น Mordred) แต่ต้องระวังไม่ให้ Assassin สังหาร
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Toggle Hide / Show button for privacy -->
+                <div class="max-w-[260px] sm:max-w-[280px] mx-auto">
+                    <button type="button" onclick="toggleCardFlipPrivacy()" class="w-full bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 text-xs font-semibold py-2.5 px-4 rounded-xl border border-slate-700 transition flex items-center justify-center gap-1.5 shadow">
+                        <span>👁️</span>
+                        <span id="btn-toggle-privacy-text">แตะเพื่อดูบทบาทลับ</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Player Action Panels -->
+            <div id="action-panel" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-4 hidden">
+                
+                <!-- Team Selection Grid (For Leader) -->
+                <div id="team-selection" class="hidden space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <div>
+                            <span class="text-[10px] text-slate-400">ภารกิจที่ <span id="current-quest-num-label" class="font-bold text-amber-400">1</span></span>
+                            <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider">เลือกสมาชิกทำภารกิจ</h3>
+                        </div>
+                        <span class="text-xs font-mono font-bold text-amber-400 bg-amber-950/80 border border-amber-800 px-2.5 py-1 rounded-xl">
+                            <span id="team-select-count">0</span> / <span id="team-select-required">2</span> คน
+                        </span>
+                    </div>
+
+                    <p id="team-select-hint" class="text-[11px] text-slate-400 text-center">
+                        กรุณาเลือกผู้เล่นให้ครบ 2 คน เพื่อเสนอทีม
+                    </p>
+
+                    <div id="player-grid" class="grid grid-cols-2 gap-2"></div>
+
+                    <!-- Only displays when exact required count is selected -->
+                    <button id="btn-propose-team" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 py-3.5 rounded-xl font-bold transition shadow-lg shadow-amber-500/20 text-sm hidden flex items-center justify-center gap-1.5 active:scale-95">
+                        <span>เสนอทีมนี้ (Propose Team)</span>
+                        <span>➔</span>
+                    </button>
+                </div>
+                
+                <!-- Voting Panel (Approve / Reject) -->
+                <div id="voting-panel" class="hidden space-y-3 text-center">
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <span class="text-[11px] text-slate-400 uppercase">ทีมที่ถูกเสนอ:</span>
+                        <div id="proposed-team-names" class="text-sm font-bold text-amber-400 mt-0.5"></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="vote-btn flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-lg" data-vote="approve">
+                            เห็นชอบ (Approve)
+                        </button>
+                        <button class="vote-btn flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg" data-vote="reject">
+                            คัดค้าน (Reject)
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Quest Execution Panel (Success / Fail) -->
+                <div id="quest-panel" class="hidden space-y-3 text-center">
+                    <div class="bg-slate-950 border border-blue-900/50 rounded-xl p-3">
+                        <h4 class="text-sm font-bold text-blue-400">คุณอยู่ในทีมทำภารกิจ!</h4>
+                        <p class="text-[11px] text-slate-400 mt-0.5">เลือกการกระทำในภารกิจอย่างลับ ๆ</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="quest-vote-btn flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl text-sm transition shadow-lg" data-vote="success">
+                            ✨ สำเร็จ (Success)
+                        </button>
+                        <button class="quest-vote-btn flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-3.5 rounded-xl text-sm transition shadow-lg" data-vote="fail">
+                            💀 ล้มเหลว (Fail)
+                        </button>
+                    </div>
+                </div>
+            </div> <!-- End action-panel -->
+        </section> <!-- End screen-player-game -->
+    </main> <!-- End main -->
+    <!-- ========================================== -->
+    <!-- MODAL 1: TEAM VOTING RESULTS POPUP         -->
+    <!-- ========================================== -->
+    <div id="vote-result-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border-2 border-amber-500/40 w-full max-w-sm rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="text-center space-y-1">
+                <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">ผลการลงความเห็นรับรองทีม</span>
+                <div id="vote-result-status-badge" class="px-3.5 py-1.5 rounded-full text-xs font-bold inline-block mt-1"></div>
+            </div>
+
+            <!-- Proposed Team Info -->
+            <div class="bg-slate-950/80 border border-slate-800 p-2.5 rounded-xl text-center">
+                <span class="text-[10px] text-slate-400 uppercase">ทีมที่ถูกเสนอ:</span>
+                <div id="vote-result-team-names" class="text-xs font-bold text-amber-400 mt-0.5"></div>
+            </div>
+
+            <!-- Summary Scores -->
+            <div class="flex gap-2">
+                <div class="flex-1 bg-emerald-950/60 border border-emerald-800/80 p-2.5 rounded-xl text-center">
+                    <span class="text-[11px] text-emerald-400 block font-semibold">เห็นชอบ (Approve)</span>
+                    <span id="vote-result-approve-count" class="text-2xl font-black text-emerald-300">0</span>
+                </div>
+                <div class="flex-1 bg-rose-950/60 border border-rose-800/80 p-2.5 rounded-xl text-center">
+                    <span class="text-[11px] text-rose-400 block font-semibold">คัดค้าน (Reject)</span>
+                    <span id="vote-result-reject-count" class="text-2xl font-black text-rose-300">0</span>
+                </div>
+            </div>
+
+            <!-- Player Vote Breakdown List -->
+            <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block mb-1">ผลคะแนนรายบุคคล:</span>
+                <div id="vote-result-players-list" class="space-y-1.5">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Next Leader Notice if Rejected -->
+            <div id="vote-result-next-leader-box" class="bg-slate-950 border border-amber-900/60 p-2.5 rounded-xl text-center text-xs hidden">
+                <span class="text-slate-400">เปลี่ยนผู้เล่นถัดไป:</span>
+                <span id="vote-result-next-leader-name" class="font-bold text-amber-400 ml-1"></span>
+            </div>
+
+            <p id="vote-result-timer-hint" class="text-[11px] text-slate-400 text-center italic">
+                กำลังเข้าสู่ขั้นตอนถัดไปใน 4 วินาที...
+            </p>
+
+            <button onclick="proceedFromVoteModal()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 active:scale-95">
+                <span>ดำเนินการต่อทันที</span>
+                <span>➔</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 2: QUEST ACTION POPUP (FOR TEAM)     -->
+    <!-- ========================================== -->
+    <div id="quest-action-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border-2 border-amber-500/50 w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-5 text-center">
+            <div>
+                <span class="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider bg-amber-950/60 border border-amber-800 px-3 py-1 rounded-full">
+                    ⚔️ ภารกิจที่ <span id="quest-modal-num">1</span>
+                </span>
+                <h3 class="text-xl font-black text-slate-100 mt-3">คุณได้รับเลือกให้ลง Quest!</h3>
+                <p class="text-xs text-slate-400 mt-1">
+                    กรุณาลงคะแนนอย่างลับ ๆ ผลลัพธ์จะไม่ระบุชื่อผู้ส่ง
+                </p>
+            </div>
+
+            <div class="space-y-2.5 pt-1">
+                <button onclick="submitQuestVote('success')" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-black py-4 px-4 rounded-2xl transition shadow-lg shadow-blue-600/30 text-base active:scale-95 flex items-center justify-center gap-2">
+                    <span class="text-xl">✨</span>
+                    <span>ส่งผลสำเร็จ (SUCCESS)</span>
+                </button>
+                <button id="btn-quest-fail" onclick="submitQuestVote('fail')" class="w-full bg-gradient-to-r from-rose-700 to-rose-600 hover:from-rose-600 hover:to-rose-500 text-white font-black py-4 px-4 rounded-2xl transition shadow-lg shadow-rose-600/30 text-base active:scale-95 flex items-center justify-center gap-2">
+                    <span class="text-xl">💀</span>
+                    <span>ส่งผลล้มเหลว (FAIL)</span>
+                </button>
+            </div>
+
+            <p id="quest-modal-role-hint" class="text-[10px] text-slate-500 italic">
+                *ฝ่ายคนดี (Good) ต้องลงผลสำเร็จเท่านั้น, ฝ่ายร้าย (Evil) สามารถเลือกล้มเหลวหรือสำเร็จได้
+            </p>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 3: GAME OVER POPUP                   -->
+    <!-- ========================================== -->
+    <div id="game-over-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border-2 border-amber-500/50 w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-4 text-center">
+            <!-- Icon & Title -->
+            <div>
+                <div id="game-over-icon" class="text-6xl mb-2 drop-shadow-[0_0_20px_rgba(245,158,11,0.6)]">
+                    🏆
+                </div>
+                <span class="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-widest bg-amber-950/60 border border-amber-800 px-3 py-1 rounded-full">
+                    GAME OVER • จบเกม
+                </span>
+                <h3 id="game-over-title" class="text-2xl font-black text-white mt-3 drop-shadow">
+                    ฝ่ายคนดีชนะ!
+                </h3>
+                <p id="game-over-subtitle" class="text-xs text-slate-300 mt-1">
+                    ภารกิจสำเร็จ 3 ใน 5 ครั้ง (Success 3/5)
+                </p>
+            </div>
+
+            <!-- Quest Cards Result Mini-Tracker -->
+            <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-3 space-y-2">
+                <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">สรุปผล 5 ภารกิจ (Quest Results)</span>
+                <div id="game-over-quest-list" class="flex justify-center gap-1.5">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="flex justify-between items-center text-[11px] font-mono px-2 pt-1 border-t border-slate-800/80">
+                    <span class="text-blue-400 font-bold">สำเร็จ (Success): <span id="game-over-success-count">3</span>/5</span>
+                    <span class="text-rose-400 font-bold">ล้มเหลว (Fail): <span id="game-over-fail-count">0</span>/5</span>
+                </div>
+            </div>
+
+            <!-- Confirm Button: Returns to initial game creation screen -->
+            <button onclick="confirmGameOverAndReturnHome()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-black py-3.5 px-4 rounded-xl transition shadow-lg shadow-amber-500/25 text-sm sm:text-base flex items-center justify-center gap-2 active:scale-95">
+                <span>ตกลง (กลับสู่หน้าแรก)</span>
+                <span>🏠</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>
