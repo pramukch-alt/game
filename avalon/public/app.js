@@ -1,7 +1,18 @@
-const socket = (typeof io !== 'undefined') ? io() : {
-    on: () => {},
-    emit: () => {}
-};
+// Smart Socket.io initialization
+let socket;
+if (typeof io !== 'undefined') {
+    if (window.location.protocol === 'file:' || (window.location.port !== '3000' && window.location.hostname === 'localhost')) {
+        socket = io('http://localhost:3000', { reconnectionAttempts: 3, timeout: 2500 });
+    } else {
+        socket = io({ reconnectionAttempts: 3, timeout: 2500 });
+    }
+} else {
+    socket = {
+        on: () => {},
+        emit: () => {},
+        connected: false
+    };
+}
 
 // Screen IDs
 const ALL_SCREENS = [
@@ -205,8 +216,87 @@ window.startCreateRoom = startCreateRoom;
 
 document.getElementById('btn-create-room')?.addEventListener('click', startCreateRoom);
 
-document.getElementById('btn-confirm-roles')?.addEventListener('click', () => {
-    const balance = playerBalances[expectedPlayers];
+function getJoinUrl(roomCode) {
+    let base = window.location.href.split('?')[0];
+    if (base.endsWith('index.html')) {
+        base = base.substring(0, base.lastIndexOf('index.html'));
+    }
+    if (!base.endsWith('/')) {
+        base += '/';
+    }
+    return base + '?room=' + encodeURIComponent(roomCode);
+}
+
+function generateLobbyQRCode(joinUrl) {
+    const qrContainer = document.getElementById('qrcode-container');
+    if (!qrContainer) return;
+    qrContainer.innerHTML = '';
+
+    try {
+        if (typeof QRCode !== 'undefined') {
+            new QRCode(qrContainer, {
+                text: joinUrl,
+                width: 190,
+                height: 190,
+                colorDark: "#020617",
+                colorLight: "#ffffff",
+                correctLevel: (typeof QRCode.CorrectLevel !== 'undefined' ? QRCode.CorrectLevel.M : 1)
+            });
+            return;
+        }
+    } catch (e) {
+        console.warn('QRCode JS error, using fallback API image:', e);
+    }
+
+    // Fallback to QR API image if library fails or is unavailable
+    qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=${encodeURIComponent(joinUrl)}" class="w-full h-full rounded-xl" alt="QR Code">`;
+}
+
+function setupModLobby(roomCode, targetPlayers) {
+    myRoom = roomCode;
+    activeRoomCode = roomCode;
+    
+    // Update Mod Lobby Info
+    const codeDisplay = document.getElementById('mod-room-code-display');
+    if (codeDisplay) codeDisplay.innerText = roomCode;
+    
+    const targetCount = document.getElementById('mod-target-count');
+    if (targetCount) targetCount.innerText = targetPlayers || expectedPlayers;
+    
+    const joinedCount = document.getElementById('mod-joined-count');
+    if (joinedCount) joinedCount.innerText = (allPlayers && allPlayers.length) ? allPlayers.length : '0';
+    
+    const progress = document.getElementById('mod-lobby-progress');
+    if (progress) progress.style.width = '0%';
+    
+    const playersList = document.getElementById('mod-players-list');
+    if (playersList) playersList.innerHTML = '';
+    
+    const joinUrl = getJoinUrl(roomCode);
+    const urlDisplay = document.getElementById('qr-target-url-display');
+    if (urlDisplay) urlDisplay.innerText = joinUrl;
+
+    const btnStart = document.getElementById('btn-start-game');
+    if (btnStart) {
+        btnStart.classList.add('opacity-50', 'cursor-not-allowed');
+        btnStart.disabled = true;
+    }
+
+    // Switch to Lobby Screen FIRST so screen ALWAYS transitions!
+    showScreen('screen-mod-lobby');
+
+    // Reset button text
+    const btnConfirm = document.getElementById('btn-confirm-roles');
+    if (btnConfirm) {
+        btnConfirm.innerHTML = `<span>ตกลง & รับ QR Code</span> <span>➡️</span>`;
+    }
+
+    // Generate QR Code with try-catch and API image fallback
+    generateLobbyQRCode(joinUrl);
+}
+
+function confirmRolesAndCreateRoom() {
+    const balance = playerBalances[expectedPlayers] || { good: 3, evil: 2 };
     let goodSelected = 0, evilSelected = 0;
     const finalRoles = [];
     rolesConfig.forEach(r => {
@@ -217,14 +307,35 @@ document.getElementById('btn-confirm-roles')?.addEventListener('click', () => {
         }
     });
     
-    if (goodSelected === balance.good && evilSelected === balance.evil) {
-        socket.emit('createRoom', { expectedPlayers, roles: finalRoles });
+    if (goodSelected !== balance.good || evilSelected !== balance.evil) {
+        alert(`กรุณาเลือกบทบาทให้ครบตามจำนวนผู้เล่น ${expectedPlayers} คน:\n- ฝ่ายคนดีต้องการ ${balance.good} คน (เลือกแล้ว ${goodSelected})\n- ฝ่ายร้ายต้องการ ${balance.evil} คน (เลือกแล้ว ${evilSelected})`);
+        return;
     }
-});
+    
+    // Provide visual feedback on button
+    const btnConfirm = document.getElementById('btn-confirm-roles');
+    if (btnConfirm) {
+        btnConfirm.innerHTML = `<span>กำลังสร้างห้อง QR...</span> <span class="animate-spin">⏳</span>`;
+    }
+
+    // If socket is connected, emit createRoom to server
+    if (socket && socket.connected) {
+        socket.emit('createRoom', { expectedPlayers, roles: finalRoles });
+    } else {
+        // Fallback: Generate local room and proceed to QR lobby immediately!
+        setTimeout(() => {
+            const localCode = 'AV-' + Math.floor(1000 + Math.random() * 9000).toString();
+            setupModLobby(localCode, expectedPlayers);
+        }, 150);
+    }
+}
+window.confirmRolesAndCreateRoom = confirmRolesAndCreateRoom;
+
+document.getElementById('btn-confirm-roles')?.addEventListener('click', confirmRolesAndCreateRoom);
 
 // --- Mod Lobby Events ---
 function copyJoinLink() {
-    const url = document.getElementById('qr-target-url-display')?.innerText;
+    const url = document.getElementById('qr-target-url-display')?.innerText || getJoinUrl(myRoom || activeRoomCode);
     if (url) {
         navigator.clipboard.writeText(url).then(() => {
             const btnText = document.getElementById('btn-copy-link-text');
@@ -233,14 +344,75 @@ function copyJoinLink() {
                 btnText.innerText = 'คัดลอกสำเร็จ! ✓';
                 setTimeout(() => { btnText.innerText = old; }, 2000);
             }
+        }).catch(() => {
+            prompt('คัดลอกลิงก์นี้เพื่อส่งให้เพื่อน:', url);
         });
     }
 }
 window.copyJoinLink = copyJoinLink;
 
+function renderModLobbyPlayers(players) {
+    allPlayers = players;
+    const joinedCount = document.getElementById('mod-joined-count');
+    if (joinedCount) joinedCount.innerText = players.length;
+    
+    const pct = Math.min(100, Math.round((players.length / expectedPlayers) * 100));
+    const progress = document.getElementById('mod-lobby-progress');
+    if (progress) progress.style.width = pct + '%';
+    
+    const list = document.getElementById('mod-players-list');
+    if (list) {
+        list.innerHTML = '';
+        players.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'flex items-center justify-between bg-slate-950/70 border border-slate-800 px-3 py-2 rounded-xl';
+            div.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="text-xs">👤</span>
+                    <span class="text-xs font-semibold text-slate-200">${p.name}</span>
+                </div>
+                <span class="text-[10px] text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-800 font-mono">พร้อม</span>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    const btnStart = document.getElementById('btn-start-game');
+    const waitingText = document.getElementById('mod-waiting-text');
+    if (players.length >= expectedPlayers) {
+        if (btnStart) {
+            btnStart.classList.remove('opacity-50', 'cursor-not-allowed');
+            btnStart.disabled = false;
+        }
+        if (waitingText) {
+            waitingText.innerText = 'ผู้เล่นครบแล้ว! กด Start Game เพื่อเริ่มเกมได้เลย';
+            waitingText.className = 'text-xs text-emerald-400 text-center font-bold pt-1';
+        }
+    } else {
+        if (btnStart) {
+            btnStart.classList.add('opacity-50', 'cursor-not-allowed');
+            btnStart.disabled = true;
+        }
+        if (waitingText) {
+            waitingText.innerText = 'กำลังรอให้ผู้เล่นสแกนเข้าร่วมห้อง...';
+            waitingText.className = 'text-xs text-slate-500 text-center italic pt-1';
+        }
+    }
+}
+
 function simulatePlayerBot() {
-    if (myRoom) {
+    if (socket && socket.connected && myRoom) {
         socket.emit('simulateBot', myRoom);
+    } else {
+        // Local simulation fallback
+        if (!allPlayers) allPlayers = [];
+        if (allPlayers.length < expectedPlayers) {
+            const botNum = allPlayers.length + 1;
+            const botNames = ['อาเธอร์', 'แลนสล็อต', 'เกเวน', 'เพอร์ซิวัล', 'ไตรสตัน', 'กาลาฮัด', 'บอร์ส', 'เคย์', 'เบดิเวียร์', 'โมเดร็ด'];
+            const randomName = botNames[(botNum - 1) % botNames.length] + ' #' + botNum;
+            allPlayers.push({ id: 'bot_' + botNum, name: randomName, role: null });
+            renderModLobbyPlayers(allPlayers);
+        }
     }
 }
 window.simulatePlayerBot = simulatePlayerBot;
@@ -274,100 +446,12 @@ socket.on('error', (msg) => alert(msg));
 
 // --- Socket Listeners (Mod Room Created -> Load New QR Screen!) ---
 socket.on('roomCreated', (roomCode) => {
-    myRoom = roomCode;
-    
-    // Update Mod Lobby Info
-    const codeDisplay = document.getElementById('mod-room-code-display');
-    if (codeDisplay) codeDisplay.innerText = roomCode;
-    
-    const targetCount = document.getElementById('mod-target-count');
-    if (targetCount) targetCount.innerText = expectedPlayers;
-    
-    const joinedCount = document.getElementById('mod-joined-count');
-    if (joinedCount) joinedCount.innerText = '0';
-    
-    const progress = document.getElementById('mod-lobby-progress');
-    if (progress) progress.style.width = '0%';
-    
-    const playersList = document.getElementById('mod-players-list');
-    if (playersList) playersList.innerHTML = '';
-    
-    const joinUrl = window.location.origin + '?room=' + roomCode;
-    const urlDisplay = document.getElementById('qr-target-url-display');
-    if (urlDisplay) urlDisplay.innerText = joinUrl;
-    
-    // Generate QR Code into container
-    const qrContainer = document.getElementById('qrcode-container');
-    if (qrContainer) {
-        qrContainer.innerHTML = '';
-        new QRCode(qrContainer, {
-            text: joinUrl,
-            width: 190,
-            height: 190,
-            colorDark: "#020617",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.M
-        });
-    }
-
-    const btnStart = document.getElementById('btn-start-game');
-    if (btnStart) {
-        btnStart.classList.add('opacity-50', 'cursor-not-allowed');
-        btnStart.disabled = true;
-    }
-    
-    // LOAD DEDICATED QR SCREEN
-    showScreen('screen-mod-lobby');
+    setupModLobby(roomCode, expectedPlayers);
 });
 
 // Mod Player Joined Broadcast
 socket.on('playerJoined', (players) => {
-    const joinedCount = document.getElementById('mod-joined-count');
-    if (joinedCount) joinedCount.innerText = players.length;
-    
-    const pct = Math.min(100, Math.round((players.length / expectedPlayers) * 100));
-    const progress = document.getElementById('mod-lobby-progress');
-    if (progress) progress.style.width = pct + '%';
-    
-    const list = document.getElementById('mod-players-list');
-    if (list) {
-        list.innerHTML = '';
-        players.forEach(p => {
-            const div = document.createElement('div');
-            div.className = 'flex items-center justify-between bg-slate-950/70 border border-slate-800 px-3 py-2 rounded-xl';
-            div.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <span class="text-xs">👤</span>
-                    <span class="text-xs font-semibold text-slate-200">${p.name}</span>
-                </div>
-                <span class="text-[10px] text-emerald-400 font-mono">พร้อมแล้ว</span>
-            `;
-            list.appendChild(div);
-        });
-    }
-    
-    const btnStart = document.getElementById('btn-start-game');
-    const waitingText = document.getElementById('mod-waiting-text');
-    
-    if (players.length >= expectedPlayers) {
-        if (btnStart) {
-            btnStart.classList.remove('opacity-50', 'cursor-not-allowed');
-            btnStart.disabled = false;
-        }
-        if (waitingText) {
-            waitingText.innerText = 'ผู้เล่นครบแล้ว! กด Start Game เพื่อเริ่มเกมได้เลย';
-            waitingText.className = 'text-xs text-emerald-400 text-center font-bold pt-1';
-        }
-    } else {
-        if (btnStart) {
-            btnStart.classList.add('opacity-50', 'cursor-not-allowed');
-            btnStart.disabled = true;
-        }
-        if (waitingText) {
-            waitingText.innerText = 'กำลังรอให้ผู้เล่นสแกนเข้าร่วมห้อง...';
-            waitingText.className = 'text-xs text-slate-500 text-center italic pt-1';
-        }
-    }
+    renderModLobbyPlayers(players);
 });
 
 // Mod Clicks Start Game
