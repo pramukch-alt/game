@@ -115,6 +115,9 @@
     
     <!-- Top Sticky Header (Consistent with Werewolf Modulator) -->
     <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 p-3 sm:p-4 text-center sticky top-0 z-50 relative">
+        <a id="header-hub-btn" href="../../index.html" class="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-amber-400 flex items-center gap-1 transition" title="กลับสู่หน้าหลัก Game Hub">
+            <span>&larr;</span> <span class="hidden sm:inline">หน้าหลัก Hub</span>
+        </a>
         <button id="header-back-btn" onclick="handleHeaderBack()" class="hidden absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-amber-400 flex items-center gap-1 transition">
             <span>&larr;</span> <span class="hidden sm:inline">ย้อนกลับ</span>
         </button>
@@ -143,7 +146,7 @@
 
                 <div class="relative z-10 p-6 space-y-4">
                     <div class="w-24 h-24 mx-auto rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/40 p-1 bg-slate-950/70 flex items-center justify-center backdrop-blur-sm">
-                        <img src="./pics/Avalon.png" alt="Avalon Logo" class="w-full h-full object-cover rounded-2xl drop-shadow-[0_0_15px_rgba(245,158,11,0.6)]" onerror="this.onerror=null; this.src='./pics/iconmerlin.png';">
+                        <img src="./pics/iconmerlin.png" alt="Merlin Icon" class="w-full h-full object-cover rounded-2xl drop-shadow-[0_0_15px_rgba(245,158,11,0.6)]">
                     </div>
                     <div>
                         <h2 class="text-xl font-bold text-slate-100 drop-shadow-md">ยินดีต้อนรับเข้าสู่ Game Avalon</h2>
@@ -152,7 +155,7 @@
 
                     <div class="space-y-3 pt-2">
                         <!-- ปุ่มเปิดห้องแบบ QR Code -->
-                        <button id="btn-create-room" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-3.5 px-4 rounded-xl transition shadow-[0_0_15px_rgba(245,158,11,0.2)] flex items-center justify-center gap-2 group active:scale-[0.99]">
+                        <button id="btn-create-room" onclick="startCreateRoom()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-3.5 px-4 rounded-xl transition shadow-[0_0_15px_rgba(245,158,11,0.2)] flex items-center justify-center gap-2 group active:scale-[0.99]">
                             <span class="text-lg">📱</span>
                             <span>สร้างห้องใหม่ (สแกน QR Code รับการ์ด)</span>
                         </button>
@@ -395,7 +398,7 @@
         <section id="screen-player-join" class="space-y-4 hidden">
             <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center space-y-4 shadow-xl">
                 <div class="w-16 h-16 mx-auto rounded-2xl overflow-hidden shadow-lg border border-amber-500/30 p-1 bg-slate-950/60 flex items-center justify-center">
-                    <img src="./pics/Avalon.png" alt="Avalon Logo" class="w-full h-full object-cover rounded-xl shadow" onerror="this.onerror=null; this.src='./pics/iconmerlin.png';">
+                    <img src="./pics/iconmerlin.png" alt="Merlin Icon" class="w-full h-full object-cover rounded-xl shadow">
                 </div>
                 <div>
                     <span class="text-xs text-amber-400 font-mono font-bold uppercase tracking-wider">ห้องเล่นเกม: <span id="player-view-room-code">AV-XXXX</span></span>
@@ -646,16 +649,19 @@
     <!-- MODAL 2: QUEST ACTION POPUP (FOR TEAM)     -->
     <!-- ========================================== -->
     <div id="quest-action-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border-2 border-amber-500/50 w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-5 text-center">
-            <div>
-                <span class="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider bg-amber-950/60 border border-amber-800 px-3 py-1 rounded-full">
-                    ⚔️ ภารกิจที่ <span id="quest-modal-num">1</span>
-                </span>
-                <h3 class="text-xl font-black text-slate-100 mt-3">คุณได้รับเลือกให้ลง Quest!</h3>
-                <p class="text-xs text-slate-400 mt-1">
-                    กรุณาลงคะแนนอย่างลับ ๆ ผลลัพธ์จะไม่ระบุชื่อผู้ส่ง
-                </p>
-            </div>
+        <div class="bg-slate-900 border-2 border-amber-500/50 w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-5 text-center relative overflow-hidden">
+            <!-- Quest Card Background Artwork (Avalon.png) -->
+            <img src="./pics/Avalon.png" alt="Avalon Quest Card" class="absolute inset-0 w-full h-full object-cover opacity-15 pointer-events-none">
+            <div class="relative z-10 space-y-4">
+                <div>
+                    <span class="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider bg-amber-950/80 border border-amber-700/80 px-3 py-1 rounded-full shadow">
+                        ⚔️ ภารกิจที่ <span id="quest-modal-num">1</span> (Quest Card)
+                    </span>
+                    <h3 class="text-xl font-black text-slate-100 mt-3 drop-shadow">คุณได้รับเลือกให้ลง Quest!</h3>
+                    <p class="text-xs text-slate-300 mt-1 drop-shadow">
+                        กรุณาลงคะแนนอย่างลับ ๆ ผลลัพธ์จะไม่ระบุชื่อผู้ส่ง
+                    </p>
+                </div>
 
             <div class="space-y-2.5 pt-1">
                 <button onclick="submitQuestVote('success')" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-black py-4 px-4 rounded-2xl transition shadow-lg shadow-blue-600/30 text-base active:scale-95 flex items-center justify-center gap-2">
@@ -671,6 +677,7 @@
             <p id="quest-modal-role-hint" class="text-[10px] text-slate-500 italic">
                 *ฝ่ายคนดี (Good) ต้องลงผลสำเร็จเท่านั้น, ฝ่ายร้าย (Evil) สามารถเลือกล้มเหลวหรือสำเร็จได้
             </p>
+            </div>
         </div>
     </div>
 
@@ -715,6 +722,6 @@
         </div>
     </div>
 
-    <script src="/app.js"></script>
+    <script src="./app.js"></script>
 </body>
 </html>

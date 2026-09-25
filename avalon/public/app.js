@@ -29,28 +29,33 @@ function showScreen(screenId) {
     // Update Header Status & Back Button
     const statusEl = document.getElementById('game-status');
     const backBtn = document.getElementById('header-back-btn');
+    const hubBtn = document.getElementById('header-hub-btn');
 
     if (screenId === 'screen-home') {
         if (statusEl) statusEl.innerText = 'ยินดีต้อนรับเข้าสู่ Game Avalon';
         if (backBtn) backBtn.classList.add('hidden');
-    } else if (screenId === 'screen-role-select') {
-        if (statusEl) statusEl.innerText = 'เลือกบทบาท & คำนวณความสมดุล';
-        if (backBtn) backBtn.classList.remove('hidden');
-    } else if (screenId === 'screen-mod-lobby') {
-        if (statusEl) statusEl.innerText = 'ห้องรอ: สแกน QR Code เพื่อรับบทบาท';
-        if (backBtn) backBtn.classList.remove('hidden');
-    } else if (screenId === 'screen-mod-game') {
-        if (statusEl) statusEl.innerText = 'กระดานภารกิจ: Avalon Quest Board';
-        if (backBtn) backBtn.classList.add('hidden');
-    } else if (screenId === 'screen-player-join') {
-        if (statusEl) statusEl.innerText = 'กรอกชื่อเข้าร่วมห้อง Avalon';
-        if (backBtn) backBtn.classList.remove('hidden');
-    } else if (screenId === 'screen-player-waiting') {
-        if (statusEl) statusEl.innerText = 'กำลังรอแจกบทบาท...';
-        if (backBtn) backBtn.classList.add('hidden');
-    } else if (screenId === 'screen-player-game') {
-        if (statusEl) statusEl.innerText = 'บทบาทของคุณ';
-        if (backBtn) backBtn.classList.add('hidden');
+        if (hubBtn) hubBtn.classList.remove('hidden');
+    } else {
+        if (hubBtn) hubBtn.classList.add('hidden');
+        if (screenId === 'screen-role-select') {
+            if (statusEl) statusEl.innerText = 'เลือกบทบาท & คำนวณความสมดุล';
+            if (backBtn) backBtn.classList.remove('hidden');
+        } else if (screenId === 'screen-mod-lobby') {
+            if (statusEl) statusEl.innerText = 'ห้องรอ: สแกน QR Code เพื่อรับบทบาท';
+            if (backBtn) backBtn.classList.remove('hidden');
+        } else if (screenId === 'screen-mod-game') {
+            if (statusEl) statusEl.innerText = 'กระดานภารกิจ: Avalon Quest Board';
+            if (backBtn) backBtn.classList.add('hidden');
+        } else if (screenId === 'screen-player-join') {
+            if (statusEl) statusEl.innerText = 'กรอกชื่อเข้าร่วมห้อง Avalon';
+            if (backBtn) backBtn.classList.remove('hidden');
+        } else if (screenId === 'screen-player-waiting') {
+            if (statusEl) statusEl.innerText = 'กำลังรอแจกบทบาท...';
+            if (backBtn) backBtn.classList.add('hidden');
+        } else if (screenId === 'screen-player-game') {
+            if (statusEl) statusEl.innerText = 'บทบาทของคุณ';
+            if (backBtn) backBtn.classList.add('hidden');
+        }
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -191,11 +196,14 @@ document.getElementById('btn-increase-players')?.addEventListener('click', () =>
 });
 
 // --- Home Screen Events ---
-document.getElementById('btn-create-room')?.addEventListener('click', () => {
+function startCreateRoom() {
     showScreen('screen-role-select');
     updateRoleUI();
     renderRoleSwitches();
-});
+}
+window.startCreateRoom = startCreateRoom;
+
+document.getElementById('btn-create-room')?.addEventListener('click', startCreateRoom);
 
 document.getElementById('btn-confirm-roles')?.addEventListener('click', () => {
     const balance = playerBalances[expectedPlayers];
@@ -995,10 +1003,11 @@ function showGameOverModal(winner, reason, questHistory) {
                 mark = '✗';
             }
 
-            chip.className = `w-11 h-14 rounded-xl border flex flex-col items-center justify-between p-1.5 text-xs ${chipClass}`;
+            chip.className = `w-11 h-14 rounded-xl border flex flex-col items-center justify-between p-1.5 text-xs relative overflow-hidden ${chipClass}`;
             chip.innerHTML = `
-                <span class="text-[9px] font-mono opacity-80">${label}</span>
-                <span class="text-base font-black">${mark}</span>
+                <img src="./pics/Avalon.png" alt="Avalon" class="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none">
+                <span class="text-[9px] font-mono opacity-80 relative z-10">${label}</span>
+                <span class="text-base font-black relative z-10">${mark}</span>
             `;
             questListEl.appendChild(chip);
         }
@@ -1042,31 +1051,38 @@ function renderQuestTracker(history, currentQuestNum, questList) {
         const isCurrent = (qNum === activeQ && status === undefined);
         const isTwoFail = (totalP >= 7 && qNum === 4);
 
-        let borderClass = 'border-slate-800 bg-slate-900/90 text-slate-400';
-        let badge = `<span class="text-[10px] text-slate-400 font-mono font-bold">${reqCount} คน</span>`;
-        let icon = `<span class="text-[11px] font-bold text-slate-400">Quest ${qNum}</span>`;
+        let borderClass = 'border-slate-800 bg-slate-900/90 text-slate-300';
+        let imgOpacity = 'opacity-30';
+        let badge = `<span class="text-[10px] text-slate-300 font-mono font-bold bg-slate-950/80 px-1 rounded border border-slate-700/60 shadow">${reqCount} คน</span>`;
+        let icon = `<span class="text-[11px] font-bold text-slate-300 drop-shadow">Quest ${qNum}</span>`;
 
         if (status === true) {
             // สีน้ำเงิน = All Success (ตามที่ระบุ)
-            borderClass = 'border-blue-400 bg-blue-600 text-white font-black shadow-lg shadow-blue-500/40';
-            icon = '<span class="text-base">✓</span>';
-            badge = '<span class="text-[9px] uppercase font-bold tracking-tight">All Success</span>';
+            borderClass = 'border-blue-400 bg-blue-600/90 text-white font-black shadow-lg shadow-blue-500/50';
+            imgOpacity = 'opacity-25';
+            icon = '<span class="text-base drop-shadow">✓</span>';
+            badge = '<span class="text-[9px] uppercase font-bold tracking-tight bg-blue-950/80 px-1 rounded border border-blue-400/60">All Success</span>';
         } else if (status === false) {
             // สีแดง = มีคนลง Fail ตามเงื่อนไข (ตามที่ระบุ)
-            borderClass = 'border-rose-400 bg-rose-600 text-white font-black shadow-lg shadow-rose-500/40';
-            icon = '<span class="text-base">✗</span>';
-            badge = '<span class="text-[9px] uppercase font-bold tracking-tight">Fail</span>';
+            borderClass = 'border-rose-400 bg-rose-600/90 text-white font-black shadow-lg shadow-rose-500/50';
+            imgOpacity = 'opacity-25';
+            icon = '<span class="text-base drop-shadow">✗</span>';
+            badge = '<span class="text-[9px] uppercase font-bold tracking-tight bg-rose-950/80 px-1 rounded border border-rose-400/60">Fail</span>';
         } else if (isCurrent) {
-            borderClass = 'border-amber-400 bg-amber-950/70 text-amber-300 font-bold shadow-[0_0_15px_rgba(245,158,11,0.6)] animate-pulse';
+            borderClass = 'border-amber-400 bg-amber-950/80 text-amber-300 font-bold shadow-[0_0_15px_rgba(245,158,11,0.6)] animate-pulse';
+            imgOpacity = 'opacity-45';
             badge = `<span class="text-[10px] text-amber-300 font-black bg-amber-950/90 px-1.5 py-0.5 rounded border border-amber-800">${reqCount} คน</span>`;
-            icon = `<span class="text-[11px] font-black text-amber-400">Quest ${qNum}*</span>`;
+            icon = `<span class="text-[11px] font-black text-amber-400 drop-shadow">Quest ${qNum}*</span>`;
         }
 
-        card.className = `w-14 h-20 sm:w-16 sm:h-22 border-2 rounded-2xl flex flex-col items-center justify-between p-2 transition-all duration-300 backdrop-blur-sm ${borderClass}`;
+        card.className = `w-14 h-20 sm:w-16 sm:h-22 border-2 rounded-2xl flex flex-col items-center justify-between p-2 transition-all duration-300 backdrop-blur-sm relative overflow-hidden ${borderClass}`;
         card.innerHTML = `
-            ${icon}
-            ${badge}
-            ${isTwoFail && status === undefined ? '<span class="text-[8px] text-rose-400 font-mono font-bold">*2 fails</span>' : '<span class="h-1"></span>'}
+            <img src="./pics/Avalon.png" alt="Avalon Quest Card" class="absolute inset-0 w-full h-full object-cover ${imgOpacity} pointer-events-none">
+            <div class="relative z-10 w-full flex flex-col items-center justify-between h-full">
+                ${icon}
+                ${badge}
+                ${isTwoFail && status === undefined ? '<span class="text-[8px] text-rose-400 font-mono font-bold bg-rose-950/90 px-1 rounded border border-rose-800/80">*2 fails</span>' : '<span class="h-1"></span>'}
+            </div>
         `;
         tracker.appendChild(card);
     }
