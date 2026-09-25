@@ -1,4 +1,7 @@
-const socket = io();
+const socket = (typeof io !== 'undefined') ? io() : {
+    on: () => {},
+    emit: () => {}
+};
 
 // Screen IDs
 const ALL_SCREENS = [
@@ -149,7 +152,7 @@ function renderRoleSwitches() {
         
         let roleIconHTML = '';
         if (r.id === 'Merlin') {
-            roleIconHTML = `<img src="/pics/iconmerlin.png" alt="Merlin" class="w-8 h-8 rounded-lg object-cover border border-amber-500/50 shadow shrink-0">`;
+            roleIconHTML = `<img src="./pics/iconmerlin.png" alt="Merlin" class="w-8 h-8 rounded-lg object-cover border border-amber-500/50 shadow shrink-0">`;
         } else if (r.team === 'good') {
             const sym = r.id === 'Percival' ? '🛡️' : '⚔️';
             roleIconHTML = `<div class="w-8 h-8 rounded-lg bg-blue-950/60 border border-blue-800/80 flex items-center justify-center text-sm shadow shrink-0">${sym}</div>`;
@@ -389,7 +392,7 @@ const ROLES_DETAILS = {
     'Merlin': {
         name: 'Merlin',
         thai: 'เมอร์ลิน (ผู้วิเศษ)',
-        icon: '<img src="/pics/iconmerlin.png" alt="Merlin" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-amber-400/80 shadow-[0_0_15px_rgba(245,158,11,0.6)] mx-auto">',
+        icon: '<img src="./pics/iconmerlin.png" alt="Merlin" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-amber-400/80 shadow-[0_0_15px_rgba(245,158,11,0.6)] mx-auto">',
         desc: 'รู้ว่าใครเป็นฝ่ายร้าย (ยกเว้น Mordred) แต่ต้องระวังไม่ให้ Assassin สังหารตอนจบเกม',
         team: 'good'
     },

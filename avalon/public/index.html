@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Avalon Online & Game Room</title>
     <!-- Favicon: iconmerlin.png -->
-    <link rel="icon" type="image/png" href="/pics/iconmerlin.png">
+    <link rel="icon" type="image/png" href="./pics/iconmerlin.png">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Prompt -->
@@ -14,6 +14,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
+    <script>
+        if (typeof io === 'undefined') {
+            document.write('<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"><\/script>');
+        }
+    </script>
 
     <style>
         body { font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -114,7 +119,7 @@
             <span>&larr;</span> <span class="hidden sm:inline">ย้อนกลับ</span>
         </button>
         <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent flex items-center justify-center gap-2">
-            <img src="/pics/iconmerlin.png" alt="Avalon Icon" class="w-7 h-7 object-cover inline-block rounded-full border border-amber-500/50 shadow-md">
+            <img src="./pics/iconmerlin.png" alt="Avalon Icon" class="w-7 h-7 object-cover inline-block rounded-full border border-amber-500/50 shadow-md">
             <span>Avalon Modulator</span>
         </h1>
         <div id="game-status" class="text-[11px] sm:text-xs text-slate-400 mt-0.5">ยินดีต้อนรับเข้าสู่ Game Avalon</div>
@@ -130,7 +135,7 @@
             <div class="relative bg-slate-900 border border-slate-800 rounded-2xl text-center shadow-xl overflow-hidden">
                 <!-- Background Image -->
                 <div class="absolute inset-0 z-0">
-                    <img src="/pics/Merlin_BG.png" alt="Background" class="w-full h-full object-cover opacity-25">
+                    <img src="./pics/Merlin_BG.png" alt="Background" class="w-full h-full object-cover opacity-25">
                 </div>
                 <!-- Gradients for readability -->
                 <div class="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-slate-900/95 to-transparent z-0"></div>
@@ -138,7 +143,7 @@
 
                 <div class="relative z-10 p-6 space-y-4">
                     <div class="w-24 h-24 mx-auto rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/40 p-1 bg-slate-950/70 flex items-center justify-center backdrop-blur-sm">
-                        <img src="/pics/iconmerlin.png" alt="Avalon Logo" class="w-full h-full object-cover rounded-2xl drop-shadow-[0_0_15px_rgba(245,158,11,0.6)]">
+                        <img src="./pics/Avalon.png" alt="Avalon Logo" class="w-full h-full object-cover rounded-2xl drop-shadow-[0_0_15px_rgba(245,158,11,0.6)]" onerror="this.onerror=null; this.src='./pics/iconmerlin.png';">
                     </div>
                     <div>
                         <h2 class="text-xl font-bold text-slate-100 drop-shadow-md">ยินดีต้อนรับเข้าสู่ Game Avalon</h2>
@@ -334,7 +339,7 @@
         <section id="screen-mod-game" class="space-y-4 hidden">
             <!-- Quest Board Container -->
             <div class="w-full relative border-2 border-amber-600/50 rounded-2xl overflow-hidden shadow-2xl min-h-[380px] bg-slate-900">
-                <img src="/pics/Merlin_BG.png" class="absolute inset-0 w-full h-full object-cover opacity-25" alt="Avalon Board">
+                <img src="./pics/Merlin_BG.png" class="absolute inset-0 w-full h-full object-cover opacity-25" alt="Avalon Board">
                 
                 <div class="relative z-10 p-5 flex flex-col items-center bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/60 w-full h-full">
                     <div class="flex items-center justify-between w-full mb-4">
@@ -390,7 +395,7 @@
         <section id="screen-player-join" class="space-y-4 hidden">
             <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-center space-y-4 shadow-xl">
                 <div class="w-16 h-16 mx-auto rounded-2xl overflow-hidden shadow-lg border border-amber-500/30 p-1 bg-slate-950/60 flex items-center justify-center">
-                    <img src="/pics/iconmerlin.png" alt="Avalon Logo" class="w-full h-full object-cover rounded-xl shadow">
+                    <img src="./pics/Avalon.png" alt="Avalon Logo" class="w-full h-full object-cover rounded-xl shadow" onerror="this.onerror=null; this.src='./pics/iconmerlin.png';">
                 </div>
                 <div>
                     <span class="text-xs text-amber-400 font-mono font-bold uppercase tracking-wider">ห้องเล่นเกม: <span id="player-view-room-code">AV-XXXX</span></span>
@@ -413,7 +418,7 @@
         <section id="screen-player-waiting" class="space-y-4 hidden">
             <div class="max-w-[280px] sm:max-w-[300px] mx-auto aspect-[3/4.6] relative rounded-3xl overflow-hidden border-2 border-amber-500/40 shadow-2xl shadow-amber-500/20 bg-slate-900">
                 <!-- MerlinCard.png Card Artwork -->
-                <img src="/pics/MerlinCard.png" alt="Merlin Card Back" class="w-full h-full object-cover">
+                <img src="./pics/MerlinCard.png" alt="Merlin Card Back" class="w-full h-full object-cover">
                 
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-slate-950/70 flex flex-col items-center justify-between p-5 text-center">
                     <!-- Top Badge -->
@@ -455,7 +460,7 @@
                         
                         <!-- Card Back (Shown initially before flip: MerlinCard Cover) -->
                         <div class="card-back border-2 border-amber-500/40 shadow-2xl bg-slate-900 rounded-2xl overflow-hidden">
-                            <img src="/pics/MerlinCard.png" alt="Merlin Card Cover" class="w-full h-full object-cover">
+                            <img src="./pics/MerlinCard.png" alt="Merlin Card Cover" class="w-full h-full object-cover">
                             <!-- Overlay with Tap to reveal -->
                             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/35 to-slate-950/65 flex flex-col items-center justify-between p-4 text-center pointer-events-none">
                                 <span class="px-2.5 py-0.5 rounded-full bg-slate-900/80 border border-amber-500/40 text-[10px] text-amber-300 font-semibold tracking-wider">
@@ -474,7 +479,7 @@
                         <div id="card-front-content" class="card-front border-2 border-amber-500/60 shadow-2xl bg-slate-900 rounded-2xl flex flex-col justify-between p-4 sm:p-5 text-center overflow-hidden">
                             <!-- Atmospheric background image (MerlinCard.png) -->
                             <div class="absolute inset-0 z-0 opacity-20 pointer-events-none">
-                                <img src="/pics/MerlinCard.png" alt="Card BG" class="w-full h-full object-cover">
+                                <img src="./pics/MerlinCard.png" alt="Card BG" class="w-full h-full object-cover">
                             </div>
                             
                             <!-- Atmospheric background glow -->
@@ -491,7 +496,7 @@
                             <!-- Middle Role Icon & Title -->
                             <div class="relative z-10 my-auto space-y-1 sm:space-y-1.5 py-2">
                                 <div id="card-role-icon" class="my-1 flex items-center justify-center transform hover:scale-105 transition-transform">
-                                    <img src="/pics/iconmerlin.png" alt="Merlin" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-amber-400/80 shadow-[0_0_15px_rgba(245,158,11,0.6)] mx-auto">
+                                    <img src="./pics/iconmerlin.png" alt="Merlin" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-amber-400/80 shadow-[0_0_15px_rgba(245,158,11,0.6)] mx-auto">
                                 </div>
                                 <h2 id="player-role-text" class="text-xl sm:text-2xl font-black text-amber-400 tracking-wide drop-shadow">
                                     Merlin
