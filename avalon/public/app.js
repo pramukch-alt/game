@@ -100,7 +100,7 @@ let expectedPlayers = 5;
 const playerBalances = {
     5: { good: 3, evil: 2 },
     6: { good: 4, evil: 2 },
-    7: { good: 4, evil: 2 },
+    7: { good: 4, evil: 3 },
     8: { good: 5, evil: 3 },
     9: { good: 6, evil: 3 },
     10: { good: 6, evil: 4 }
@@ -109,16 +109,16 @@ const playerBalances = {
 const rolesConfig = [
     { id: 'Merlin', name: 'Merlin', team: 'good', default: true },
     { id: 'Percival', name: 'Percival', team: 'good', default: false },
-    { id: 'Loyal Servant 1', name: 'Loyal Servant 1', team: 'good', default: true },
-    { id: 'Loyal Servant 2', name: 'Loyal Servant 2', team: 'good', default: true },
-    { id: 'Loyal Servant 3', name: 'Loyal Servant 3', team: 'good', default: false },
-    { id: 'Loyal Servant 4', name: 'Loyal Servant 4', team: 'good', default: false },
+    { id: 'Loyal Servant of Arthur 1', name: 'Loyal Servant of Arthur', team: 'good', default: true },
+    { id: 'Loyal Servant of Arthur 2', name: 'Loyal Servant of Arthur', team: 'good', default: true },
+    { id: 'Loyal Servant of Arthur 3', name: 'Loyal Servant of Arthur', team: 'good', default: false },
+    { id: 'Loyal Servant of Arthur 4', name: 'Loyal Servant of Arthur', team: 'good', default: false },
     { id: 'Mordred', name: 'Mordred', team: 'evil', default: false },
     { id: 'Morgana', name: 'Morgana', team: 'evil', default: false },
     { id: 'Assassin', name: 'Assassin', team: 'evil', default: true },
     { id: 'Oberon', name: 'Oberon', team: 'evil', default: false },
-    { id: 'Other Evil 1', name: 'Other Evil 1', team: 'evil', default: true },
-    { id: 'Other Evil 2', name: 'Other Evil 2', team: 'evil', default: false }
+    { id: 'Minion of Mordred 1', name: 'Minion of Mordred', team: 'evil', default: true },
+    { id: 'Minion of Mordred 2', name: 'Minion of Mordred', team: 'evil', default: false }
 ];
 
 let selectedRoles = {};
@@ -495,29 +495,8 @@ const ROLES_DETAILS = {
         desc: 'มองเห็น Merlin และ Morgana แต่ไม่รู้ว่าใครคือตัวจริง ต้องคอยปกป้องเมอร์ลินตัวจริง',
         team: 'good'
     },
-    'Loyal Servant 1': {
-        name: 'Loyal Servant',
-        thai: 'อัศวินผู้ภักดีของอาเธอร์',
-        icon: '⚔️',
-        desc: 'ผู้รับใช้ที่ซื่อสัตย์ของกษัตริย์อาเธอร์ ทำภารกิจให้สำเร็จและช่วยปกป้องความลับของเมอร์ลิน',
-        team: 'good'
-    },
-    'Loyal Servant 2': {
-        name: 'Loyal Servant',
-        thai: 'อัศวินผู้ภักดีของอาเธอร์',
-        icon: '⚔️',
-        desc: 'ผู้รับใช้ที่ซื่อสัตย์ของกษัตริย์อาเธอร์ ทำภารกิจให้สำเร็จและช่วยปกป้องความลับของเมอร์ลิน',
-        team: 'good'
-    },
-    'Loyal Servant 3': {
-        name: 'Loyal Servant',
-        thai: 'อัศวินผู้ภักดีของอาเธอร์',
-        icon: '⚔️',
-        desc: 'ผู้รับใช้ที่ซื่อสัตย์ของกษัตริย์อาเธอร์ ทำภารกิจให้สำเร็จและช่วยปกป้องความลับของเมอร์ลิน',
-        team: 'good'
-    },
-    'Loyal Servant 4': {
-        name: 'Loyal Servant',
+    'Loyal Servant of Arthur': {
+        name: 'Loyal Servant of Arthur',
         thai: 'อัศวินผู้ภักดีของอาเธอร์',
         icon: '⚔️',
         desc: 'ผู้รับใช้ที่ซื่อสัตย์ของกษัตริย์อาเธอร์ ทำภารกิจให้สำเร็จและช่วยปกป้องความลับของเมอร์ลิน',
@@ -551,14 +530,7 @@ const ROLES_DETAILS = {
         desc: 'ฝ่ายร้ายที่ไม่รู้จักฝ่ายร้ายคนอื่น และฝ่ายร้ายคนอื่นก็ไม่รู้จักเขาเช่นกัน',
         team: 'evil'
     },
-    'Other Evil 1': {
-        name: 'Minion of Mordred',
-        thai: 'สมุนฝ่ายมอร์เดรด',
-        icon: '🦹',
-        desc: 'สมุนฝ่ายร้าย รู้ว่าใครคือฝ่ายร้ายด้วยกัน ร่วมมือกันขัดขวางภารกิจให้ล้มเหลว',
-        team: 'evil'
-    },
-    'Other Evil 2': {
+    'Minion of Mordred': {
         name: 'Minion of Mordred',
         thai: 'สมุนฝ่ายมอร์เดรด',
         icon: '🦹',
@@ -566,6 +538,16 @@ const ROLES_DETAILS = {
         team: 'evil'
     }
 };
+
+// Compatibility aliases
+ROLES_DETAILS['Loyal Servant 1'] = ROLES_DETAILS['Loyal Servant of Arthur'];
+ROLES_DETAILS['Loyal Servant 2'] = ROLES_DETAILS['Loyal Servant of Arthur'];
+ROLES_DETAILS['Loyal Servant 3'] = ROLES_DETAILS['Loyal Servant of Arthur'];
+ROLES_DETAILS['Loyal Servant 4'] = ROLES_DETAILS['Loyal Servant of Arthur'];
+ROLES_DETAILS['Loyal Servant'] = ROLES_DETAILS['Loyal Servant of Arthur'];
+ROLES_DETAILS['Other Evil 1'] = ROLES_DETAILS['Minion of Mordred'];
+ROLES_DETAILS['Other Evil 2'] = ROLES_DETAILS['Minion of Mordred'];
+ROLES_DETAILS['Other Evil'] = ROLES_DETAILS['Minion of Mordred'];
 
 function toggleCardFlipPrivacy() {
     const cardInner = document.getElementById('player-card-inner');

@@ -47,7 +47,7 @@ io.on('connection', (socket) => {
             modId: socket.id,
             players: [], // { id, name, role }
             state: 'LOBBY',
-            config: config || { expectedPlayers: 5, roles: ['Merlin', 'Assassin', 'Loyal Servant 1', 'Loyal Servant 2', 'Other Evil 1'] },
+            config: config || { expectedPlayers: 5, roles: ['Merlin', 'Assassin', 'Loyal Servant of Arthur', 'Loyal Servant of Arthur', 'Minion of Mordred'] },
             questResults: [], // true for success, false for fail
             currentQuest: 1,
             leaderIndex: 0,
@@ -127,7 +127,7 @@ function getRequiredTeamSize(playerCount, questNumber) {
             
             // Use configured roles, slice to player count if needed
             let roles = shuffle([...room.config.roles].slice(0, playerCount));
-            while (roles.length < playerCount) { roles.push('Loyal Servant'); }
+            while (roles.length < playerCount) { roles.push('Loyal Servant of Arthur'); }
             
             room.players.forEach((player, index) => {
                 player.role = roles[index];
