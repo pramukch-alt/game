@@ -1,0 +1,352 @@
+/* DrinkTalk Custom Styling & 3D Engine - Mobile & iPad Optimized */
+:root {
+  --bg-primary: #0F1016;
+  --surface: #1B1D29;
+  --surface-light: #252839;
+  --neon-pink: #FF2E93;
+  --neon-purple: #7928CA;
+  --neon-cyan: #00F0FF;
+  --neon-amber: #FFB800;
+  --neon-green: #10B981;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0AEC0;
+}
+
+html, body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Prompt', 'Kanit', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Dynamic Viewport Container */
+.app-viewport {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Safe area padding for mobile home indicators */
+.safe-bottom-area {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.safe-top-area {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+/* Background Atmosphere */
+.bg-party-grid {
+  background-color: #0F1016;
+  background-image: 
+    radial-gradient(at 10% 10%, rgba(255, 46, 147, 0.12) 0px, transparent 50%),
+    radial-gradient(at 90% 10%, rgba(121, 40, 202, 0.15) 0px, transparent 50%),
+    radial-gradient(at 50% 90%, rgba(0, 240, 255, 0.1) 0px, transparent 60%),
+    radial-gradient(at 50% 50%, rgba(15, 16, 22, 0.95) 0px, transparent 100%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+}
+
+/* Glow Utilities */
+.glow-pink {
+  box-shadow: 0 0 20px rgba(255, 46, 147, 0.45), 0 0 40px rgba(255, 46, 147, 0.2);
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px rgba(121, 40, 202, 0.45), 0 0 40px rgba(121, 40, 202, 0.2);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.45), 0 0 40px rgba(0, 240, 255, 0.2);
+}
+
+.glow-amber {
+  box-shadow: 0 0 20px rgba(255, 184, 0, 0.45), 0 0 40px rgba(255, 184, 0, 0.2);
+}
+
+.text-glow-pink {
+  text-shadow: 0 0 10px rgba(255, 46, 147, 0.7), 0 0 20px rgba(255, 46, 147, 0.3);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.7), 0 0 20px rgba(0, 240, 255, 0.3);
+}
+
+.text-glow-purple {
+  text-shadow: 0 0 10px rgba(121, 40, 202, 0.7), 0 0 20px rgba(121, 40, 202, 0.3);
+}
+
+/* ============================================================ */
+/* 3D CARD SCENE & RESPONSIVE PROPORTIONS (Mobile & iPad) */
+/* ============================================================ */
+.card-scene {
+  perspective: 1400px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Base Card Container (Mobile-first fluid sizing) */
+.card-container {
+  width: min(88vw, 360px);
+  height: clamp(340px, 48dvh, 480px);
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* iPad Mini & iPad Standard (Portrait: 768px - 834px) */
+@media (min-width: 768px) {
+  .card-container {
+    width: min(75vw, 460px);
+    max-width: 460px;
+    height: clamp(500px, 56dvh, 640px);
+  }
+
+  .card-question-text {
+    font-size: 1.85rem !important;
+    line-height: 2.35rem !important;
+  }
+
+  .card-face {
+    border-radius: 36px !important;
+    padding: 2.25rem !important;
+  }
+}
+
+/* iPad Pro / Large Tablets / Desktop (min-width: 1024px) */
+@media (min-width: 1024px) {
+  .card-container {
+    width: min(65vw, 500px);
+    max-width: 500px;
+    height: clamp(540px, 60dvh, 680px);
+  }
+
+  .card-question-text {
+    font-size: 2.15rem !important;
+    line-height: 2.75rem !important;
+  }
+
+  .card-face {
+    border-radius: 40px !important;
+    padding: 2.5rem !important;
+  }
+}
+
+/* Compact Mobile Phones (iPhone SE, smaller Androids, height < 720px) */
+@media (max-height: 720px) and (max-width: 500px) {
+  .card-container {
+    width: min(90vw, 320px);
+    height: clamp(300px, 46dvh, 410px);
+  }
+
+  .card-question-text {
+    font-size: 1.15rem !important;
+    line-height: 1.65rem !important;
+  }
+
+  .card-face {
+    padding: 1.15rem !important;
+    border-radius: 24px !important;
+  }
+}
+
+/* Landscape Mode Adaptation (Smartphones held sideways) */
+@media (orientation: landscape) and (max-height: 520px) {
+  #gameRoomView {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  .game-room-content {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 1.5rem !important;
+  }
+
+  .card-container {
+    width: 260px !important;
+    height: clamp(230px, 68dvh, 290px) !important;
+  }
+
+  .card-question-text {
+    font-size: 1rem !important;
+    line-height: 1.4rem !important;
+  }
+
+  .card-face {
+    padding: 0.85rem !important;
+    border-radius: 20px !important;
+  }
+
+  .landscape-controls {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    width: 220px !important;
+  }
+}
+
+.card-container.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 28px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Card Back (Deck Stack look) */
+.card-back {
+  transform: rotateY(0deg);
+  background: #151722;
+  border: 2px solid rgba(255, 215, 0, 0.35);
+  box-shadow: 
+    0 10px 30px -5px rgba(0, 0, 0, 0.8),
+    0 0 25px rgba(255, 46, 147, 0.3),
+    4px 4px 0 rgba(20, 22, 33, 0.9),
+    8px 8px 0 rgba(15, 17, 26, 0.8),
+    12px 12px 0 rgba(10, 11, 18, 0.7);
+}
+
+/* 3D Deck Stack Illusion */
+.card-back::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 46, 147, 0.15), transparent 70%);
+  pointer-events: none;
+}
+
+/* Card Front */
+.card-front {
+  transform: rotateY(180deg);
+  background: #1B1D29;
+  border: 2px solid rgba(255, 46, 147, 0.4);
+  box-shadow: 
+    0 20px 40px -10px rgba(0, 0, 0, 0.9),
+    0 0 35px rgba(255, 46, 147, 0.25);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem;
+}
+
+/* Category Specific Front Borders & Glows */
+.card-front.theme-general {
+  border-color: rgba(0, 240, 255, 0.5);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.9), 0 0 35px rgba(0, 240, 255, 0.3);
+}
+
+.card-front.theme-deep {
+  border-color: rgba(121, 40, 202, 0.6);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.9), 0 0 40px rgba(121, 40, 202, 0.35);
+}
+
+.card-front.theme-dirty {
+  border-color: rgba(255, 46, 147, 0.6);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.9), 0 0 40px rgba(255, 46, 147, 0.35);
+}
+
+.card-front.theme-special {
+  border-color: rgba(255, 184, 0, 0.7);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.9), 0 0 45px rgba(255, 184, 0, 0.4);
+}
+
+/* Smooth Interactive Micro-animations */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) {
+  .hover-lift:hover {
+    transform: translateY(-4px);
+  }
+}
+
+.hover-lift:active {
+  transform: translateY(0) scale(0.96);
+}
+
+/* Pulse animation for next button */
+@keyframes neonPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 46, 147, 0.6), 0 0 40px rgba(255, 46, 147, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 46, 147, 0.8), 0 0 60px rgba(255, 46, 147, 0.5);
+  }
+}
+
+.btn-neon-pulse {
+  animation: neonPulse 2.5s infinite ease-in-out;
+}
+
+/* Subtle Shimmer Effect */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.shimmer-badge {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-badge::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  animation: shimmer 2s infinite;
+}
+
+/* Rainbow border for Mix Mode */
+.rainbow-border {
+  background: linear-gradient(135deg, #00F0FF, #7928CA, #FF2E93, #FFB800);
+  padding: 2px;
+  border-radius: 1.75rem;
+}
+
+.rainbow-inner {
+  background: #1B1D29;
+  border-radius: calc(1.75rem - 2px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0F1016;
+}
+::-webkit-scrollbar-thumb {
+  background: #2D3142;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FF2E93;
+}
