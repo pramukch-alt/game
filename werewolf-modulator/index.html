@@ -357,7 +357,7 @@
 
                     <!-- Bottom Status Text -->
                     <div class="w-full space-y-1.5">
-                        <h4 class="text-sm font-bold text-white tracking-wide">
+                        <h4 id="player-waiting-status-text" class="text-sm font-bold text-white tracking-wide">
                             รอสมาชิกให้ครบทีม...
                         </h4>
                         <div class="bg-slate-900/90 backdrop-blur border border-slate-700/80 rounded-xl py-1.5 px-3">
@@ -1143,14 +1143,14 @@
                     } catch(e) {}
                 }
 
-                // Auto-start if all players joined!
-                const totalTarget = getTotalPlayersCount();
-                if (joinedPlayers.length >= totalTarget && totalTarget > 0) {
-                    if (autoStartTimer) clearTimeout(autoStartTimer);
-                    autoStartTimer = setTimeout(() => {
-                        triggerGameStart();
-                    }, 800);
-                }
+                // Auto-start disabled by user request. Game will only start when Admin clicks Start button.
+                // const totalTarget = getTotalPlayersCount();
+                // if (joinedPlayers.length >= totalTarget && totalTarget > 0) {
+                //     if (autoStartTimer) clearTimeout(autoStartTimer);
+                //     autoStartTimer = setTimeout(() => {
+                //         triggerGameStart();
+                //     }, 800);
+                // }
             }
 
             // PLAYERS RECEIVE ROOM STATE UPDATE
@@ -1158,8 +1158,20 @@
                 // Update waiting screen
                 const countEl = document.getElementById('player-view-count');
                 const totalEl = document.getElementById('player-view-total');
+                const waitingStatusText = document.getElementById('player-waiting-status-text');
+                
                 if (countEl) countEl.innerText = data.joinedCount;
                 if (totalEl) totalEl.innerText = data.totalTarget;
+                
+                if (waitingStatusText) {
+                    if (data.joinedCount >= data.totalTarget && data.totalTarget > 0) {
+                        waitingStatusText.innerText = 'รอ Admin กดเริ่มเกม...';
+                        waitingStatusText.classList.replace('text-white', 'text-emerald-400');
+                    } else {
+                        waitingStatusText.innerText = 'รอสมาชิกให้ครบทีม...';
+                        waitingStatusText.classList.replace('text-emerald-400', 'text-white');
+                    }
+                }
 
                 const friendsEl = document.getElementById('player-friends-preview');
                 if (friendsEl && data.playersList && data.playersList.length > 0) {
@@ -1509,11 +1521,11 @@
             updateModLobbyUI();
             broadcastRoomStateUpdate();
 
-            // Auto start if full
-            if (joinedPlayers.length >= total) {
-                if (autoStartTimer) clearTimeout(autoStartTimer);
-                autoStartTimer = setTimeout(() => { triggerGameStart(); }, 600);
-            }
+            // Auto start if full (Disabled by user request - require manual start)
+            // if (joinedPlayers.length >= total) {
+            //     if (autoStartTimer) clearTimeout(autoStartTimer);
+            //     autoStartTimer = setTimeout(() => { triggerGameStart(); }, 600);
+            // }
         }
 
         function updateModLobbyUI() {
