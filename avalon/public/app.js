@@ -1,17 +1,80 @@
-// Smart Socket.io initialization
+// Smart Socket.io initialization & network discovery
 let socket;
-if (typeof io !== 'undefined') {
-    if (window.location.protocol === 'file:' || (window.location.port !== '3000' && window.location.hostname === 'localhost')) {
-        socket = io('http://localhost:3000', { reconnectionAttempts: 3, timeout: 2500 });
-    } else {
-        socket = io({ reconnectionAttempts: 3, timeout: 2500 });
+let serverLanIp = '';
+
+function updateConnectionBadge(isConnected, message) {
+    const modBadge = document.getElementById('mod-conn-status');
+    const playerBadge = document.getElementById('player-join-conn-status');
+
+    if (modBadge) {
+        if (isConnected) {
+            modBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800 mt-1';
+            modBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>🟢 สัญญาณออนไลน์ พร้อมรับผู้เล่น</span>`;
+        } else {
+            modBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-950 text-amber-300 border border-amber-800 mt-1';
+            modBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span><span>🟡 กำลังเชื่อมต่อเซิร์ฟเวอร์...</span>`;
+        }
     }
+
+    if (playerBadge) {
+        if (isConnected) {
+            playerBadge.className = 'px-2.5 py-1 rounded-full text-[11px] bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center gap-1.5 inline-flex';
+            playerBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>🟢 ${message || 'เชื่อมต่อเซิร์ฟเวอร์สำเร็จ พร้อมเข้าร่วมห้อง'}</span>`;
+        } else {
+            playerBadge.className = 'px-2.5 py-1 rounded-full text-[11px] bg-rose-950 text-rose-300 border border-rose-800 flex items-center gap-1.5 inline-flex';
+            playerBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span><span>🔴 ${message || 'กำลังเชื่อมต่อเซิร์ฟเวอร์ (พอร์ต 3000)...'}</span>`;
+        }
+    }
+}
+
+const socketOptions = {
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 10000
+};
+
+if (typeof io !== 'undefined') {
+    if (window.location.protocol === 'file:' || (window.location.port !== '3000' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))) {
+        socket = io('http://localhost:3000', socketOptions);
+    } else {
+        socket = io(socketOptions);
+    }
+
+    socket.on('connect', () => {
+        console.log('Socket.IO connected successfully:', socket.id);
+        updateConnectionBadge(true);
+    });
+
+    socket.on('disconnect', () => {
+        console.warn('Socket.IO disconnected');
+        updateConnectionBadge(false, 'สัญญาณหลุด กำลังเชื่อมต่อใหม่...');
+    });
+
+    socket.on('connect_error', (err) => {
+        console.warn('Socket.IO connect_error:', err?.message || err);
+        updateConnectionBadge(false, 'ยังไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ (พอร์ต 3000)');
+    });
 } else {
     socket = {
         on: () => {},
         emit: () => {},
         connected: false
     };
+}
+
+// Fetch network IP info from server if possible
+if (window.location.protocol.startsWith('http')) {
+    fetch('/api/server-info')
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.ip) {
+                serverLanIp = data.ip;
+                console.log('Server LAN IP detected:', serverLanIp);
+            }
+        })
+        .catch(() => {});
 }
 
 // Screen IDs
@@ -224,6 +287,16 @@ function getJoinUrl(roomCode) {
     if (!base.endsWith('/')) {
         base += '/';
     }
+
+    // If running on localhost or 127.0.0.1, and we have a valid LAN IP, replace it so mobile phones on Wi-Fi can scan and connect!
+    if (serverLanIp && serverLanIp !== 'localhost' && serverLanIp !== '127.0.0.1') {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            base = base.replace('localhost', serverLanIp).replace('127.0.0.1', serverLanIp);
+        } else if (window.location.protocol === 'file:') {
+            base = `http://${serverLanIp}:3000/`;
+        }
+    }
+
     return base + '?room=' + encodeURIComponent(roomCode);
 }
 
@@ -419,33 +492,138 @@ window.simulatePlayerBot = simulatePlayerBot;
 
 // --- Manual Join from Home ---
 document.getElementById('btn-join-submit')?.addEventListener('click', () => {
-    const code = document.getElementById('input-room-code')?.value.trim();
+    const code = document.getElementById('input-room-code')?.value.trim().toUpperCase();
     const name = document.getElementById('input-player-name')?.value.trim();
-    if (code && name) {
-        socket.emit('joinRoom', { roomCode: code, playerName: name });
-    } else {
+    if (!code || !name) {
         alert('กรุณากรอกทั้งชื่อและรหัสห้อง');
+        return;
+    }
+    
+    const btn = document.getElementById('btn-join-submit');
+    const origText = btn ? btn.innerText : 'เข้าร่วมห้อง';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'กำลังเชื่อมต่อ...';
+    }
+
+    if (socket && socket.connected) {
+        socket.emit('joinRoom', { roomCode: code, playerName: name });
+        setTimeout(() => {
+            if (btn && currentScreen === 'screen-home') {
+                btn.disabled = false;
+                btn.innerText = origText;
+            }
+        }, 6000);
+    } else {
+        if (socket && typeof socket.connect === 'function') socket.connect();
+        alert('ยังไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ในขณะนี้ กรุณาตรวจสอบว่าเซิร์ฟเวอร์เปิดอยู่ (พอร์ต 3000)');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = origText;
+        }
     }
 });
 
 // --- Direct Join from QR Scan URL ---
 function submitDirectPlayerJoin() {
-    const name = document.getElementById('player-direct-name')?.value.trim();
+    const nameInput = document.getElementById('player-direct-name');
+    const name = nameInput?.value.trim();
     if (!name) {
         alert('กรุณากรอกชื่อของคุณ');
+        if (nameInput) nameInput.focus();
         return;
     }
-    if (activeRoomCode) {
-        socket.emit('joinRoom', { roomCode: activeRoomCode, playerName: name });
+
+    // Resolve room code safely from state, URL, or view elements
+    let room = (activeRoomCode || '').trim().toUpperCase();
+    if (!room || room === 'AV-XXXX') {
+        const params = new URLSearchParams(window.location.search);
+        room = (params.get('room') || document.getElementById('player-view-room-code')?.innerText || document.getElementById('input-room-code')?.value || '').trim().toUpperCase();
     }
+    if (!room || room === 'AV-XXXX') {
+        alert('ไม่พบรหัสห้อง กรุณาสแกน QR Code ใหม่อีกครั้ง หรือกลับไปที่หน้าแรก');
+        return;
+    }
+    activeRoomCode = room;
+
+    const btn = document.getElementById('btn-direct-join') || document.querySelector('#screen-player-join button');
+    const originalHTML = btn ? btn.innerHTML : '<span>เข้าร่วมห้อง & รอรับการ์ด</span> <span>🃏</span>';
+    
+    if (btn) {
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-wait');
+        btn.innerHTML = `<span>กำลังเข้าสู่ห้อง...</span> <span class="animate-spin inline-block ml-1">⏳</span>`;
+    }
+
+    const resetBtn = () => {
+        if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('opacity-75', 'cursor-wait');
+            btn.innerHTML = originalHTML;
+        }
+    };
+
+    // If socket is connected, emit joinRoom immediately!
+    if (socket && socket.connected) {
+        socket.emit('joinRoom', { roomCode: room, playerName: name });
+        // Set safety timeout in case server doesn't respond
+        setTimeout(() => {
+            if (currentScreen === 'screen-player-join') {
+                resetBtn();
+            }
+        }, 8000);
+        return;
+    }
+
+    // If socket is not connected yet, attempt reconnect
+    console.warn('Socket not connected yet, connecting...');
+    updateConnectionBadge(false, 'กำลังเชื่อมต่อเซิร์ฟเวอร์...');
+    if (socket && typeof socket.connect === 'function') {
+        socket.connect();
+    }
+
+    let attempts = 0;
+    const interval = setInterval(() => {
+        attempts++;
+        if (socket && socket.connected) {
+            clearInterval(interval);
+            updateConnectionBadge(true);
+            socket.emit('joinRoom', { roomCode: room, playerName: name });
+            setTimeout(() => {
+                if (currentScreen === 'screen-player-join') resetBtn();
+            }, 8000);
+        } else if (attempts >= 10) { // 5 seconds timeout
+            clearInterval(interval);
+            resetBtn();
+            alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ในขณะนี้\n\nคำแนะนำ:\n1. ตรวจสอบว่าเปิดเซิร์ฟเวอร์ node server.js แล้วหรือยัง\n2. ตรวจสอบว่าโทรศัพท์และคอมพิวเตอร์อยู่ใน Wi-Fi วงเดียวกัน\n3. ตรวจสอบว่า URL ในแถบที่อยู่ตรงกับ IP ของเครื่องคอมพิวเตอร์');
+        }
+    }, 500);
 }
 window.submitDirectPlayerJoin = submitDirectPlayerJoin;
 
 // --- Socket Listeners (Common) ---
-socket.on('error', (msg) => alert(msg));
+socket.on('error', (msg) => {
+    const btn = document.getElementById('btn-direct-join') || document.querySelector('#screen-player-join button');
+    if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-wait');
+        btn.innerHTML = `<span>เข้าร่วมห้อง & รอรับการ์ด</span> <span>🃏</span>`;
+    }
+    const btnHome = document.getElementById('btn-join-submit');
+    if (btnHome) {
+        btnHome.disabled = false;
+        btnHome.innerText = 'เข้าร่วมห้อง';
+    }
+    alert(msg);
+});
 
 // --- Socket Listeners (Mod Room Created -> Load New QR Screen!) ---
-socket.on('roomCreated', (roomCode) => {
+socket.on('roomCreated', (data) => {
+    const roomCode = (typeof data === 'object' && data.roomCode) ? data.roomCode : data;
+    if (typeof data === 'object' && data.lanIp) {
+        serverLanIp = data.lanIp;
+        console.log('Server LAN IP updated via roomCreated:', serverLanIp);
+    }
     setupModLobby(roomCode, expectedPlayers);
 });
 
@@ -471,6 +649,13 @@ socket.on('joined', ({ roomCode, playerName }) => {
     myRoom = roomCode;
     myName = playerName;
     
+    const btn = document.getElementById('btn-direct-join') || document.querySelector('#screen-player-join button');
+    if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-wait');
+        btn.innerHTML = `<span>เข้าร่วมห้อง & รอรับการ์ด</span> <span>🃏</span>`;
+    }
+
     const waitingTag = document.getElementById('waiting-room-tag');
     if (waitingTag) waitingTag.innerText = roomCode;
     
@@ -1166,7 +1351,7 @@ function updateVoteTrack(failedCount) {
 }
 
 // --- Direct Room Join via URL Parsing (?room=AV-XXXX) ---
-window.onload = function() {
+function initDirectJoin() {
     const params = new URLSearchParams(window.location.search);
     const roomParam = params.get('room');
     if (roomParam) {
@@ -1181,4 +1366,18 @@ window.onload = function() {
     } else {
         showScreen('screen-home');
     }
-};
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDirectJoin);
+} else {
+    initDirectJoin();
+}
+
+// Support Enter key on name input in player join screen
+document.getElementById('player-direct-name')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        submitDirectPlayerJoin();
+    }
+});

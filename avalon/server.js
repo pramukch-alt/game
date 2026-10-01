@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const os = require('os');
 
 const app = express();
 const server = http.createServer(app);
@@ -15,6 +16,27 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Helper: Get Primary Local Network IPv4 Address
+function getLocalIpAddress() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return 'localhost';
+}
+
+// API: Server Network Info
+app.get('/api/server-info', (req, res) => {
+    res.json({
+        ip: getLocalIpAddress(),
+        port: PORT
+    });
+});
 
 // Game State Storage
 const rooms = {};
@@ -57,8 +79,9 @@ io.on('connection', (socket) => {
             rejectedVoteCount: 0 // track consecutive rejected teams
         };
         socket.join(roomCode);
-        console.log('Room created successfully:', roomCode, 'Expected players:', config?.expectedPlayers);
-        socket.emit('roomCreated', roomCode);
+        const lanIp = getLocalIpAddress();
+        console.log('Room created successfully:', roomCode, 'Expected players:', config?.expectedPlayers, 'LAN IP:', lanIp);
+        socket.emit('roomCreated', { roomCode, lanIp, port: PORT });
     });
 
     // Join Room (Player)
@@ -488,6 +511,9 @@ function getRequiredTeamSize(playerCount, questNumber) {
     });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
+    const localIp = getLocalIpAddress();
     console.log(`Server listening on port ${PORT}`);
+    console.log(`Local Access URL:   http://localhost:${PORT}`);
+    console.log(`Network Access URL: http://${localIp}:${PORT}`);
 });

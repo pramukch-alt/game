@@ -268,7 +268,7 @@
                         AV-0000
                     </div>
                     <!-- Connection Status Tag -->
-                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800 mt-1">
+                    <div id="mod-conn-status" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800 mt-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                         <span>🟢 สัญญาณออนไลน์ พร้อมรับผู้เล่น</span>
                     </div>
@@ -408,9 +408,17 @@
 
                 <div class="space-y-3 pt-2">
                     <input type="text" id="player-direct-name" placeholder="พิมพ์ชื่อเล่นของคุณ..." maxlength="20" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 text-center font-semibold focus:outline-none focus:border-amber-500 transition shadow-inner">
-                    <button onclick="submitDirectPlayerJoin()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-amber-500/20 text-sm active:scale-95">
-                        เข้าร่วมห้อง & รอรับการ์ด 🃏
+                    <button id="btn-direct-join" onclick="submitDirectPlayerJoin()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-amber-500/20 text-sm active:scale-95 flex items-center justify-center gap-1.5">
+                        <span>เข้าร่วมห้อง & รอรับการ์ด</span>
+                        <span>🃏</span>
                     </button>
+                    <!-- Real-time Status Badge & Room Info -->
+                    <div class="pt-1 flex flex-col items-center gap-1.5">
+                        <span id="player-join-conn-status" class="px-2.5 py-1 rounded-full text-[11px] bg-slate-950 text-slate-400 border border-slate-800 flex items-center gap-1.5 inline-flex">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                            <span>กำลังตรวจสอบสัญญาณเซิร์ฟเวอร์...</span>
+                        </span>
+                    </div>
                 </div>
             </div>
         </section>
