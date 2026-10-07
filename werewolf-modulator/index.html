@@ -566,6 +566,43 @@
             </button>
         </section>
 
+        <!-- ========================================== -->
+        <!-- MODAL: MAD BOMBER SELECT TARGETS -->
+        <!-- ========================================== -->
+        <div id="modal-mad-bomber" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-950/80 backdrop-blur-sm px-4">
+            <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-2xl p-5 shadow-2xl space-y-4">
+                <div class="text-center space-y-1">
+                    <div class="text-4xl">💣</div>
+                    <h3 class="text-lg font-bold text-slate-100">Mad Bomber ถูกสังหาร!</h3>
+                    <p class="text-xs text-slate-400">เลือกระบุตัวผู้เล่นที่นั่งทางซ้ายและขวา เพื่อให้ระเบิดทำงานสังหารพวกเขา (เลือก "ไม่มี" หากไม่มีคนนั่งฝั่งนั้น)</p>
+                </div>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-300 mb-1">👈 ผู้เล่นทางซ้าย</label>
+                        <select id="mad-bomber-target-left" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                            <!-- Populated via JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-300 mb-1">👉 ผู้เล่นทางขวา</label>
+                        <select id="mad-bomber-target-right" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                            <!-- Populated via JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-2">
+                    <button onclick="triggerMadBomberBlast()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl transition shadow text-sm">
+                        💥 ระเบิดทำงาน (สังหารเป้าหมาย)
+                    </button>
+                    <button onclick="closeMadBomberModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl transition border border-slate-700 text-xs">
+                        ข้าม (ไม่มีคนระเบิด)
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- ========================================== -->
@@ -2627,24 +2664,10 @@
                     }
                 }
 
-                // If Mad Bomber dies, ask if bomb triggers
+                // If Mad Bomber dies, open target selection modal
                 if (roleId === 'mad_bomber') {
-                    const triggerBomb = confirm(`ผู้เล่น ${playerName} คือ Mad Bomber (มือระเบิดบ้าคลั่ง)!\n\nต้องการให้ระเบิดทำงานสังหารผู้เล่นทางซ้ายและขวาด้วยหรือไม่? 💣`);
-                    if (triggerBomb) {
-                        gameState.playerStatus[playerName].alive = false;
-                        const adjacent = getAdjacentLivingPlayers(playerName);
-                        adjacent.forEach(adj => {
-                            if (gameState.playerStatus[adj]) gameState.playerStatus[adj].alive = false;
-                            if (gameState.lovers.includes(adj)) {
-                                const partner = gameState.lovers.find(p => p !== adj);
-                                if (partner && gameState.playerStatus[partner]) gameState.playerStatus[partner].alive = false;
-                            }
-                        });
-                        renderPlayerStatusList();
-                        const adjText = adjacent.length > 0 ? adjacent.join(', ') : 'ไม่มี';
-                        alert(`💥 ระเบิดทำงาน!\n\nMad Bomber (${playerName}) เสียชีวิต ทำให้ผู้เล่นทางซ้ายและขวา (${adjText}) เสียชีวิตตามทันที! 💣💀`);
-                        return;
-                    }
+                    openMadBomberModal(playerName);
+                    return; // Stop here, modal will handle the status update
                 }
             }
 
@@ -2657,6 +2680,87 @@
                     alert(`💘 เงื่อนไข Lover: ${partner} เสียชีวิตตาม ${playerName} ทันที!`);
                 }
             }
+            renderPlayerStatusList();
+        }
+
+        let activeMadBomber = null;
+
+        function openMadBomberModal(playerName) {
+            activeMadBomber = playerName;
+            
+            const leftSelect = document.getElementById('mad-bomber-target-left');
+            const rightSelect = document.getElementById('mad-bomber-target-right');
+            
+            const livingPlayers = gameState.players.filter(p => gameState.playerStatus[p].alive && p !== playerName);
+            
+            let optionsHtml = '<option value="">(ไม่มีคนนั่งข้าง)</option>';
+            livingPlayers.forEach(p => {
+                const role = gameState.rolePlayerMap[p] || 'unknown';
+                const roleObj = ROLES_DATABASE.find(r => r.id === role);
+                optionsHtml += `<option value="${p}">${p} (${roleObj ? roleObj.name : role})</option>`;
+            });
+
+            leftSelect.innerHTML = optionsHtml;
+            rightSelect.innerHTML = optionsHtml;
+
+            // Auto-suggest using array order as fallback
+            const adjacent = getAdjacentLivingPlayers(playerName);
+            if (adjacent.length > 0) leftSelect.value = adjacent[0];
+            if (adjacent.length > 1) rightSelect.value = adjacent[1];
+
+            document.getElementById('modal-mad-bomber').classList.remove('hidden');
+        }
+
+        function closeMadBomberModal() {
+            if (activeMadBomber) {
+                // Kill ONLY the mad bomber, skip bomb
+                gameState.playerStatus[activeMadBomber].alive = false;
+                
+                // Lover check
+                if (gameState.lovers.includes(activeMadBomber)) {
+                    const partner = gameState.lovers.find(p => p !== activeMadBomber);
+                    if (partner && gameState.playerStatus[partner].alive) {
+                        gameState.playerStatus[partner].alive = false;
+                        alert(`💘 เงื่อนไข Lover: ${partner} เสียชีวิตตาม ${activeMadBomber} ทันที!`);
+                    }
+                }
+            }
+            activeMadBomber = null;
+            document.getElementById('modal-mad-bomber').classList.add('hidden');
+            renderPlayerStatusList();
+        }
+
+        function triggerMadBomberBlast() {
+            if (!activeMadBomber) return;
+            
+            const leftTarget = document.getElementById('mad-bomber-target-left').value;
+            const rightTarget = document.getElementById('mad-bomber-target-right').value;
+            
+            const targetsToKill = new Set([activeMadBomber]);
+            if (leftTarget) targetsToKill.add(leftTarget);
+            if (rightTarget) targetsToKill.add(rightTarget);
+            
+            targetsToKill.forEach(target => {
+                if (gameState.playerStatus[target]) {
+                    gameState.playerStatus[target].alive = false;
+                    
+                    // Lover check
+                    if (gameState.lovers.includes(target)) {
+                        const partner = gameState.lovers.find(p => p !== target);
+                        if (partner && gameState.playerStatus[partner].alive) {
+                            gameState.playerStatus[partner].alive = false;
+                            alert(`💘 เงื่อนไข Lover: ${partner} เสียชีวิตตามคู่รัก ทันที!`);
+                        }
+                    }
+                }
+            });
+
+            const killedList = Array.from(targetsToKill).filter(p => p !== activeMadBomber);
+            const adjText = killedList.length > 0 ? killedList.join(', ') : 'ไม่มี (ระเบิดว่าว)';
+            alert(`💥 ระเบิดทำงาน!\n\nMad Bomber (${activeMadBomber}) เสียชีวิต ทำให้ผู้เล่นที่เลือก (${adjText}) เสียชีวิตตามทันที! 💣💀`);
+
+            activeMadBomber = null;
+            document.getElementById('modal-mad-bomber').classList.add('hidden');
             renderPlayerStatusList();
         }
 
