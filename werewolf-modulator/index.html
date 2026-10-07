@@ -2244,7 +2244,7 @@
                 
                 const isTurnedWolf = gameState.cursedTurned.includes(p);
                 if (status.alive && role === 'cursed' && isTurnedWolf) {
-                    statusBtnText = '🟡 <span>รอด (เหลือง)</span>';
+                    statusBtnText = '🟡 <span>รอด</span>';
                     statusBtnClass = 'bg-amber-950 text-amber-400 border-amber-800';
                 }
 
@@ -2607,7 +2607,7 @@
 
                 // If Cursed is being killed, check if it's a wolf bite to transform them instead
                 if (roleId === 'cursed' && !gameState.cursedTurned.includes(playerName)) {
-                    const isWolfBite = confirm(`ผู้เล่น ${playerName} คือ Cursed (คนต้องสาป)!\n\nการกดให้เสียชีวิตครั้งนี้ เกิดจากการ "ถูกหมาป่ากัดในตอนกลางคืน" ใช่หรือไม่?\n\n- กด OK: หากถูกหมาป่ากัด (จะกลายร่างเป็นหมาป่า และปุ่มจะเปลี่ยนเป็น รอด(เหลือง))\n- กด Cancel: หากถูกชาวบ้านโหวต หรือตายจากสาเหตุอื่น (จะเสียชีวิตทันที)`);
+                    const isWolfBite = confirm(`ผู้เล่น ${playerName} คือ Cursed (คนต้องสาป)!\n\nการกดให้เสียชีวิตครั้งนี้ เกิดจากการ "ถูกหมาป่ากัดในตอนกลางคืน" ใช่หรือไม่?\n\n- กด OK: หากถูกหมาป่ากัด (จะกลายร่างเป็นหมาป่า และปุ่มจะเปลี่ยนเป็นปุ่มสีเหลือง)\n- กด Cancel: หากถูกชาวบ้านโหวต หรือตายจากสาเหตุอื่น (จะเสียชีวิตทันที)`);
                     if (isWolfBite) {
                         gameState.cursedTurned.push(playerName);
                         renderPlayerStatusList();
