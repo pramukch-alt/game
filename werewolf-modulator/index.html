@@ -123,6 +123,13 @@
                             <span class="text-lg">📱</span>
                             <span>สร้างห้องใหม่ (สแกน QR Code รับการ์ด)</span>
                         </button>
+                        
+                        <!-- Traveler Role Button (New) -->
+                        <button onclick="openTravelerModal()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-semibold py-3 px-4 rounded-xl border border-purple-500 transition shadow-lg shadow-purple-600/20 flex items-center justify-center gap-2 active:scale-[0.99]">
+                            <span class="text-lg">🧳</span>
+                            <span>เลือกบทบาท Traveler (สำหรับผู้เล่นมาใหม่)</span>
+                        </button>
+                        
                         <p class="text-[11px] text-slate-400 drop-shadow">สแกนมือถือ สุ่มการ์ดอัตโนมัติ ไม่ต้องเลือก Dropdown</p>
 
                         <div class="relative py-2">
@@ -598,6 +605,86 @@
                     </button>
                     <button onclick="closeMadBomberModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl transition border border-slate-700 text-xs">
                         ข้าม (ไม่มีคนระเบิด)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MODAL: TRAVELER SELECT (For Late Joiners) -->
+        <!-- ========================================== -->
+        <div id="modal-traveler" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-950/90 backdrop-blur-sm px-4">
+            <div class="bg-slate-900 border border-purple-500/50 w-full max-w-md rounded-2xl p-5 shadow-2xl shadow-purple-900/20 max-h-[90vh] overflow-y-auto">
+                <div class="text-center space-y-1 mb-4">
+                    <h3 class="text-lg font-bold text-purple-400">🧳 เลือกบทบาท Traveler</h3>
+                    <p class="text-[11px] text-slate-400">ให้ Modulator เลือกบทบาทและฝ่าย (ดี/ร้าย) ให้กับผู้เล่นที่เพิ่งเข้าร่วมกลางเกม</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- Judge -->
+                    <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl">⚖️</span>
+                            <div>
+                                <div class="text-sm font-bold text-slate-200">Judge (ผู้พิพากษา)</div>
+                                <div class="text-[10px] text-slate-400">สั่ง "ยกเลิก" การประหารได้ 1 ครั้ง</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="assignTraveler('judge_good')" class="flex-1 bg-emerald-900/50 hover:bg-emerald-800 text-emerald-400 border border-emerald-800 text-xs py-2 rounded-lg transition">ฝ่ายชาวบ้าน</button>
+                            <button onclick="assignTraveler('judge_evil')" class="flex-1 bg-rose-900/50 hover:bg-rose-800 text-rose-400 border border-rose-800 text-xs py-2 rounded-lg transition">ฝ่ายหมาป่า</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Gunslinger -->
+                    <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl">🔫</span>
+                            <div>
+                                <div class="text-sm font-bold text-slate-200">Gunslinger (มือปืน)</div>
+                                <div class="text-[10px] text-slate-400">ยิงคนให้ตายทันทีได้ 1 ครั้ง</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="assignTraveler('gunslinger_good')" class="flex-1 bg-emerald-900/50 hover:bg-emerald-800 text-emerald-400 border border-emerald-800 text-xs py-2 rounded-lg transition">ฝ่ายชาวบ้าน</button>
+                            <button onclick="assignTraveler('gunslinger_evil')" class="flex-1 bg-rose-900/50 hover:bg-rose-800 text-rose-400 border border-rose-800 text-xs py-2 rounded-lg transition">ฝ่ายหมาป่า</button>
+                        </div>
+                    </div>
+
+                    <!-- Politician -->
+                    <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl">🏛️</span>
+                            <div>
+                                <div class="text-sm font-bold text-slate-200">Politician (นักการเมือง)</div>
+                                <div class="text-[10px] text-slate-400">คะแนนโหวตจะนับเป็น 2 เสียงตลอดเกม</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="assignTraveler('politician_good')" class="flex-1 bg-emerald-900/50 hover:bg-emerald-800 text-emerald-400 border border-emerald-800 text-xs py-2 rounded-lg transition">ฝ่ายชาวบ้าน</button>
+                            <button onclick="assignTraveler('politician_evil')" class="flex-1 bg-rose-900/50 hover:bg-rose-800 text-rose-400 border border-rose-800 text-xs py-2 rounded-lg transition">ฝ่ายหมาป่า</button>
+                        </div>
+                    </div>
+
+                    <!-- Bureaucrat -->
+                    <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl">📜</span>
+                            <div>
+                                <div class="text-sm font-bold text-slate-200">Bureaucrat (ข้าราชการ)</div>
+                                <div class="text-[10px] text-slate-400">เพิ่มสิทธิ์โหวตให้คนอื่น +1 เสียง ได้ 1 ครั้ง</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="assignTraveler('bureaucrat_good')" class="flex-1 bg-emerald-900/50 hover:bg-emerald-800 text-emerald-400 border border-emerald-800 text-xs py-2 rounded-lg transition">ฝ่ายชาวบ้าน</button>
+                            <button onclick="assignTraveler('bureaucrat_evil')" class="flex-1 bg-rose-900/50 hover:bg-rose-800 text-rose-400 border border-rose-800 text-xs py-2 rounded-lg transition">ฝ่ายหมาป่า</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button onclick="closeTravelerModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl transition border border-slate-700 text-xs">
+                        ยกเลิก
                     </button>
                 </div>
             </div>
@@ -2901,6 +2988,60 @@
                 };
                 showScreen('screen-home');
             }
+        }
+
+        // ==========================================
+        // TRAVELER ROLE LOGIC
+        // ==========================================
+        const TRAVELER_ROLES = {
+            'judge_good': { id: 'judge', name: 'Judge', thai: 'ผู้พิพากษา', icon: '⚖️', team: 'good', desc: 'ใช้ได้ 1 ครั้งต่อเกม หลังการโหวตประหารสำเร็จ สามารถสั่ง "ยกเลิก" การประหารนั้นได้ทันที' },
+            'judge_evil': { id: 'judge', name: 'Judge', thai: 'ผู้พิพากษา', icon: '⚖️', team: 'wolf', desc: 'ใช้ได้ 1 ครั้งต่อเกม หลังการโหวตประหารสำเร็จ สามารถสั่ง "ยกเลิก" การประหารนั้นได้ทันที' },
+            'gunslinger_good': { id: 'gunslinger', name: 'Gunslinger', thai: 'มือปืน', icon: '🔫', team: 'good', desc: 'ใช้ได้ 1 ครั้งต่อเกม สามารถเลือกยิงผู้เล่นคนใดก็ได้ 1 คน และผู้เล่นคนนั้นจะตายทันที' },
+            'gunslinger_evil': { id: 'gunslinger', name: 'Gunslinger', thai: 'มือปืน', icon: '🔫', team: 'wolf', desc: 'ใช้ได้ 1 ครั้งต่อเกม สามารถเลือกยิงผู้เล่นคนใดก็ได้ 1 คน และผู้เล่นคนนั้นจะตายทันที' },
+            'politician_good': { id: 'politician', name: 'Politician', thai: 'นักการเมือง', icon: '🏛️', team: 'good', desc: 'เสียงโหวตจะนับเป็น 2 เสียง ตลอดทั้งเกมในการลงมติทุกประเภท' },
+            'politician_evil': { id: 'politician', name: 'Politician', thai: 'นักการเมือง', icon: '🏛️', team: 'wolf', desc: 'เสียงโหวตจะนับเป็น 2 เสียง ตลอดทั้งเกมในการลงมติทุกประเภท' },
+            'bureaucrat_good': { id: 'bureaucrat', name: 'Bureaucrat', thai: 'ข้าราชการ', icon: '📜', team: 'good', desc: 'ใช้ได้ 1 ครั้งต่อเกม เลือกผู้เล่นอื่น 1 คนให้ได้รับโควตาคะแนนโหวตเพิ่มขึ้น +1 เสียง ในรอบถัดไป' },
+            'bureaucrat_evil': { id: 'bureaucrat', name: 'Bureaucrat', thai: 'ข้าราชการ', icon: '📜', team: 'wolf', desc: 'ใช้ได้ 1 ครั้งต่อเกม เลือกผู้เล่นอื่น 1 คนให้ได้รับโควตาคะแนนโหวตเพิ่มขึ้น +1 เสียง ในรอบถัดไป' }
+        };
+
+        function openTravelerModal() {
+            document.getElementById('modal-traveler').classList.remove('hidden');
+        }
+
+        function closeTravelerModal() {
+            document.getElementById('modal-traveler').classList.add('hidden');
+        }
+
+        function assignTraveler(travelerKey) {
+            const roleObj = TRAVELER_ROLES[travelerKey];
+            if (!roleObj) return;
+
+            // Set up the Card UI for the Traveler
+            const teamBadge = document.getElementById('card-team-badge');
+            if (roleObj.team === 'wolf') {
+                teamBadge.innerText = 'ฝั่งหมาป่า';
+                teamBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800 shadow relative z-10';
+            } else {
+                teamBadge.innerText = 'ฝั่งชาวบ้าน';
+                teamBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 shadow relative z-10';
+            }
+
+            document.getElementById('card-player-name-tag').innerText = "Traveler (มาใหม่)";
+            document.getElementById('card-role-icon').innerText = roleObj.icon;
+            document.getElementById('card-role-name').innerText = roleObj.name;
+            document.getElementById('card-role-thai').innerText = roleObj.thai;
+            document.getElementById('card-role-desc').innerText = roleObj.desc;
+
+            // Make sure the card is facing down initially (hidden)
+            const cardInner = document.getElementById('player-card-inner');
+            if (cardInner) {
+                cardInner.classList.remove('flipped');
+                document.getElementById('btn-toggle-privacy-text').innerText = 'แตะเพื่อเปิดดูบทบาท 👁️';
+            }
+
+            // Close modal and show card
+            closeTravelerModal();
+            showScreen('screen-player-card');
         }
     </script>
 </body>
