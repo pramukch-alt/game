@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BINGO PARTY - เครื่องออกเลข & BINGO Hub</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Prompt & Orbitron -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --neon-cyan: #00f0ff;
+      --neon-magenta: #ff007f;
+      --neon-yellow: #ffd700;
+      --neon-green: #00ff66;
+      --neon-purple: #bd00ff;
+      --neon-orange: #ff5500;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: #07040d;
+      color: #f8fafc;
+      overflow-x: hidden;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    .font-digital {
+      font-family: 'Orbitron', monospace;
+    }
+
+    /* Ambient Cyber Neon Background */
+    .neon-bg {
+      background: radial-gradient(circle at 50% 15%, #2a0845 0%, #0c0414 50%, #05020a 100%);
+    }
+
+    .cyber-grid {
+      background-image: 
+        linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 0, 127, 0.05) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* Neon Glow Effects */
+    .glow-cyan {
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.45), inset 0 0 10px rgba(0, 240, 255, 0.2);
+    }
+    .glow-magenta {
+      box-shadow: 0 0 15px rgba(255, 0, 127, 0.45), inset 0 0 10px rgba(255, 0, 127, 0.2);
+    }
+    .glow-yellow {
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.45), inset 0 0 10px rgba(255, 215, 0, 0.2);
+    }
+    .glow-green {
+      box-shadow: 0 0 15px rgba(0, 255, 102, 0.45), inset 0 0 10px rgba(0, 255, 102, 0.2);
+    }
+    .glow-purple {
+      box-shadow: 0 0 15px rgba(189, 0, 255, 0.45), inset 0 0 10px rgba(189, 0, 255, 0.2);
+    }
+
+    .text-glow-cyan {
+      text-shadow: 0 0 8px #00f0ff, 0 0 18px rgba(0, 240, 255, 0.6);
+    }
+    .text-glow-magenta {
+      text-shadow: 0 0 8px #ff007f, 0 0 18px rgba(255, 0, 127, 0.6);
+    }
+    .text-glow-yellow {
+      text-shadow: 0 0 8px #ffd700, 0 0 18px rgba(255, 215, 0, 0.6);
+    }
+    .text-glow-green {
+      text-shadow: 0 0 8px #00ff66, 0 0 18px rgba(0, 255, 102, 0.6);
+    }
+    .text-glow-purple {
+      text-shadow: 0 0 8px #bd00ff, 0 0 18px rgba(189, 0, 255, 0.6);
+    }
+    .text-glow-white {
+      text-shadow: 0 0 10px #ffffff, 0 0 20px rgba(255, 255, 255, 0.8);
+    }
+
+    /* Pulse Animations */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8), 0 0 20px currentColor; }
+      70% { transform: scale(1.04); box-shadow: 0 0 0 10px rgba(255, 255, 255, 0), 0 0 30px currentColor; }
+      100% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0), 0 0 20px currentColor; }
+    }
+
+    .animate-neon-pulse {
+      animation: pulse-ring 1.8s infinite ease-in-out;
+    }
+
+    /* Ball machine 3D Glass Look */
+    .machine-glass {
+      background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.18) 0%, rgba(0, 240, 255, 0.08) 40%, rgba(13, 6, 28, 0.75) 100%);
+      border: 2px solid rgba(0, 240, 255, 0.4);
+      box-shadow: 
+        inset 0 0 20px rgba(0, 240, 255, 0.3),
+        inset 0 0 40px rgba(255, 0, 127, 0.15),
+        0 10px 30px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(0, 240, 255, 0.25);
+      backdrop-filter: blur(4px);
+    }
+
+    /* Neon Number Cells in 75% Board */
+    .num-cell {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Column Color Rules for Active Drawn Numbers */
+    .cell-drawn-B {
+      background: linear-gradient(135deg, #00f0ff 0%, #0099ff 100%) !important;
+      color: #030a16 !important;
+      border-color: #ffffff !important;
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.9), inset 0 0 6px #ffffff !important;
+      font-weight: 800 !important;
+    }
+    .cell-drawn-I {
+      background: linear-gradient(135deg, #ff007f 0%, #d400ff 100%) !important;
+      color: #1a0010 !important;
+      border-color: #ffffff !important;
+      box-shadow: 0 0 14px rgba(255, 0, 127, 0.9), inset 0 0 6px #ffffff !important;
+      font-weight: 800 !important;
+    }
+    .cell-drawn-N {
+      background: linear-gradient(135deg, #ffe600 0%, #ff9900 100%) !important;
+      color: #1a1200 !important;
+      border-color: #ffffff !important;
+      box-shadow: 0 0 14px rgba(255, 230, 0, 0.9), inset 0 0 6px #ffffff !important;
+      font-weight: 800 !important;
+    }
+    .cell-drawn-G {
+      background: linear-gradient(135deg, #00ff66 0%, #00b347 100%) !important;
+      color: #001a08 !important;
+      border-color: #ffffff !important;
+      box-shadow: 0 0 14px rgba(0, 255, 102, 0.9), inset 0 0 6px #ffffff !important;
+      font-weight: 800 !important;
+    }
+    .cell-drawn-O {
+      background: linear-gradient(135deg, #bd00ff 0%, #7b00ff 100%) !important;
+      color: #130021 !important;
+      border-color: #ffffff !important;
+      box-shadow: 0 0 14px rgba(189, 0, 255, 0.9), inset 0 0 6px #ffffff !important;
+      font-weight: 800 !important;
+    }
+
+    /* Latest drawn ball highlight on board */
+    .cell-latest {
+      animation: pulse-ring 1.1s infinite alternate;
+      border-width: 2px !important;
+      z-index: 10;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(10, 5, 20, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 240, 255, 0.3);
+      border-radius: 4px;
+    }
+
+    /* BINGO Sheet Cells Styles */
+    .sheet-cell {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .sheet-cell:active {
+      transform: scale(0.93);
+    }
+
+    /* Marked Sheet Cells (Neon Stamp Glow per column) */
+    .sheet-marked-B {
+      background: radial-gradient(circle, rgba(0, 240, 255, 0.35) 0%, rgba(0, 30, 60, 0.95) 100%) !important;
+      border-color: #00f0ff !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.8), inset 0 0 10px rgba(0, 240, 255, 0.4) !important;
+      font-weight: 800 !important;
+    }
+    .sheet-marked-I {
+      background: radial-gradient(circle, rgba(255, 0, 127, 0.35) 0%, rgba(60, 0, 30, 0.95) 100%) !important;
+      border-color: #ff007f !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 16px rgba(255, 0, 127, 0.8), inset 0 0 10px rgba(255, 0, 127, 0.4) !important;
+      font-weight: 800 !important;
+    }
+    .sheet-marked-N {
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.35) 0%, rgba(60, 45, 0, 0.95) 100%) !important;
+      border-color: #ffd700 !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 16px rgba(255, 215, 0, 0.8), inset 0 0 10px rgba(255, 215, 0, 0.4) !important;
+      font-weight: 800 !important;
+    }
+    .sheet-marked-G {
+      background: radial-gradient(circle, rgba(0, 255, 102, 0.35) 0%, rgba(0, 50, 20, 0.95) 100%) !important;
+      border-color: #00ff66 !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 16px rgba(0, 255, 102, 0.8), inset 0 0 10px rgba(0, 255, 102, 0.4) !important;
+      font-weight: 800 !important;
+    }
+    .sheet-marked-O {
+      background: radial-gradient(circle, rgba(189, 0, 255, 0.35) 0%, rgba(45, 0, 60, 0.95) 100%) !important;
+      border-color: #bd00ff !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 16px rgba(189, 0, 255, 0.8), inset 0 0 10px rgba(189, 0, 255, 0.4) !important;
+      font-weight: 800 !important;
+    }
+
+    /* Free Center Cell */
+    .sheet-free-cell {
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.45) 0%, rgba(70, 45, 0, 0.95) 100%) !important;
+      border-color: #ffd700 !important;
+      color: #ffea00 !important;
+      box-shadow: 0 0 18px rgba(255, 215, 0, 0.85), inset 0 0 10px rgba(255, 255, 255, 0.5) !important;
+      font-weight: 800 !important;
+    }
+
+    /* Winning BINGO Cells Glow */
+    .sheet-win-cell {
+      border-color: #ffffff !important;
+      box-shadow: 0 0 25px #ffd700, inset 0 0 12px #ffffff !important;
+      animation: win-cell-glow 1s infinite alternate !important;
+      z-index: 10;
+    }
+    @keyframes win-cell-glow {
+      0% { transform: scale(0.97); box-shadow: 0 0 15px #ffd700, inset 0 0 8px #ffffff; }
+      100% { transform: scale(1.04); box-shadow: 0 0 30px #ffd700, 0 0 15px #ff007f, inset 0 0 15px #ffffff; }
+    }
+  </style>
+</head>
+<body class="neon-bg cyber-grid flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
+
+  <!-- ========================================== -->
+  <!-- SCREEN 1: BINGO MAIN MENU (2 ปุ่มเรียงกันบนล่าง) -->
+  <!-- ========================================== -->
+  <section id="screen-menu" class="min-h-screen flex flex-col justify-between p-4 md:p-6 max-w-md mx-auto w-full">
+    <!-- Top Bar -->
+    <div class="flex items-center justify-between pt-2">
+      <a href="../index.html" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-300 hover:text-cyan-400 hover:border-cyan-500/50 transition-all text-xs font-medium backdrop-blur-md">
+        <span>⬅</span> กลับ Game Hub
+      </a>
+      <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-cyan-950/80 text-cyan-400 border border-cyan-800">
+        ✨ NEON EDITION
+      </span>
+    </div>
+
+    <!-- Center Hero Branding -->
+    <div class="my-auto py-8 text-center flex flex-col items-center">
+      <!-- Glow Icon Logo -->
+      <div class="relative w-28 h-28 mb-5 group">
+        <div class="absolute -inset-2 bg-gradient-to-r from-cyan-500 via-pink-500 to-yellow-500 rounded-3xl blur-lg opacity-60 group-hover:opacity-100 transition duration-700 animate-pulse"></div>
+        <img src="./assets/bingo_cover.jpg" alt="Bingo Neon Logo" class="relative w-28 h-28 object-cover rounded-2xl border-2 border-cyan-400/60 shadow-2xl">
+      </div>
+
+      <h1 class="text-4xl md:text-5xl font-black tracking-wider uppercase">
+        <span class="text-cyan-400 text-glow-cyan">B</span><span class="text-pink-500 text-glow-magenta">I</span><span class="text-yellow-400 text-glow-yellow">N</span><span class="text-emerald-400 text-glow-green">G</span><span class="text-purple-400 text-glow-purple">O</span>
+      </h1>
+      <p class="text-xs md:text-sm text-slate-300 mt-2 font-medium tracking-wide">
+        ระบบเกมบิงโกครบวงจร สำหรับ 50 หมายเลข (1 - 50)
+      </p>
+
+      <!-- The 2 Vertically Stacked Buttons as requested -->
+      <div class="w-full mt-10 space-y-4">
+        
+        <!-- Button 1: เครื่องออกเลข BINGO -->
+        <button id="btn-goto-machine" onclick="showScreen('machine')" class="w-full relative group overflow-hidden rounded-2xl p-[2px] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-cyan-500/20">
+          <div class="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-pink-500 animate-gradient-x"></div>
+          <div class="relative bg-slate-950/90 rounded-[14px] p-5 flex items-center justify-between backdrop-blur-xl border border-cyan-500/30">
+            <div class="flex items-center gap-4 text-left">
+              <div class="w-14 h-14 rounded-xl bg-cyan-500/10 border border-cyan-400/40 flex items-center justify-center text-3xl shadow-[0_0_15px_rgba(0,240,255,0.4)]">
+                🎰
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-400/30">เมนูที่ 1</span>
+                  <span class="text-[11px] text-emerald-400 flex items-center gap-1 font-semibold">● พร้อมใช้งาน</span>
+                </div>
+                <h3 class="text-lg md:text-xl font-bold text-white group-hover:text-cyan-300 transition-colors mt-0.5">
+                  1. เครื่องออกเลข BINGO
+                </h3>
+                <p class="text-xs text-slate-400">
+                  เครื่องหมุนสลากจำลอง & กระดานเช็ค 1-50 สี Neon
+                </p>
+              </div>
+            </div>
+            <div class="text-cyan-400 text-xl font-bold pr-1 group-hover:translate-x-1 transition-transform">
+              ➜
+            </div>
+          </div>
+        </button>
+
+        <!-- Button 2: BINGO SHEET -->
+        <button id="btn-goto-sheet" onclick="showScreen('sheet')" class="w-full relative group overflow-hidden rounded-2xl p-[2px] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-pink-500/15">
+          <div class="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-amber-500"></div>
+          <div class="relative bg-slate-950/90 rounded-[14px] p-5 flex items-center justify-between backdrop-blur-xl border border-pink-500/30">
+            <div class="flex items-center gap-4 text-left">
+              <div class="w-14 h-14 rounded-xl bg-pink-500/10 border border-pink-400/40 flex items-center justify-center text-3xl shadow-[0_0_15px_rgba(255,0,127,0.4)]">
+                📋
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 font-bold border border-pink-400/30">เมนูที่ 2</span>
+                  <span class="text-[11px] text-emerald-400 flex items-center gap-1 font-semibold">● พร้อมใช้งาน</span>
+                </div>
+                <h3 class="text-lg md:text-xl font-bold text-white group-hover:text-pink-300 transition-colors mt-0.5">
+                  2. BINGO SHEET
+                </h3>
+                <p class="text-xs text-slate-400">
+                  ใบบิงโกผู้เล่น 5x5 สุ่มเลข 1-50 & ตรวจ BINGO อัตโนมัติ
+                </p>
+              </div>
+            </div>
+            <div class="text-pink-400 text-xl font-bold pr-1 group-hover:translate-x-1 transition-transform">
+              ➜
+            </div>
+          </div>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Menu Footer -->
+    <div class="text-center text-xs text-slate-500 py-3 border-t border-slate-900">
+      <span>BINGO 1-50 &bull; Game Hub System</span>
+    </div>
+  </section>
+
+
+  <!-- ============================================================== -->
+  <!-- SCREEN 2: เครื่องออกเลข BINGO (PORTRAIT VERTICAL ORIENTATION)     -->
+  <!-- แบ่งเป็น: 25% ด้านบน (เครื่องออกสลาก) + 75% ด้านล่าง (กระดาน 1-50) -->
+  <!-- ============================================================== -->
+  <section id="screen-machine" class="hidden h-screen h-[100dvh] flex flex-col max-w-lg mx-auto w-full bg-slate-950/95 border-x border-slate-800/80 shadow-2xl relative overflow-hidden select-none">
+    
+    <!-- Mini Header Bar (กลับเมนู, เสียง, สถิติ) -->
+    <header class="h-[44px] flex-none px-3 bg-slate-900/90 border-b border-slate-800/80 flex items-center justify-between text-xs z-30">
+      <button onclick="showScreen('menu')" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/80 text-slate-300 hover:text-cyan-400 hover:bg-slate-700/80 transition-all font-medium border border-slate-700/50">
+        <span>⬅</span> <span class="hidden xs:inline">เมนู</span> BINGO
+      </button>
+
+      <!-- Draw Stats -->
+      <div class="flex items-center gap-2">
+        <span class="text-slate-400 font-medium">ออกแล้ว:</span>
+        <span id="stat-drawn-count" class="font-digital text-amber-400 font-bold text-sm">0/50</span>
+      </div>
+
+      <!-- Quick Controls: Voice & Reset -->
+      <div class="flex items-center gap-1.5">
+        <button id="btn-sound-toggle" onclick="toggleSound()" class="p-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-cyan-400 transition" title="เปิด/ปิดเสียง">
+          <span id="sound-icon">🔊</span>
+        </button>
+        <button onclick="confirmReset()" class="p-1.5 px-2 rounded-lg bg-red-950/40 border border-red-800/60 text-red-300 hover:bg-red-900/50 transition font-medium" title="เริ่มเกมใหม่">
+          🔄 ล้างกระดาน
+        </button>
+      </div>
+    </header>
+
+    <!-- =================================================== -->
+    <!-- 25% พื้นที่ด้านบน: เครื่องออกเลขสลากกินแบ่ง (BINGO SPINNER) -->
+    <!-- =================================================== -->
+    <div id="machine-top-25" class="h-[25vh] min-h-[170px] max-h-[220px] flex-none p-2.5 bg-gradient-to-b from-slate-900/90 via-purple-950/20 to-slate-950 border-b-2 border-cyan-500/30 flex items-center justify-between gap-2 relative overflow-hidden z-20">
+      
+      <!-- Ambient Tube Glow at top -->
+      <div class="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-400 shadow-[0_0_10px_#00f0ff]"></div>
+
+      <!-- Left Side: กราฟฟิคเครื่องออกสลากกินแบ่ง (Tumbling Ball Drum) -->
+      <div class="relative flex-1 h-full flex flex-col items-center justify-center">
+        <!-- Drum Frame with glass effect -->
+        <div class="relative w-full max-w-[170px] h-[130px] machine-glass rounded-2xl flex items-center justify-center overflow-hidden">
+          
+          <!-- Canvas for Tumbling Neon Balls & Air Blower Simulation -->
+          <canvas id="lottery-canvas" width="220" height="170" class="w-full h-full object-cover"></canvas>
+
+          <!-- Glass Refraction Highlights -->
+          <div class="absolute inset-0 pointer-events-none rounded-2xl border border-white/20"></div>
+          <div class="absolute -top-10 -left-10 w-24 h-24 bg-white/10 rounded-full blur-md pointer-events-none"></div>
+
+          <!-- Air Blower Nozzle Graphic at bottom of drum -->
+          <div class="absolute bottom-1 inset-x-6 h-2 bg-gradient-to-r from-slate-700 via-cyan-400 to-slate-700 rounded-full opacity-60"></div>
+        </div>
+
+        <span class="text-[10px] text-cyan-300/80 font-medium mt-1 tracking-wider uppercase flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span> เครื่องหมุนสลาก BINGO
+        </span>
+      </div>
+
+      <!-- Right Side: พื้นที่แสดงลูกบอลที่ออกล่าสุด & ปุ่ม SPIN -->
+      <div class="w-[165px] xs:w-[185px] h-full flex flex-col justify-between items-center py-0.5">
+        
+        <!-- Big Neon Drawn Ball Display -->
+        <div id="display-ball-box" class="relative w-full flex-1 flex flex-col items-center justify-center bg-slate-900/80 rounded-xl border border-slate-800 p-1.5 shadow-inner">
+          <span class="text-[10px] font-semibold text-slate-400 tracking-wider">ลูกที่ออกล่าสุด</span>
+          
+          <!-- Active Ball Sphere -->
+          <div id="latest-ball-sphere" class="w-16 h-16 rounded-full bg-slate-800 border-2 border-slate-600 flex flex-col items-center justify-center shadow-lg transition-all duration-300 relative my-0.5">
+            <span id="latest-letter" class="text-xs font-black tracking-widest text-slate-400 font-digital -mb-1">-</span>
+            <span id="latest-number" class="text-2xl font-black font-digital text-slate-300">--</span>
+          </div>
+
+          <div id="latest-ball-desc" class="text-[10px] text-slate-400 truncate max-w-full text-center">
+            พร้อมหมุนออกเลข
+          </div>
+        </div>
+
+        <!-- Spin Action Button -->
+        <button id="btn-spin" onclick="spinNextBall()" class="w-full mt-1.5 py-2 px-3 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-cyan-400 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-sm tracking-wider uppercase flex items-center justify-center gap-1.5 shadow-[0_0_18px_rgba(0,240,255,0.6)] active:scale-95 transition-all">
+          <span class="text-base">🎲</span>
+          <span id="spin-btn-text">หมุนออกเลข</span>
+        </button>
+
+      </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- 75% พื้นที่ด้านล่าง: กระดานตัวเลข 1 - 50 เรียงแนวตั้ง B(1-10) I(11-20)... -->
+    <!-- ตัวเลขที่ spin แล้ว จะแสดงสีแบบ Neon สว่าง เพื่อให้ผู้เล่นตรวจสอบย้อนหลังได้   -->
+    <!-- ========================================================================= -->
+    <div id="board-bottom-75" class="flex-1 p-2 md:p-3 flex flex-col justify-between bg-slate-950 overflow-hidden relative">
+      
+      <!-- Top info bar of board -->
+      <div class="flex items-center justify-between px-1 mb-1 text-[11px] text-slate-400 flex-none">
+        <span class="flex items-center gap-1 text-slate-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-[0_0_6px_#00ff66]"></span>
+          กระดานผลตัวเลข 1 - 50 (เรียงแนวตั้ง)
+        </span>
+        <span class="text-slate-400 text-[10px]">
+          แตะตัวเลขเพื่อดูรายละเอียด
+        </span>
+      </div>
+
+      <!-- Main B I N G O 5-Column Grid -->
+      <div class="flex-1 w-full flex flex-col justify-between bg-slate-900/60 rounded-xl border border-slate-800/80 p-1.5 shadow-2xl relative overflow-hidden">
+        
+        <!-- Headers: B I N G O -->
+        <div class="grid grid-cols-5 gap-1 md:gap-1.5 mb-1 flex-none text-center">
+          <!-- B Column Header -->
+          <div class="py-1 rounded-lg bg-cyan-950/80 border border-cyan-500/60 shadow-[0_0_10px_rgba(0,240,255,0.3)]">
+            <span class="font-digital font-black text-base text-cyan-400 text-glow-cyan">B</span>
+            <div class="text-[9px] text-cyan-300/70 -mt-0.5">1-10</div>
+          </div>
+          <!-- I Column Header -->
+          <div class="py-1 rounded-lg bg-pink-950/80 border border-pink-500/60 shadow-[0_0_10px_rgba(255,0,127,0.3)]">
+            <span class="font-digital font-black text-base text-pink-400 text-glow-magenta">I</span>
+            <div class="text-[9px] text-pink-300/70 -mt-0.5">11-20</div>
+          </div>
+          <!-- N Column Header -->
+          <div class="py-1 rounded-lg bg-yellow-950/80 border border-yellow-500/60 shadow-[0_0_10px_rgba(255,215,0,0.3)]">
+            <span class="font-digital font-black text-base text-yellow-400 text-glow-yellow">N</span>
+            <div class="text-[9px] text-yellow-300/70 -mt-0.5">21-30</div>
+          </div>
+          <!-- G Column Header -->
+          <div class="py-1 rounded-lg bg-emerald-950/80 border border-emerald-500/60 shadow-[0_0_10px_rgba(0,255,102,0.3)]">
+            <span class="font-digital font-black text-base text-emerald-400 text-glow-green">G</span>
+            <div class="text-[9px] text-emerald-300/70 -mt-0.5">31-40</div>
+          </div>
+          <!-- O Column Header -->
+          <div class="py-1 rounded-lg bg-purple-950/80 border border-purple-500/60 shadow-[0_0_10px_rgba(189,0,255,0.3)]">
+            <span class="font-digital font-black text-base text-purple-400 text-glow-purple">O</span>
+            <div class="text-[9px] text-purple-300/70 -mt-0.5">41-50</div>
+          </div>
+        </div>
+
+        <!-- 10 Vertical Rows of Numbers for B (1-10), I (11-20), N (21-30), G (31-40), O (41-50) -->
+        <!-- We use grid-cols-5 with 10 rows to distribute perfectly vertically -->
+        <div id="bingo-numbers-grid" class="flex-1 grid grid-cols-5 gap-1 md:gap-1.5 h-full" style="grid-template-rows: repeat(10, minmax(0, 1fr));">
+          <!-- Dynamically populated 50 cells via JavaScript -->
+        </div>
+
+      </div>
+
+      <!-- Bottom Recent 5 Balls Reel -->
+      <div class="flex-none mt-1.5 pt-1.5 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+        <div class="flex items-center gap-1.5 text-slate-400">
+          <span class="text-[10px] text-slate-400 font-medium">5 ลูกล่าสุด:</span>
+          <div id="recent-balls-bar" class="flex items-center gap-1">
+            <span class="text-slate-600 text-[10px]">- ยังไม่มี -</span>
+          </div>
+        </div>
+        
+        <!-- Toggle Auto Spin -->
+        <button id="btn-auto-spin" onclick="toggleAutoSpin()" class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 hover:text-cyan-400 hover:border-cyan-500/50 transition">
+          ⏱ สุ่มออโต้: <span id="auto-spin-status" class="text-amber-400 font-bold">ปิด</span>
+        </button>
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ============================================================== -->
+  <!-- SCREEN 3: BINGO SHEET (ใบบิงโกผู้เล่น 5x5 สุ่มเลข 1-50)            -->
+  <!-- ============================================================== -->
+  <section id="screen-sheet" class="hidden min-h-screen flex flex-col justify-between p-3 md:p-6 max-w-md mx-auto w-full select-none">
+    
+    <!-- Top Navigation Bar -->
+    <div class="flex items-center justify-between pt-1 mb-2">
+      <button onclick="showScreen('menu')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700/60 text-slate-300 hover:text-cyan-400 hover:border-cyan-500/50 transition-all text-xs font-medium">
+        <span>⬅</span> เมนู BINGO
+      </button>
+
+      <div class="flex items-center gap-2">
+        <button onclick="showScreen('machine')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-cyan-950/70 border border-cyan-500/50 text-cyan-300 hover:bg-cyan-900/80 transition-all text-xs font-medium shadow-[0_0_10px_rgba(0,240,255,0.2)]">
+          <span>🎰</span> เครื่องออกเลข
+        </button>
+        <button onclick="confirmNewCard()" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-pink-950/70 border border-pink-500/50 text-pink-300 hover:bg-pink-900/80 transition-all text-xs font-semibold shadow-[0_0_10px_rgba(255,0,127,0.2)]">
+          <span>🎲</span> สุ่มใหม่
+        </button>
+      </div>
+    </div>
+
+    <!-- BINGO SHEET MAIN CARD -->
+    <div class="my-auto bg-slate-950/90 border-2 border-pink-500/40 rounded-3xl p-3 md:p-4 shadow-2xl backdrop-blur-xl relative overflow-hidden flex flex-col">
+      <!-- Glow decoration -->
+      <div class="absolute -top-16 -right-16 w-36 h-36 bg-pink-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-16 -left-16 w-36 h-36 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Card Header -->
+      <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📋</span>
+          <div>
+            <h2 class="text-base font-black text-white tracking-wider">
+              BINGO SHEET
+            </h2>
+            <div class="text-[10px] text-slate-400 font-digital flex items-center gap-1">
+              <span>รหัสการ์ด:</span>
+              <span id="sheet-card-id" class="text-pink-400 font-bold">#----</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status badge -->
+        <div id="sheet-status-badge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-900 text-slate-300 border border-slate-700 flex items-center gap-1.5 transition-all">
+          <span id="sheet-status-dot" class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+          <span id="sheet-status-text">กาแล้ว 1/25</span>
+        </div>
+      </div>
+
+      <!-- Table Header: B I N G O -->
+      <div class="grid grid-cols-5 gap-1.5 md:gap-2 mb-1.5 text-center">
+        <!-- B -->
+        <div class="py-1 rounded-xl bg-cyan-950/80 border border-cyan-500/60 shadow-[0_0_10px_rgba(0,240,255,0.3)]">
+          <span class="font-digital font-black text-lg text-cyan-400 text-glow-cyan">B</span>
+          <div class="text-[9px] text-cyan-300/70 font-medium -mt-1">1-10</div>
+        </div>
+        <!-- I -->
+        <div class="py-1 rounded-xl bg-pink-950/80 border border-pink-500/60 shadow-[0_0_10px_rgba(255,0,127,0.3)]">
+          <span class="font-digital font-black text-lg text-pink-400 text-glow-magenta">I</span>
+          <div class="text-[9px] text-pink-300/70 font-medium -mt-1">11-20</div>
+        </div>
+        <!-- N -->
+        <div class="py-1 rounded-xl bg-yellow-950/80 border border-yellow-500/60 shadow-[0_0_10px_rgba(255,215,0,0.3)]">
+          <span class="font-digital font-black text-lg text-yellow-400 text-glow-yellow">N</span>
+          <div class="text-[9px] text-yellow-300/70 font-medium -mt-1">21-30</div>
+        </div>
+        <!-- G -->
+        <div class="py-1 rounded-xl bg-emerald-950/80 border border-emerald-500/60 shadow-[0_0_10px_rgba(0,255,102,0.3)]">
+          <span class="font-digital font-black text-lg text-emerald-400 text-glow-green">G</span>
+          <div class="text-[9px] text-emerald-300/70 font-medium -mt-1">31-40</div>
+        </div>
+        <!-- O -->
+        <div class="py-1 rounded-xl bg-purple-950/80 border border-purple-500/60 shadow-[0_0_10px_rgba(189,0,255,0.3)]">
+          <span class="font-digital font-black text-lg text-purple-400 text-glow-purple">O</span>
+          <div class="text-[9px] text-purple-300/70 font-medium -mt-1">41-50</div>
+        </div>
+      </div>
+
+      <!-- 5x5 Grid Table (Square Cells) -->
+      <div id="bingo-sheet-grid" class="grid grid-cols-5 gap-1.5 md:gap-2 w-full">
+        <!-- 25 Cells populated by JavaScript -->
+      </div>
+
+      <!-- How to Bingo Legend & Active Lines -->
+      <div class="mt-3 pt-2.5 border-t border-slate-800 text-[11px]">
+        <div class="flex items-center justify-between text-slate-400 mb-1.5 font-medium">
+          <span>🎯 กติกา BINGO (5 รูปแบบ):</span>
+          <span class="text-[10px] text-slate-500">แตะเพื่อกา / แตะซ้ำเพื่อยกเลิก</span>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span id="rule-badge-inner" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-900 text-slate-400 border border-slate-800 transition">1. สี่มุมเล็ก</span>
+          <span id="rule-badge-outer" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-900 text-slate-400 border border-slate-800 transition">2. สี่มุมใหญ่</span>
+          <span id="rule-badge-col" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-900 text-slate-400 border border-slate-800 transition">3. แนวตั้ง</span>
+          <span id="rule-badge-row" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-900 text-slate-400 border border-slate-800 transition">4. แนวนอน</span>
+          <span id="rule-badge-diag" class="px-2 py-0.5 rounded-full text-[10px] bg-slate-900 text-slate-400 border border-slate-800 transition">5. แนวทแยง</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sheet Bottom Footer -->
+    <div class="text-center text-xs text-slate-500 py-2">
+      BINGO Sheet &bull; แตะตัวเลขเพื่อกา หากกดพลาดแตะซ้ำเพื่อยกเลิกได้
+    </div>
+  </section>
+
+
+  <!-- ============================================================== -->
+  <!-- MODAL: BINGO WINNER POPUP CARD                                 -->
+  <!-- ============================================================== -->
+  <div id="modal-bingo-win" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <!-- Confetti canvas overlay -->
+    <canvas id="confetti-canvas" class="absolute inset-0 pointer-events-none w-full h-full"></canvas>
+
+    <div class="relative bg-gradient-to-b from-slate-900 via-purple-950/40 to-slate-950 border-2 border-yellow-400 rounded-3xl p-6 max-w-sm w-full text-center shadow-[0_0_50px_rgba(255,215,0,0.5)] z-10">
+      
+      <!-- Crown / Star Glow -->
+      <div class="w-20 h-20 rounded-full bg-yellow-400/20 border-2 border-yellow-400 text-yellow-300 flex items-center justify-center text-4xl mx-auto mb-3 shadow-[0_0_25px_rgba(255,215,0,0.8)] animate-pulse">
+        👑
+      </div>
+
+      <h2 class="text-4xl md:text-5xl font-black font-digital text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-400 to-cyan-300 drop-shadow-[0_0_20px_rgba(255,215,0,0.9)]">
+        BINGO!
+      </h2>
+      <p class="text-sm text-yellow-200 font-bold mt-1">
+        🎉 ยินดีด้วย คุณบิงโกแล้ว! 🎉
+      </p>
+
+      <!-- Win Patterns List -->
+      <div class="mt-4 p-3.5 rounded-2xl bg-slate-950/80 border border-yellow-400/40 text-left text-xs">
+        <span class="text-slate-400 font-semibold block mb-1.5">🏆 รูปแบบที่ชนะ:</span>
+        <div id="bingo-win-patterns-list" class="space-y-1">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="mt-6 flex flex-col gap-2">
+        <button onclick="closeBingoWinModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 hover:from-yellow-300 hover:to-amber-300 text-slate-950 font-black text-sm tracking-wide shadow-[0_0_20px_rgba(255,215,0,0.6)] transition-all">
+          👀 ดูการ์ดที่ชนะต่อ
+        </button>
+        <button onclick="confirmNewCard(true)" class="w-full py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">
+          🎲 เริ่มรอบใหม่ (สุ่มการ์ดใหม่)
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: Confirmation New Card -->
+  <div id="modal-new-card" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-pink-500/40 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl relative">
+      <div class="w-12 h-12 rounded-full bg-pink-500/10 border border-pink-500/30 text-pink-400 flex items-center justify-center text-2xl mx-auto mb-3">
+        🎲
+      </div>
+      <h3 class="text-lg font-bold text-white">ต้องการสุ่มการ์ดใหม่?</h3>
+      <p class="text-xs text-slate-400 mt-1">
+        ตัวเลขและช่องที่กาไว้ทั้งหมดจะถูกเปลี่ยนเป็นการ์ดใบใหม่
+      </p>
+      <div class="mt-5 flex gap-2">
+        <button onclick="closeModalNewCard()" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition">
+          ยกเลิก
+        </button>
+        <button onclick="executeNewCard()" class="flex-1 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white text-xs font-bold shadow-[0_0_15px_rgba(255,0,127,0.4)] transition">
+          สุ่มการ์ดใหม่
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================== -->
+  <!-- MODAL: Confirmation Reset / New Game                           -->
+  <!-- ============================================================== -->
+  <div id="modal-reset" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-red-500/40 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl relative">
+      <div class="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 flex items-center justify-center text-2xl mx-auto mb-3">
+        ⚠️
+      </div>
+      <h3 class="text-lg font-bold text-white">ยืนยันเริ่มเกมใหม่?</h3>
+      <p class="text-xs text-slate-400 mt-1">
+        ตัวเลขที่ออกไปแล้วทั้งหมดจะถูกล้าง และเริ่มนับรอบใหม่ 1-50
+      </p>
+      <div class="mt-5 flex gap-2">
+        <button onclick="closeModalReset()" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition">
+          ยกเลิก
+        </button>
+        <button onclick="executeResetGame()" class="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-[0_0_15px_rgba(239,68,68,0.4)] transition">
+          ล้างกระดานใหม่
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================== -->
+  <!-- JAVASCRIPT: LOGIC & AUDIO & LOTTERY MACHINE SIMULATION         -->
+  <!-- ============================================================== -->
+  <script>
+    /* -------------------------------------------------------------
+       STATE MANAGEMENT & CONFIGURATION
+       B: 1-10, I: 11-20, N: 21-30, G: 31-40, O: 41-50 (Total 50 numbers)
+    ---------------------------------------------------------------- */
+    const STORAGE_KEY = 'bingo_game_state_50';
+    let gameState = {
+      drawnNumbers: [],     // Array of drawn numbers in chronological order
+      currentBall: null,     // { letter: 'B', number: 7 }
+      isSpinning: false,
+      soundEnabled: true,
+      autoSpinInterval: null
+    };
+
+    // Column Map Helpers
+    function getLetterForNumber(num) {
+      if (num >= 1 && num <= 10) return 'B';
+      if (num >= 11 && num <= 20) return 'I';
+      if (num >= 21 && num <= 30) return 'N';
+      if (num >= 31 && num <= 40) return 'G';
+      if (num >= 41 && num <= 50) return 'O';
+      return '';
+    }
+
+    function getColorForLetter(letter) {
+      switch (letter) {
+        case 'B': return { hex: '#00f0ff', glow: 'glow-cyan', textGlow: 'text-glow-cyan', bg: 'bg-cyan-500' };
+        case 'I': return { hex: '#ff007f', glow: 'glow-magenta', textGlow: 'text-glow-magenta', bg: 'bg-pink-500' };
+        case 'N': return { hex: '#ffd700', glow: 'glow-yellow', textGlow: 'text-glow-yellow', bg: 'bg-yellow-400' };
+        case 'G': return { hex: '#00ff66', glow: 'glow-green', textGlow: 'text-glow-green', bg: 'bg-emerald-500' };
+        case 'O': return { hex: '#bd00ff', glow: 'glow-purple', textGlow: 'text-glow-purple', bg: 'bg-purple-500' };
+        default: return { hex: '#ffffff', glow: '', textGlow: '', bg: 'bg-slate-700' };
+      }
+    }
+
+    /* -------------------------------------------------------------
+       AUDIO ENGINE (Web Audio API Synthesizer & SpeechSynthesis)
+    ---------------------------------------------------------------- */
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    // Play synthesized mechanical clack / ball tumble sound
+    function playBallClackSound() {
+      if (!gameState.soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(300 + Math.random() * 400, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.05);
+      } catch (e) { }
+    }
+
+    // Play celebratory ding sound on ball reveal
+    function playDingSound() {
+      if (!gameState.soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.25, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.6);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.6);
+        });
+      } catch (e) { }
+    }
+
+    // Speech announcement in Thai ("บี เก้า", "ไอ สิบหก")
+    function speakBall(letter, number) {
+      if (!gameState.soundEnabled || !window.speechSynthesis) return;
+      try {
+        window.speechSynthesis.cancel();
+        const letterThai = {
+          'B': 'บี',
+          'I': 'ไอ',
+          'N': 'เอ็น',
+          'G': 'จี',
+          'O': 'โอ'
+        }[letter] || letter;
+
+        const utterance = new SpeechSynthesisUtterance(`${letterThai} ${number}`);
+        utterance.lang = 'th-TH';
+        utterance.rate = 1.0;
+        utterance.pitch = 1.1;
+        window.speechSynthesis.speak(utterance);
+      } catch (e) { }
+    }
+
+    function toggleSound() {
+      gameState.soundEnabled = !gameState.soundEnabled;
+      document.getElementById('sound-icon').innerText = gameState.soundEnabled ? '🔊' : '🔇';
+      saveState();
+    }
+
+    // Play punchy daub sound when stamping a number
+    function playDaubSound() {
+      if (!gameState.soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.35, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.08);
+      } catch (e) { }
+    }
+
+    // Play light undo click sound
+    function playUnDaubSound() {
+      if (!gameState.soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(250, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(450, ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.05);
+      } catch (e) { }
+    }
+
+    // Play triumphant brass fanfare for BINGO victory!
+    function playBingoFanfareSound() {
+      if (!gameState.soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const chord = [
+          { freq: 523.25, time: 0.00, dur: 0.16 }, // C5
+          { freq: 659.25, time: 0.14, dur: 0.16 }, // E5
+          { freq: 783.99, time: 0.28, dur: 0.22 }, // G5
+          { freq: 1046.50, time: 0.44, dur: 0.70 }, // C6
+          { freq: 1318.51, time: 0.44, dur: 0.70 }, // E6
+          { freq: 1567.98, time: 0.44, dur: 0.85 }  // G6
+        ];
+        chord.forEach(note => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(note.freq, now + note.time);
+          gain.gain.setValueAtTime(0.3, now + note.time);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + note.time + note.dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + note.time);
+          osc.stop(now + note.time + note.dur);
+        });
+      } catch (e) { }
+    }
+
+    /* -------------------------------------------------------------
+       LOTTERY DRUM CANVAS ANIMATION (เครื่องออกสลากกินแบ่ง)
+    ---------------------------------------------------------------- */
+    const canvas = document.getElementById('lottery-canvas');
+    const ctx = canvas.getContext('2d');
+    const balls = [];
+    const NUM_SIM_BALLS = 22;
+    const BALL_COLORS = ['#00f0ff', '#ff007f', '#ffd700', '#00ff66', '#bd00ff', '#ff5500'];
+
+    // Initialize simulation balls in the drum
+    for (let i = 0; i < NUM_SIM_BALLS; i++) {
+      balls.push({
+        x: 30 + Math.random() * (canvas.width - 60),
+        y: 40 + Math.random() * (canvas.height - 70),
+        vx: (Math.random() - 0.5) * 3,
+        vy: (Math.random() - 0.5) * 3,
+        radius: 8 + Math.random() * 2,
+        color: BALL_COLORS[i % BALL_COLORS.length],
+        num: (i % 50) + 1
+      });
+    }
+
+    let isDrumSpeedBoosted = false;
+
+    function renderDrum() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Drum interior shadow
+      const grad = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 10, canvas.width / 2, canvas.height / 2, canvas.width / 2);
+      grad.addColorStop(0, 'rgba(20, 8, 40, 0.4)');
+      grad.addColorStop(1, 'rgba(5, 2, 12, 0.9)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Air turbulence particles effect when spinning
+      if (isDrumSpeedBoosted) {
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+        ctx.lineWidth = 1;
+        for (let p = 0; p < 6; p++) {
+          ctx.beginPath();
+          ctx.arc(
+            canvas.width / 2 + (Math.random() - 0.5) * 40,
+            canvas.height - 20 - Math.random() * 80,
+            10 + Math.random() * 30,
+            0,
+            Math.PI * 2
+          );
+          ctx.stroke();
+        }
+      }
+
+      // Update & Draw Balls
+      balls.forEach((b) => {
+        // Apply wind/blower speed
+        if (isDrumSpeedBoosted) {
+          b.vx += (Math.random() - 0.5) * 3.5;
+          b.vy += (Math.random() - 0.6) * 4.0; // upward updraft
+        } else {
+          // gentle float
+          b.vy += 0.08; // mild gravity
+        }
+
+        b.x += b.vx;
+        b.y += b.vy;
+
+        // Friction
+        b.vx *= 0.98;
+        b.vy *= 0.98;
+
+        // Boundary bounce inside drum
+        const pad = b.radius + 6;
+        if (b.x < pad) { b.x = pad; b.vx = Math.abs(b.vx) * 0.9; }
+        if (b.x > canvas.width - pad) { b.x = canvas.width - pad; b.vx = -Math.abs(b.vx) * 0.9; }
+        if (b.y < pad) { b.y = pad; b.vy = Math.abs(b.vy) * 0.9; }
+        if (b.y > canvas.height - pad) { b.y = canvas.height - pad; b.vy = -Math.abs(b.vy) * 0.9; }
+
+        // Ball 3D Gradient Sphere
+        ctx.save();
+        const ballGrad = ctx.createRadialGradient(b.x - b.radius * 0.3, b.y - b.radius * 0.3, 1, b.x, b.y, b.radius);
+        ballGrad.addColorStop(0, '#ffffff');
+        ballGrad.addColorStop(0.3, b.color);
+        ballGrad.addColorStop(1, '#05020a');
+        ctx.fillStyle = ballGrad;
+        ctx.shadowColor = b.color;
+        ctx.shadowBlur = isDrumSpeedBoosted ? 10 : 4;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Tiny number text on simulation ball
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 7px Orbitron, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(b.num, b.x, b.y + 0.5);
+        ctx.restore();
+      });
+
+      requestAnimationFrame(renderDrum);
+    }
+    renderDrum();
+
+    /* -------------------------------------------------------------
+       BOARD SETUP (10 ROWS x 5 COLUMNS: B 1-10, I 11-20, ...)
+       Row 1: 1, 11, 21, 31, 41
+       Row 2: 2, 12, 22, 32, 42
+       ...
+       Row 10: 10, 20, 30, 40, 50
+    ---------------------------------------------------------------- */
+    function buildBoardGrid() {
+      const grid = document.getElementById('bingo-numbers-grid');
+      grid.innerHTML = '';
+
+      // 10 Rows (r = 1 to 10)
+      for (let r = 1; r <= 10; r++) {
+        // 5 Columns: B, I, N, G, O
+        // Column B: r
+        // Column I: r + 10
+        // Column N: r + 20
+        // Column G: r + 30
+        // Column O: r + 40
+        const cols = [
+          { letter: 'B', num: r },
+          { letter: 'I', num: r + 10 },
+          { letter: 'N', num: r + 20 },
+          { letter: 'G', num: r + 30 },
+          { letter: 'O', num: r + 40 }
+        ];
+
+        cols.forEach(item => {
+          const btn = document.createElement('button');
+          btn.id = `cell-num-${item.num}`;
+          btn.className = `num-cell relative flex items-center justify-center rounded-lg border border-slate-800/80 bg-slate-900/60 text-slate-400 font-digital font-bold text-xs md:text-sm select-none transition-all duration-300`;
+          btn.onclick = () => onCellClick(item.letter, item.num);
+          btn.innerHTML = `<span>${item.num}</span>`;
+          grid.appendChild(btn);
+        });
+      }
+    }
+
+    // Update board UI reflecting all drawn numbers with Neon Colors
+    function updateBoardUI() {
+      // 1. Reset all cells to default inactive appearance
+      for (let num = 1; num <= 50; num++) {
+        const cell = document.getElementById(`cell-num-${num}`);
+        if (!cell) continue;
+
+        const letter = getLetterForNumber(num);
+        const isDrawn = gameState.drawnNumbers.includes(num);
+        const isLatest = gameState.currentBall && gameState.currentBall.number === num;
+
+        // Clear existing drawn classes
+        cell.className = 'num-cell relative flex items-center justify-center rounded-lg font-digital font-bold text-xs md:text-sm select-none transition-all duration-300';
+
+        if (isDrawn) {
+          // Display vibrant bright neon color based on column
+          cell.classList.add(`cell-drawn-${letter}`);
+          if (isLatest) {
+            cell.classList.add('cell-latest');
+          }
+        } else {
+          // Inactive dark cyber neon outline
+          cell.classList.add('border', 'border-slate-800/80', 'bg-slate-900/40', 'text-slate-500', 'hover:border-slate-700');
+        }
+      }
+
+      // 2. Update Stats Counter
+      const countEl = document.getElementById('stat-drawn-count');
+      if (countEl) {
+        countEl.innerText = `${gameState.drawnNumbers.length}/50`;
+      }
+
+      // 3. Update Latest Ball Display in 25% area
+      const letterEl = document.getElementById('latest-letter');
+      const numberEl = document.getElementById('latest-number');
+      const descEl = document.getElementById('latest-ball-desc');
+      const sphereEl = document.getElementById('latest-ball-sphere');
+      const spinBtn = document.getElementById('btn-spin');
+      const spinBtnText = document.getElementById('spin-btn-text');
+
+      if (gameState.currentBall) {
+        const { letter, number } = gameState.currentBall;
+        const colorInfo = getColorForLetter(letter);
+
+        letterEl.innerText = letter;
+        numberEl.innerText = number;
+        descEl.innerText = `ลูกที่ ${gameState.drawnNumbers.length}: ${letter} - ${number}`;
+
+        // Sphere Neon Style
+        sphereEl.style.borderColor = '#ffffff';
+        sphereEl.style.backgroundColor = colorInfo.hex;
+        sphereEl.style.color = '#000000';
+        sphereEl.style.boxShadow = `0 0 25px ${colorInfo.hex}, inset 0 0 10px #ffffff`;
+        letterEl.style.color = '#000000';
+        numberEl.style.color = '#000000';
+      } else {
+        letterEl.innerText = '-';
+        numberEl.innerText = '--';
+        descEl.innerText = 'พร้อมหมุนออกเลข';
+        sphereEl.style.borderColor = '#334155';
+        sphereEl.style.backgroundColor = '#1e293b';
+        sphereEl.style.color = '#94a3b8';
+        sphereEl.style.boxShadow = 'none';
+        letterEl.style.color = '#64748b';
+        numberEl.style.color = '#94a3b8';
+      }
+
+      // Check if all 50 drawn
+      if (gameState.drawnNumbers.length >= 50) {
+        spinBtn.disabled = true;
+        spinBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        spinBtnText.innerText = 'ครบ 50 ลูกแล้ว 🎉';
+      } else {
+        spinBtn.disabled = false;
+        spinBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        spinBtnText.innerText = gameState.isSpinning ? 'กำลังออกเลข...' : 'หมุนออกเลข';
+      }
+
+      // 4. Update Recent 5 Balls Reel
+      renderRecentBalls();
+    }
+
+    function renderRecentBalls() {
+      const reel = document.getElementById('recent-balls-bar');
+      if (!reel) return;
+
+      if (gameState.drawnNumbers.length === 0) {
+        reel.innerHTML = '<span class="text-slate-600 text-[10px]">- ยังไม่มี -</span>';
+        return;
+      }
+
+      // Get last 5 numbers in reverse chronological order
+      const last5 = gameState.drawnNumbers.slice(-5).reverse();
+      reel.innerHTML = '';
+
+      last5.forEach((num, index) => {
+        const letter = getLetterForNumber(num);
+        const colorInfo = getColorForLetter(letter);
+        const pill = document.createElement('span');
+        pill.className = `px-1.5 py-0.5 rounded text-[10px] font-digital font-bold border transition ${index === 0 ? 'scale-110 shadow-md' : 'opacity-80'}`;
+        pill.style.borderColor = colorInfo.hex;
+        pill.style.color = colorInfo.hex;
+        pill.style.backgroundColor = 'rgba(15, 23, 42, 0.9)';
+        pill.innerText = `${letter}${num}`;
+        reel.appendChild(pill);
+      });
+    }
+
+    /* -------------------------------------------------------------
+       SPIN / DRAW NUMBER LOGIC
+    ---------------------------------------------------------------- */
+    function spinNextBall() {
+      if (gameState.isSpinning) return;
+      if (gameState.drawnNumbers.length >= 50) {
+        alert('ตัวเลขออกครบทั้ง 50 หมายเลขแล้วครับ! กด "ล้างกระดาน" หากต้องการเริ่มเกมใหม่');
+        return;
+      }
+
+      gameState.isSpinning = true;
+      const spinBtnText = document.getElementById('spin-btn-text');
+      if (spinBtnText) spinBtnText.innerText = 'กำลังหมุน...';
+
+      // Start drum air turbulence
+      isDrumSpeedBoosted = true;
+
+      // Find available numbers that haven't been drawn yet
+      const availableNumbers = [];
+      for (let n = 1; n <= 50; n++) {
+        if (!gameState.drawnNumbers.includes(n)) {
+          availableNumbers.push(n);
+        }
+      }
+
+      // Random pick
+      const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+      const chosenNumber = availableNumbers[randomIndex];
+      const chosenLetter = getLetterForNumber(chosenNumber);
+
+      // Animation interval: fast cycling numbers in display
+      let shuffleCount = 0;
+      const maxShuffles = 18;
+      const shuffleInterval = setInterval(() => {
+        playBallClackSound();
+        const tempNum = Math.floor(Math.random() * 50) + 1;
+        const tempLetter = getLetterForNumber(tempNum);
+        document.getElementById('latest-letter').innerText = tempLetter;
+        document.getElementById('latest-number').innerText = tempNum;
+        shuffleCount++;
+
+        if (shuffleCount >= maxShuffles) {
+          clearInterval(shuffleInterval);
+
+          // Reveal Final Ball!
+          isDrumSpeedBoosted = false;
+          gameState.currentBall = { letter: chosenLetter, number: chosenNumber };
+          gameState.drawnNumbers.push(chosenNumber);
+          gameState.isSpinning = false;
+
+          saveState();
+          updateBoardUI();
+
+          // Celebration sound & voice
+          playDingSound();
+          setTimeout(() => {
+            speakBall(chosenLetter, chosenNumber);
+          }, 200);
+        }
+      }, 70);
+    }
+
+    /* -------------------------------------------------------------
+       AUTO SPIN TOGGLE
+    ---------------------------------------------------------------- */
+    function toggleAutoSpin() {
+      const statusEl = document.getElementById('auto-spin-status');
+      if (gameState.autoSpinInterval) {
+        clearInterval(gameState.autoSpinInterval);
+        gameState.autoSpinInterval = null;
+        statusEl.innerText = 'ปิด';
+        statusEl.className = 'text-amber-400 font-bold';
+      } else {
+        if (gameState.drawnNumbers.length >= 50) {
+          alert('ออกครบ 50 หมายเลขแล้ว');
+          return;
+        }
+        statusEl.innerText = 'เปิด (4s)';
+        statusEl.className = 'text-emerald-400 font-bold animate-pulse';
+        spinNextBall();
+        gameState.autoSpinInterval = setInterval(() => {
+          if (gameState.drawnNumbers.length >= 50) {
+            toggleAutoSpin();
+          } else {
+            spinNextBall();
+          }
+        }, 4500);
+      }
+    }
+
+    function onCellClick(letter, number) {
+      const isDrawn = gameState.drawnNumbers.includes(number);
+      if (isDrawn) {
+        const order = gameState.drawnNumbers.indexOf(number) + 1;
+        speakBall(letter, number);
+        alert(`🎯 หมายเลข ${letter}-${number}\nถูกออกเป็นลำดับที่: ${order} จาก 50 ลูก`);
+      } else {
+        alert(`⚪ หมายเลข ${letter}-${number} ยังไม่ถูกสุ่มออก`);
+      }
+    }
+
+    /* -------------------------------------------------------------
+       RESET / NEW GAME MODAL
+    ---------------------------------------------------------------- */
+    function confirmReset() {
+      document.getElementById('modal-reset').classList.remove('hidden');
+    }
+
+    function closeModalReset() {
+      document.getElementById('modal-reset').classList.add('hidden');
+    }
+
+    function executeResetGame() {
+      if (gameState.autoSpinInterval) {
+        clearInterval(gameState.autoSpinInterval);
+        gameState.autoSpinInterval = null;
+        document.getElementById('auto-spin-status').innerText = 'ปิด';
+      }
+      gameState.drawnNumbers = [];
+      gameState.currentBall = null;
+      gameState.isSpinning = false;
+      saveState();
+      closeModalReset();
+      updateBoardUI();
+    }
+
+    /* -------------------------------------------------------------
+       LOCAL STORAGE PERSISTENCE
+    ---------------------------------------------------------------- */
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          drawnNumbers: gameState.drawnNumbers,
+          currentBall: gameState.currentBall,
+          soundEnabled: gameState.soundEnabled
+        }));
+      } catch (e) { }
+    }
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed.drawnNumbers)) gameState.drawnNumbers = parsed.drawnNumbers;
+          if (parsed.currentBall) gameState.currentBall = parsed.currentBall;
+          if (typeof parsed.soundEnabled === 'boolean') {
+            gameState.soundEnabled = parsed.soundEnabled;
+            document.getElementById('sound-icon').innerText = gameState.soundEnabled ? '🔊' : '🔇';
+          }
+        }
+      } catch (e) { }
+    }
+
+    /* -------------------------------------------------------------
+       BINGO SHEET STATE & LOGIC (5x5 GRID: B 1-10, I 11-20, ...)
+       B = 1 - 10 สุ่ม 5 เลข
+       I = 11 - 20 สุ่ม 5 เลข
+       N = 21 - 30 สุ่ม 4 เลข + ช่องกลางเป็น FREE
+       G = 31 - 40 สุ่ม 5 เลข
+       O = 41 - 50 สุ่ม 5 เลข
+    ---------------------------------------------------------------- */
+    const SHEET_STORAGE_KEY = 'bingo_sheet_state_50';
+    let sheetState = {
+      cardId: 1000,
+      grid: [], // 5x5 array of { num, letter, isFree, marked }
+      hasShownBingoPopup: false
+    };
+
+    function pickRandomUnique(min, max, count) {
+      const pool = [];
+      for (let i = min; i <= max; i++) pool.push(i);
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      return pool.slice(0, count);
+    }
+
+    function createNewBingoSheetData() {
+      const colB = pickRandomUnique(1, 10, 5);
+      const colI = pickRandomUnique(11, 20, 5);
+      const colN = pickRandomUnique(21, 30, 4);
+      const colG = pickRandomUnique(31, 40, 5);
+      const colO = pickRandomUnique(41, 50, 5);
+
+      const grid = [];
+      for (let r = 0; r < 5; r++) {
+        const row = [];
+        // Col 0: B (1-10)
+        row.push({ num: colB[r], letter: 'B', isFree: false, marked: false });
+        // Col 1: I (11-20)
+        row.push({ num: colI[r], letter: 'I', isFree: false, marked: false });
+        // Col 2: N (21-30, center r=2 is FREE)
+        if (r === 2) {
+          row.push({ num: 'FREE', letter: 'N', isFree: true, marked: true });
+        } else {
+          const nIdx = r > 2 ? r - 1 : r;
+          row.push({ num: colN[nIdx], letter: 'N', isFree: false, marked: false });
+        }
+        // Col 3: G (31-40)
+        row.push({ num: colG[r], letter: 'G', isFree: false, marked: false });
+        // Col 4: O (41-50)
+        row.push({ num: colO[r], letter: 'O', isFree: false, marked: false });
+
+        grid.push(row);
+      }
+
+      return {
+        cardId: Math.floor(1000 + Math.random() * 9000),
+        grid: grid,
+        hasShownBingoPopup: false
+      };
+    }
+
+    function loadSheetState() {
+      try {
+        const saved = localStorage.getItem(SHEET_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && Array.isArray(parsed.grid) && parsed.grid.length === 5) {
+            sheetState = parsed;
+            return;
+          }
+        }
+      } catch (e) { }
+      sheetState = createNewBingoSheetData();
+      saveSheetState();
+    }
+
+    function saveSheetState() {
+      try {
+        localStorage.setItem(SHEET_STORAGE_KEY, JSON.stringify(sheetState));
+      } catch (e) { }
+    }
+
+    /* -------------------------------------------------------------
+       BINGO WIN CONDITIONS CHECKER
+       1. สี่เลขมุมเล็ก: (1,1), (1,3), (3,1), (3,3)
+       2. สี่เลขมุมใหญ่: (0,0), (0,4), (4,0), (4,4)
+       3. แนวตั้ง: 5 คอลัมน์
+       4. แนวนอน: 5 แถว
+       5. แนวทแยง: 2 เส้นทแยงมุม
+    ---------------------------------------------------------------- */
+    function checkSheetBingoWins() {
+      const wins = [];
+      const grid = sheetState.grid;
+      if (!grid || grid.length !== 5) return wins;
+
+      const isMarked = (r, c) => grid[r][c].isFree || grid[r][c].marked;
+
+      // 1. สี่เลขมุมเล็ก: (1,1), (1,3), (3,1), (3,3)
+      if (isMarked(1, 1) && isMarked(1, 3) && isMarked(3, 1) && isMarked(3, 3)) {
+        wins.push({
+          id: 'inner_corners',
+          name: 'สี่เลขมุมเล็ก (4 มุมล้อมช่องฟรี)',
+          badgeId: 'rule-badge-inner',
+          cells: [[1,1], [1,3], [3,1], [3,3]]
+        });
+      }
+
+      // 2. สี่เลขมุมใหญ่: (0,0), (0,4), (4,0), (4,4)
+      if (isMarked(0, 0) && isMarked(0, 4) && isMarked(4, 0) && isMarked(4, 4)) {
+        wins.push({
+          id: 'outer_corners',
+          name: 'สี่เลขมุมใหญ่ (4 มุมนอกสุดของตาราง)',
+          badgeId: 'rule-badge-outer',
+          cells: [[0,0], [0,4], [4,0], [4,4]]
+        });
+      }
+
+      // 3. แนวตั้ง (5 Columns)
+      const colLetters = ['B', 'I', 'N', 'G', 'O'];
+      for (let c = 0; c < 5; c++) {
+        if ([0, 1, 2, 3, 4].every(r => isMarked(r, c))) {
+          wins.push({
+            id: `col_${c}`,
+            name: `แนวตั้ง (คอลัมน์ ${colLetters[c]})`,
+            badgeId: 'rule-badge-col',
+            cells: [[0,c], [1,c], [2,c], [3,c], [4,c]]
+          });
+        }
+      }
+
+      // 4. แนวนอน (5 Rows)
+      for (let r = 0; r < 5; r++) {
+        if ([0, 1, 2, 3, 4].every(c => isMarked(r, c))) {
+          wins.push({
+            id: `row_${r}`,
+            name: `แนวนอน (แถวที่ ${r + 1})`,
+            badgeId: 'rule-badge-row',
+            cells: [[r,0], [r,1], [r,2], [r,3], [r,4]]
+          });
+        }
+      }
+
+      // 5. แนวทแยง (2 Diagonals)
+      // Main Diagonal: (0,0) to (4,4)
+      if ([0, 1, 2, 3, 4].every(i => isMarked(i, i))) {
+        wins.push({
+          id: 'diag_main',
+          name: 'แนวทแยง (ซ้ายบน ➜ ขวาล่าง)',
+          badgeId: 'rule-badge-diag',
+          cells: [[0,0], [1,1], [2,2], [3,3], [4,4]]
+        });
+      }
+      // Anti Diagonal: (0,4) to (4,0)
+      if ([0, 1, 2, 3, 4].every(i => isMarked(i, 4 - i))) {
+        wins.push({
+          id: 'diag_anti',
+          name: 'แนวทแยง (ขวาบน ➜ ซ้ายล่าง)',
+          badgeId: 'rule-badge-diag',
+          cells: [[0,4], [1,3], [2,2], [3,1], [4,0]]
+        });
+      }
+
+      return wins;
+    }
+
+    /* -------------------------------------------------------------
+       RENDER BINGO SHEET GRID
+    ---------------------------------------------------------------- */
+    function renderSheetGrid() {
+      const container = document.getElementById('bingo-sheet-grid');
+      if (!container) return;
+
+      container.innerHTML = '';
+      document.getElementById('sheet-card-id').innerText = `#${sheetState.cardId}`;
+
+      const wins = checkSheetBingoWins();
+      const winCellSet = new Set();
+      wins.forEach(w => {
+        w.cells.forEach(([r, c]) => winCellSet.add(`${r}_${c}`));
+      });
+
+      // Count marked cells
+      let markedCount = 0;
+
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          const item = sheetState.grid[r][c];
+          const isMarked = item.isFree || item.marked;
+          if (isMarked) markedCount++;
+
+          const isWinningCell = winCellSet.has(`${r}_${c}`);
+
+          const btn = document.createElement('button');
+          btn.className = 'sheet-cell aspect-square w-full rounded-xl flex flex-col items-center justify-center font-digital relative border transition-all duration-200';
+          btn.onclick = () => toggleSheetCell(r, c);
+
+          if (item.isFree) {
+            // Free center cell
+            btn.classList.add('sheet-free-cell');
+            if (isWinningCell) btn.classList.add('sheet-win-cell');
+            btn.innerHTML = `
+              <span class="text-xs md:text-sm -mb-0.5">⭐</span>
+              <span class="text-[11px] md:text-xs font-black tracking-wider text-yellow-300">FREE</span>
+            `;
+          } else if (item.marked) {
+            // Player marked this cell
+            btn.classList.add(`sheet-marked-${item.letter}`);
+            if (isWinningCell) btn.classList.add('sheet-win-cell');
+            btn.innerHTML = `
+              <span class="text-base md:text-lg font-black text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">${item.num}</span>
+              <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-white shadow-[0_0_6px_#ffffff]"></span>
+            `;
+          } else {
+            // Unmarked clean cell
+            btn.classList.add('bg-slate-900/70', 'border-slate-800/90', 'text-slate-300', 'hover:border-slate-700');
+            btn.innerHTML = `
+              <span class="text-base md:text-lg font-bold">${item.num}</span>
+            `;
+          }
+
+          container.appendChild(btn);
+        }
+      }
+
+      // Update Header Status Badge
+      const statusText = document.getElementById('sheet-status-text');
+      const statusBadge = document.getElementById('sheet-status-badge');
+      const statusDot = document.getElementById('sheet-status-dot');
+
+      if (wins.length > 0) {
+        statusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-400 text-slate-950 border border-yellow-300 flex items-center gap-1.5 shadow-[0_0_15px_rgba(255,215,0,0.8)] animate-pulse';
+        statusDot.className = 'w-2 h-2 rounded-full bg-slate-950 animate-ping';
+        statusText.innerText = `🎉 BINGO! (${wins.length} แบบ)`;
+      } else {
+        statusBadge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-slate-900 text-slate-300 border border-slate-700 flex items-center gap-1.5';
+        statusDot.className = 'w-2 h-2 rounded-full bg-cyan-400 animate-pulse';
+        statusText.innerText = `กาแล้ว ${markedCount}/25`;
+      }
+
+      // Update Rule Badges in Footer
+      const badges = {
+        'rule-badge-inner': false,
+        'rule-badge-outer': false,
+        'rule-badge-col': false,
+        'rule-badge-row': false,
+        'rule-badge-diag': false
+      };
+      wins.forEach(w => {
+        if (badges[w.badgeId] !== undefined) badges[w.badgeId] = true;
+      });
+
+      Object.keys(badges).forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (badges[id]) {
+          el.className = 'px-2 py-0.5 rounded-full text-[10px] bg-yellow-400 text-slate-950 font-bold border border-yellow-300 shadow-[0_0_10px_rgba(255,215,0,0.6)] animate-pulse';
+        } else {
+          el.className = 'px-2 py-0.5 rounded-full text-[10px] bg-slate-900 text-slate-400 border border-slate-800 transition';
+        }
+      });
+    }
+
+    /* -------------------------------------------------------------
+       TOGGLE MARK ON SHEET CELL
+       กดเพื่อกาตัวเลข และกดซ้ำเพื่อคืนสถานะเดิม กรณีกดพลาด
+    ---------------------------------------------------------------- */
+    function toggleSheetCell(r, c) {
+      const cell = sheetState.grid[r][c];
+      if (cell.isFree) {
+        // Center FREE cell is permanent
+        playDaubSound();
+        return;
+      }
+
+      cell.marked = !cell.marked;
+
+      if (cell.marked) {
+        playDaubSound();
+      } else {
+        playUnDaubSound();
+      }
+
+      saveSheetState();
+      renderSheetGrid();
+
+      // Check win condition
+      const wins = checkSheetBingoWins();
+      if (wins.length > 0) {
+        if (!sheetState.hasShownBingoPopup) {
+          triggerBingoWinPopup(wins);
+          sheetState.hasShownBingoPopup = true;
+          saveSheetState();
+        }
+      } else {
+        sheetState.hasShownBingoPopup = false;
+        saveSheetState();
+      }
+    }
+
+    /* -------------------------------------------------------------
+       BINGO WIN POPUP MODAL & CONFETTI
+    ---------------------------------------------------------------- */
+    function triggerBingoWinPopup(wins) {
+      playBingoFanfareSound();
+      startConfetti();
+
+      const listEl = document.getElementById('bingo-win-patterns-list');
+      if (listEl) {
+        listEl.innerHTML = wins.map(w => `
+          <div class="flex items-center gap-2 text-yellow-300 font-bold">
+            <span class="text-sm">🌟</span>
+            <span>${w.name}</span>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('modal-bingo-win').classList.remove('hidden');
+    }
+
+    function closeBingoWinModal() {
+      document.getElementById('modal-bingo-win').classList.add('hidden');
+      stopConfetti();
+    }
+
+    function confirmNewCard(fromWinModal = false) {
+      if (fromWinModal) {
+        closeBingoWinModal();
+      }
+      document.getElementById('modal-new-card').classList.remove('hidden');
+    }
+
+    function closeModalNewCard() {
+      document.getElementById('modal-new-card').classList.add('hidden');
+    }
+
+    function executeNewCard() {
+      sheetState = createNewBingoSheetData();
+      saveSheetState();
+      closeModalNewCard();
+      renderSheetGrid();
+    }
+
+    /* -------------------------------------------------------------
+       CONFETTI CANVAS SIMULATION
+    ---------------------------------------------------------------- */
+    let confettiAnimationId = null;
+    function startConfetti() {
+      const c = document.getElementById('confetti-canvas');
+      if (!c) return;
+      c.width = window.innerWidth;
+      c.height = window.innerHeight;
+      const ctx = c.getContext('2d');
+      const particles = [];
+      const colors = ['#00f0ff', '#ff007f', '#ffd700', '#00ff66', '#bd00ff', '#ffffff'];
+
+      for (let i = 0; i < 90; i++) {
+        particles.push({
+          x: Math.random() * c.width,
+          y: Math.random() * -c.height,
+          size: 6 + Math.random() * 8,
+          speed: 2 + Math.random() * 4,
+          tilt: Math.random() * 10,
+          tiltSpeed: (Math.random() - 0.5) * 0.12,
+          color: colors[Math.floor(Math.random() * colors.length)]
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, c.width, c.height);
+        particles.forEach(p => {
+          p.y += p.speed;
+          p.tilt += p.tiltSpeed;
+          if (p.y > c.height) {
+            p.y = -20;
+            p.x = Math.random() * c.width;
+          }
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.tilt);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size / 2);
+          ctx.restore();
+        });
+        confettiAnimationId = requestAnimationFrame(draw);
+      }
+
+      stopConfetti();
+      draw();
+    }
+
+    function stopConfetti() {
+      if (confettiAnimationId) {
+        cancelAnimationFrame(confettiAnimationId);
+        confettiAnimationId = null;
+      }
+      const c = document.getElementById('confetti-canvas');
+      if (c) {
+        const ctx = c.getContext('2d');
+        ctx.clearRect(0, 0, c.width, c.height);
+      }
+    }
+
+    /* -------------------------------------------------------------
+       SCREEN ROUTING (Menu / Machine / Sheet)
+    ---------------------------------------------------------------- */
+    function showScreen(screenId) {
+      document.getElementById('screen-menu').classList.add('hidden');
+      document.getElementById('screen-machine').classList.add('hidden');
+      document.getElementById('screen-sheet').classList.add('hidden');
+
+      if (screenId === 'machine') {
+        document.getElementById('screen-machine').classList.remove('hidden');
+        window.location.hash = 'machine';
+      } else if (screenId === 'sheet') {
+        document.getElementById('screen-sheet').classList.remove('hidden');
+        window.location.hash = 'sheet';
+        renderSheetGrid();
+      } else {
+        document.getElementById('screen-menu').classList.remove('hidden');
+        window.location.hash = 'menu';
+      }
+    }
+
+    // Handle hash change & back button navigation
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'machine' || hash === 'sheet') {
+        showScreen(hash);
+      } else {
+        showScreen('menu');
+      }
+    });
+
+    // Initialize App
+    window.addEventListener('DOMContentLoaded', () => {
+      buildBoardGrid();
+      loadState();
+      updateBoardUI();
+
+      loadSheetState();
+      renderSheetGrid();
+
+      // Check initial URL hash
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'machine') {
+        showScreen('machine');
+      } else if (hash === 'sheet') {
+        showScreen('sheet');
+      } else {
+        showScreen('menu');
+      }
+    });
+  </script>
+</body>
+</html>
