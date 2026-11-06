@@ -188,15 +188,6 @@ let selectedRoles = {};
 rolesConfig.forEach(r => selectedRoles[r.id] = r.default);
 
 function updateRoleUI() {
-    const countDisplay = document.getElementById('player-count-display');
-    if (countDisplay) countDisplay.innerText = expectedPlayers;
-    
-    const balance = playerBalances[expectedPlayers];
-    if (document.getElementById('good-required-desc')) document.getElementById('good-required-desc').innerText = balance.good;
-    if (document.getElementById('evil-required-desc')) document.getElementById('evil-required-desc').innerText = balance.evil;
-    if (document.getElementById('good-required-count')) document.getElementById('good-required-count').innerText = balance.good;
-    if (document.getElementById('evil-required-count')) document.getElementById('evil-required-count').innerText = balance.evil;
-    
     let goodSelected = 0;
     let evilSelected = 0;
     rolesConfig.forEach(r => {
@@ -206,12 +197,70 @@ function updateRoleUI() {
         }
     });
     
+    // Automatically count total roles selected -> expectedPlayers
+    const totalSelected = goodSelected + evilSelected;
+    expectedPlayers = totalSelected;
+    
+    const countDisplay = document.getElementById('player-count-display');
+    if (countDisplay) countDisplay.innerText = totalSelected;
+    
+    // Target balance based on total players (Avalon standard 5 - 10)
+    const balance = playerBalances[totalSelected] || (totalSelected < 5 ? playerBalances[5] : playerBalances[10]);
+    if (document.getElementById('good-required-desc')) document.getElementById('good-required-desc').innerText = balance.good;
+    if (document.getElementById('evil-required-desc')) document.getElementById('evil-required-desc').innerText = balance.evil;
+    if (document.getElementById('good-required-count')) document.getElementById('good-required-count').innerText = balance.good;
+    if (document.getElementById('evil-required-count')) document.getElementById('evil-required-count').innerText = balance.evil;
+    
     if (document.getElementById('good-selected-count')) document.getElementById('good-selected-count').innerText = goodSelected;
     if (document.getElementById('evil-selected-count')) document.getElementById('evil-selected-count').innerText = evilSelected;
     
+    const badge = document.getElementById('role-balance-badge');
+    const badgeText = document.getElementById('role-balance-badge-text');
+    const badgeDot = document.getElementById('role-balance-badge-dot');
     const btnConfirm = document.getElementById('btn-confirm-roles');
+    
+    let isValid = false;
+    let badgeMsg = '';
+    let badgeClass = '';
+    let dotColor = 'bg-emerald-400';
+    
+    if (totalSelected < 5) {
+        isValid = false;
+        badgeMsg = `🟡 ขั้นต่ำ 5 คน (เลือกแล้ว ${totalSelected} บทบาท)`;
+        badgeClass = 'bg-amber-950/80 text-amber-300 border-amber-800';
+        dotColor = 'bg-amber-400';
+    } else if (totalSelected > 10) {
+        isValid = false;
+        badgeMsg = `🟡 สูงสุด 10 คน (เลือกแล้ว ${totalSelected} บทบาท)`;
+        badgeClass = 'bg-amber-950/80 text-amber-300 border-amber-800';
+        dotColor = 'bg-amber-400';
+    } else {
+        const isBalanced = (goodSelected === balance.good && evilSelected === balance.evil);
+        if (isBalanced) {
+            isValid = true;
+            badgeMsg = `🟢 สมดุลตามกติกา (${totalSelected} คน)`;
+            badgeClass = 'bg-emerald-950/80 text-emerald-400 border-emerald-800';
+            dotColor = 'bg-emerald-400';
+        } else {
+            isValid = false;
+            badgeMsg = `🔴 ปรับเป็น Good ${balance.good} / Evil ${balance.evil}`;
+            badgeClass = 'bg-rose-950/80 text-rose-400 border-rose-800';
+            dotColor = 'bg-rose-400';
+        }
+    }
+    
+    if (badge) {
+        badge.className = `px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 shadow-sm transition-all duration-200 ${badgeClass}`;
+    }
+    if (badgeText) {
+        badgeText.innerText = badgeMsg;
+    }
+    if (badgeDot) {
+        badgeDot.className = `w-2 h-2 rounded-full ${dotColor} animate-pulse`;
+    }
+    
     if (btnConfirm) {
-        if (goodSelected === balance.good && evilSelected === balance.evil) {
+        if (isValid) {
             btnConfirm.classList.remove('opacity-50', 'cursor-not-allowed');
             btnConfirm.disabled = false;
         } else {
@@ -261,13 +310,6 @@ window.toggleRole = function(id) {
     selectedRoles[id] = !selectedRoles[id];
     updateRoleUI();
 };
-
-document.getElementById('btn-decrease-players')?.addEventListener('click', () => {
-    if (expectedPlayers > 5) { expectedPlayers--; updateRoleUI(); }
-});
-document.getElementById('btn-increase-players')?.addEventListener('click', () => {
-    if (expectedPlayers < 10) { expectedPlayers++; updateRoleUI(); }
-});
 
 // --- Home Screen Events ---
 function startCreateRoom() {
@@ -369,7 +411,6 @@ function setupModLobby(roomCode, targetPlayers) {
 }
 
 function confirmRolesAndCreateRoom() {
-    const balance = playerBalances[expectedPlayers] || { good: 3, evil: 2 };
     let goodSelected = 0, evilSelected = 0;
     const finalRoles = [];
     rolesConfig.forEach(r => {
@@ -380,8 +421,17 @@ function confirmRolesAndCreateRoom() {
         }
     });
     
+    const totalSelected = goodSelected + evilSelected;
+    expectedPlayers = totalSelected;
+    
+    if (totalSelected < 5 || totalSelected > 10) {
+        alert(`เกม Avalon รองรับผู้เล่น 5 - 10 คนเท่านั้น (ปัจจุบันเลือกไว้ ${totalSelected} บทบาท)`);
+        return;
+    }
+    
+    const balance = playerBalances[totalSelected];
     if (goodSelected !== balance.good || evilSelected !== balance.evil) {
-        alert(`กรุณาเลือกบทบาทให้ครบตามจำนวนผู้เล่น ${expectedPlayers} คน:\n- ฝ่ายคนดีต้องการ ${balance.good} คน (เลือกแล้ว ${goodSelected})\n- ฝ่ายร้ายต้องการ ${balance.evil} คน (เลือกแล้ว ${evilSelected})`);
+        alert(`กรุณาเลือกบทบาทให้สมดุลตามกติกาสำหรับผู้เล่น ${totalSelected} คน:\n- ฝ่ายคนดีต้องการ ${balance.good} คน (เลือกแล้ว ${goodSelected})\n- ฝ่ายร้ายต้องการ ${balance.evil} คน (เลือกแล้ว ${evilSelected})`);
         return;
     }
     

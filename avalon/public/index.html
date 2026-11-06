@@ -196,15 +196,17 @@
         <section id="screen-role-select" class="space-y-4 hidden">
             <!-- Player Count Card -->
             <div class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
-                <h3 class="text-slate-400 text-xs mb-3">จำนวนผู้เล่นที่ต้องใช้</h3>
                 <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-baseline space-x-2">
-                        <span id="player-count-display" class="text-4xl font-black text-amber-400">5</span>
-                        <span class="text-slate-400 text-sm">คน</span>
+                    <div>
+                        <h3 class="text-slate-400 text-xs mb-1">จำนวนผู้เล่นที่ต้องใช้ (คำนวณอัตโนมัติ)</h3>
+                        <div class="flex items-baseline space-x-2">
+                            <span id="player-count-display" class="text-4xl font-black text-amber-400">5</span>
+                            <span class="text-slate-400 text-sm">คน</span>
+                        </div>
                     </div>
-                    <div class="flex space-x-2">
-                        <button id="btn-decrease-players" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center text-xl hover:bg-slate-700 transition">-</button>
-                        <button id="btn-increase-players" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center text-xl hover:bg-slate-700 transition">+</button>
+                    <div id="role-balance-badge" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800 flex items-center gap-1.5 shadow-sm transition-all duration-200">
+                        <span id="role-balance-badge-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="role-balance-badge-text">🟢 สมดุลตามกติกา (5 คน)</span>
                     </div>
                 </div>
                 
