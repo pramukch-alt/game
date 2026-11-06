@@ -109,6 +109,91 @@
         .vote-mark.active {
             background-color: #ef4444 !important; /* red-500 */
         }
+
+        /* Desktop Expanded Board Mode */
+        body.desktop-board-expanded main {
+            max-width: 68rem !important; /* 1088px */
+            transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body.desktop-board-expanded #screen-mod-game .board-box {
+            min-height: 520px;
+            padding: 2rem 2.5rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game .board-title {
+            font-size: 2.5rem !important;
+            letter-spacing: 0.15em;
+            margin-bottom: 2rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game #quest-tracker {
+            gap: 1.5rem !important;
+            margin-bottom: 2.25rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game .quest-card-item {
+            width: 8.5rem !important;
+            height: 12.5rem !important;
+            border-radius: 1.25rem !important;
+            padding: 1rem 0.75rem !important;
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.7) !important;
+        }
+        body.desktop-board-expanded #screen-mod-game .quest-card-item .quest-icon {
+            font-size: 1.25rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game .quest-card-item .quest-icon span {
+            font-size: 1.6rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game .quest-card-item .quest-req-badge {
+            font-size: 0.95rem !important;
+            padding: 0.35rem 0.75rem !important;
+            border-radius: 0.5rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game .quest-card-item .quest-two-fail {
+            font-size: 0.8rem !important;
+            padding: 0.25rem 0.6rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game .vote-track-card {
+            max-width: 32rem !important;
+            padding: 1.25rem 1.75rem !important;
+            border-radius: 1.25rem !important;
+            margin-bottom: 2rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game .vote-track-title {
+            font-size: 0.95rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game .vote-track-hint {
+            font-size: 0.85rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game #vote-track {
+            gap: 0.75rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game .vote-mark {
+            width: 3.25rem !important;
+            height: 3.25rem !important;
+            font-size: 1.25rem !important;
+            font-weight: 800 !important;
+        }
+        body.desktop-board-expanded #screen-mod-game #mod-status {
+            font-size: 1.25rem !important;
+            padding: 1.25rem 2rem !important;
+            border-radius: 1rem !important;
+            border-left-width: 6px !important;
+            max-width: 44rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game .players-card {
+            padding: 1.5rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game .players-card h4 {
+            font-size: 0.95rem !important;
+            margin-bottom: 1rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game #game-players-list {
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+            gap: 1rem !important;
+        }
+        body.desktop-board-expanded #screen-mod-game #game-players-list div {
+            padding: 0.85rem 1rem !important;
+            font-size: 1.05rem !important;
+            border-radius: 0.85rem !important;
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
@@ -343,16 +428,29 @@
         <!-- ========================================== -->
         <section id="screen-mod-game" class="space-y-4 hidden">
             <!-- Quest Board Container -->
-            <div class="w-full relative border-2 border-amber-600/50 rounded-2xl overflow-hidden shadow-2xl min-h-[380px] bg-slate-900">
+            <div class="board-box w-full relative border-2 border-amber-600/50 rounded-2xl overflow-hidden shadow-2xl min-h-[380px] bg-slate-900 transition-all duration-300">
                 <img src="./pics/Merlin_BG.png" class="absolute inset-0 w-full h-full object-cover opacity-25" alt="Avalon Board">
                 
                 <div class="relative z-10 p-5 flex flex-col items-center bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/60 w-full h-full">
-                    <div class="flex items-center justify-between w-full mb-4">
-                        <span class="text-xs text-amber-400 font-mono uppercase tracking-wider">ห้อง: <span id="game-board-room-code">AV-0000</span></span>
-                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">กระดานหลัก</span>
+                    <div class="flex items-center justify-between w-full mb-4 flex-wrap gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs sm:text-sm text-amber-400 font-mono uppercase tracking-wider bg-slate-950/80 px-2.5 py-1 rounded-lg border border-amber-500/30">ห้อง: <span id="game-board-room-code">AV-0000</span></span>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700">กระดานหลัก</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <!-- Desktop Mode Toggle Button -->
+                            <button id="btn-toggle-desktop" onclick="toggleDesktopBoardView()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-medium border border-amber-500/40 flex items-center gap-1.5 transition active:scale-95 shadow" title="ขยายเต็มหน้าจอ Desktop / TV">
+                                <span id="btn-desktop-icon">🖥️</span>
+                                <span id="btn-desktop-text">โหมด Desktop</span>
+                            </button>
+                            <!-- Fullscreen Toggle Button -->
+                            <button id="btn-fullscreen" onclick="toggleFullscreen()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium border border-slate-700 flex items-center gap-1 transition active:scale-95 shadow" title="เต็มหน้าจอ (Fullscreen)">
+                                <span id="btn-fullscreen-icon">⛶</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <h3 class="text-2xl text-amber-400 font-black mb-6 tracking-wide drop-shadow">QUEST BOARD</h3>
+                    <h3 class="board-title text-2xl text-amber-400 font-black mb-6 tracking-wide drop-shadow">QUEST BOARD</h3>
                     
                     <!-- 5 Quest Cards -->
                     <div id="quest-tracker" class="flex space-x-2 sm:space-x-3 mb-6 w-full justify-center">
@@ -360,10 +458,10 @@
                     </div>
                     
                     <!-- Vote Track (5 Fails = Evil Wins) -->
-                    <div class="bg-slate-900/90 border border-rose-900/80 rounded-xl p-3 flex flex-col items-center w-full max-w-xs mb-5 shadow-lg">
+                    <div class="vote-track-card bg-slate-900/90 border border-rose-900/80 rounded-xl p-3 flex flex-col items-center w-full max-w-xs mb-5 shadow-lg">
                         <div class="flex justify-between items-center w-full mb-1.5 px-1">
-                            <span class="text-rose-400 font-semibold text-xs uppercase tracking-wide">Vote Track (Failed Votes)</span>
-                            <span class="text-[10px] text-rose-500">ครบ 5 = ฝ่ายร้ายชนะ</span>
+                            <span class="vote-track-title text-rose-400 font-semibold text-xs uppercase tracking-wide">Vote Track (Failed Votes)</span>
+                            <span class="vote-track-hint text-[10px] text-rose-500">ครบ 5 = ฝ่ายร้ายชนะ</span>
                         </div>
                         <div id="vote-track" class="flex space-x-2">
                             <div class="vote-mark w-7 h-7 rounded-full border border-rose-700/60 bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">1</div>
@@ -382,7 +480,7 @@
             </div>
 
             <!-- Live Players on Board -->
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-2 shadow-lg">
+            <div class="players-card bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-2 shadow-lg">
                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">ผู้เล่นในเกม</h4>
                 <div id="game-players-list" class="grid grid-cols-2 gap-2 text-xs font-medium"></div>
             </div>
@@ -732,6 +830,6 @@
         </div>
     </div>
 
-    <script src="./app.js?v=2.2"></script>
+    <script src="./app.js?v=2.3"></script>
 </body>
 </html>

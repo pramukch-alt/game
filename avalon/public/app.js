@@ -132,8 +132,76 @@ function showScreen(screenId) {
         }
     }
 
+    // Manage Desktop Expanded View state when switching screens
+    if (screenId === 'screen-mod-game') {
+        if (localStorage.getItem('avalon_desktop_expanded') === 'true') {
+            document.body.classList.add('desktop-board-expanded');
+            updateDesktopButtonUI(true);
+        } else {
+            document.body.classList.remove('desktop-board-expanded');
+            updateDesktopButtonUI(false);
+        }
+    } else {
+        document.body.classList.remove('desktop-board-expanded');
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// --- Desktop Expanded Board Controls ---
+function toggleDesktopBoardView() {
+    const isExpanded = document.body.classList.toggle('desktop-board-expanded');
+    localStorage.setItem('avalon_desktop_expanded', isExpanded ? 'true' : 'false');
+    updateDesktopButtonUI(isExpanded);
+}
+
+function updateDesktopButtonUI(isExpanded) {
+    const btn = document.getElementById('btn-toggle-desktop');
+    const icon = document.getElementById('btn-desktop-icon');
+    const text = document.getElementById('btn-desktop-text');
+    if (!btn) return;
+
+    if (isExpanded) {
+        btn.classList.add('bg-amber-500', 'text-slate-950', 'font-bold');
+        btn.classList.remove('bg-slate-800', 'text-amber-300');
+        if (icon) icon.innerText = '📱';
+        if (text) text.innerText = 'โหมดปกติ';
+        btn.title = 'สลับกลับเป็นขนาดมือถือ (Mobile View)';
+    } else {
+        btn.classList.remove('bg-amber-500', 'text-slate-950', 'font-bold');
+        btn.classList.add('bg-slate-800', 'text-amber-300');
+        if (icon) icon.innerText = '🖥️';
+        if (text) text.innerText = 'โหมด Desktop';
+        btn.title = 'ขยายเต็มหน้าจอ Desktop / TV';
+    }
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.warn('Fullscreen request failed:', err);
+            });
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen().catch(err => {
+                console.warn('Exit fullscreen failed:', err);
+            });
+        }
+    }
+}
+
+document.addEventListener('fullscreenchange', () => {
+    const icon = document.getElementById('btn-fullscreen-icon');
+    if (icon) {
+        icon.innerText = document.fullscreenElement ? '🗗' : '⛶';
+    }
+});
+
+window.toggleDesktopBoardView = toggleDesktopBoardView;
+window.toggleFullscreen = toggleFullscreen;
+window.updateDesktopButtonUI = updateDesktopButtonUI;
 
 function handleHeaderBack() {
     if (currentScreen === 'screen-role-select' || currentScreen === 'screen-player-join') {
@@ -1354,35 +1422,35 @@ function renderQuestTracker(history, currentQuestNum, questList) {
 
         let borderClass = 'border-slate-800 bg-slate-900/90 text-slate-300';
         let imgOpacity = 'opacity-30';
-        let badge = `<span class="text-[10px] text-slate-300 font-mono font-bold bg-slate-950/80 px-1 rounded border border-slate-700/60 shadow">${reqCount} คน</span>`;
-        let icon = `<span class="text-[11px] font-bold text-slate-300 drop-shadow">Quest ${qNum}</span>`;
+        let badge = `<span class="quest-req-badge text-[10px] text-slate-300 font-mono font-bold bg-slate-950/80 px-1 rounded border border-slate-700/60 shadow">${reqCount} คน</span>`;
+        let icon = `<span class="quest-icon text-[11px] font-bold text-slate-300 drop-shadow">Quest ${qNum}</span>`;
 
         if (status === true) {
             // สีน้ำเงิน = All Success (ตามที่ระบุ)
             borderClass = 'border-blue-400 bg-blue-600/90 text-white font-black shadow-lg shadow-blue-500/50';
             imgOpacity = 'opacity-25';
-            icon = '<span class="text-base drop-shadow">✓</span>';
-            badge = '<span class="text-[9px] uppercase font-bold tracking-tight bg-blue-950/80 px-1 rounded border border-blue-400/60">All Success</span>';
+            icon = '<span class="quest-icon text-base drop-shadow">✓</span>';
+            badge = '<span class="quest-req-badge text-[9px] uppercase font-bold tracking-tight bg-blue-950/80 px-1 rounded border border-blue-400/60">All Success</span>';
         } else if (status === false) {
             // สีแดง = มีคนลง Fail ตามเงื่อนไข (ตามที่ระบุ)
             borderClass = 'border-rose-400 bg-rose-600/90 text-white font-black shadow-lg shadow-rose-500/50';
             imgOpacity = 'opacity-25';
-            icon = '<span class="text-base drop-shadow">✗</span>';
-            badge = '<span class="text-[9px] uppercase font-bold tracking-tight bg-rose-950/80 px-1 rounded border border-rose-400/60">Fail</span>';
+            icon = '<span class="quest-icon text-base drop-shadow">✗</span>';
+            badge = '<span class="quest-req-badge text-[9px] uppercase font-bold tracking-tight bg-rose-950/80 px-1 rounded border border-rose-400/60">Fail</span>';
         } else if (isCurrent) {
             borderClass = 'border-amber-400 bg-amber-950/80 text-amber-300 font-bold shadow-[0_0_15px_rgba(245,158,11,0.6)] animate-pulse';
             imgOpacity = 'opacity-45';
-            badge = `<span class="text-[10px] text-amber-300 font-black bg-amber-950/90 px-1.5 py-0.5 rounded border border-amber-800">${reqCount} คน</span>`;
-            icon = `<span class="text-[11px] font-black text-amber-400 drop-shadow">Quest ${qNum}*</span>`;
+            badge = `<span class="quest-req-badge text-[10px] text-amber-300 font-black bg-amber-950/90 px-1.5 py-0.5 rounded border border-amber-800">${reqCount} คน</span>`;
+            icon = `<span class="quest-icon text-[11px] font-black text-amber-400 drop-shadow">Quest ${qNum}*</span>`;
         }
 
-        card.className = `w-14 h-20 sm:w-16 sm:h-22 border-2 rounded-2xl flex flex-col items-center justify-between p-2 transition-all duration-300 backdrop-blur-sm relative overflow-hidden ${borderClass}`;
+        card.className = `quest-card-item w-14 h-20 sm:w-16 sm:h-22 border-2 rounded-2xl flex flex-col items-center justify-between p-2 transition-all duration-300 backdrop-blur-sm relative overflow-hidden ${borderClass}`;
         card.innerHTML = `
             <img src="./pics/Avalon.png" alt="Avalon Quest Card" class="absolute inset-0 w-full h-full object-cover ${imgOpacity} pointer-events-none">
             <div class="relative z-10 w-full flex flex-col items-center justify-between h-full">
                 ${icon}
                 ${badge}
-                ${isTwoFail && status === undefined ? '<span class="text-[8px] text-rose-400 font-mono font-bold bg-rose-950/90 px-1 rounded border border-rose-800/80">*2 fails</span>' : '<span class="h-1"></span>'}
+                ${isTwoFail && status === undefined ? '<span class="quest-two-fail text-[8px] text-rose-400 font-mono font-bold bg-rose-950/90 px-1 rounded border border-rose-800/80">*2 fails</span>' : '<span class="h-1"></span>'}
             </div>
         `;
         tracker.appendChild(card);
