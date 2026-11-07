@@ -12,6 +12,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- QR Code Generator JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- PeerJS for WebRTC Direct Real-time Networking (4G/5G & Local Network Support - Werewolf Pattern) -->
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script>
+        if (typeof Peer === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"><\/script>');
+        }
+    </script>
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -830,6 +837,6 @@
         </div>
     </div>
 
-    <script src="./app.js?v=2.3"></script>
+    <script src="./app.js?v=3.0"></script>
 </body>
 </html>
