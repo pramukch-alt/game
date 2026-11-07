@@ -201,6 +201,37 @@
             font-size: 1.05rem !important;
             border-radius: 0.85rem !important;
         }
+
+        /* Quest Team User Tags Styling */
+        .quest-user-tag {
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .quest-user-tag:hover {
+            transform: translateY(-2px) scale(1.03);
+        }
+        body.desktop-board-expanded #mod-quest-team-container {
+            max-width: 44rem !important;
+            padding: 1.25rem 2rem !important;
+            border-radius: 1.25rem !important;
+        }
+        body.desktop-board-expanded #mod-quest-team-title {
+            font-size: 1.15rem !important;
+        }
+        body.desktop-board-expanded #mod-quest-team-count-badge {
+            font-size: 0.95rem !important;
+            padding: 0.35rem 0.85rem !important;
+        }
+        body.desktop-board-expanded .quest-user-tag {
+            font-size: 1.05rem !important;
+            padding: 0.6rem 1.25rem !important;
+            border-radius: 1rem !important;
+            gap: 0.75rem !important;
+        }
+        body.desktop-board-expanded .quest-user-tag .tag-avatar {
+            width: 1.75rem !important;
+            height: 1.75rem !important;
+            font-size: 0.95rem !important;
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-amber-500 selection:text-slate-950">
@@ -483,12 +514,27 @@
                     <div id="mod-status" class="w-full bg-slate-900/95 border-l-4 border-amber-500 p-3 rounded-xl text-center text-sm text-slate-200 font-semibold shadow-lg">
                         กำลังรอผู้เล่นเสนอทีม...
                     </div>
+
+                    <!-- Selected Quest Team Card (Prominent User Tags) -->
+                    <div id="mod-quest-team-container" class="w-full mt-3 bg-slate-900/95 border-2 border-amber-500/50 rounded-2xl p-3.5 text-center shadow-2xl transition-all duration-300 hidden">
+                        <div class="flex items-center justify-between mb-2 px-1">
+                            <span class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <span>⚔️</span>
+                                <span id="mod-quest-team-title">สมาชิกที่ได้รับเลือกไปทำ Quest</span>
+                            </span>
+                            <span id="mod-quest-team-count-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-700">0 คน</span>
+                        </div>
+                        <div id="mod-quest-team-tags" class="flex flex-wrap justify-center gap-2 pt-0.5"></div>
+                    </div>
                 </div>
             </div>
 
             <!-- Live Players on Board -->
             <div class="players-card bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-2 shadow-lg">
-                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">ผู้เล่นในเกม</h4>
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">ผู้เล่นในเกม</h4>
+                    <span id="players-card-team-hint" class="text-[10px] text-amber-400 font-semibold hidden">⚔️ แถบสีทอง = ทีมทำเควสต์</span>
+                </div>
                 <div id="game-players-list" class="grid grid-cols-2 gap-2 text-xs font-medium"></div>
             </div>
 
@@ -666,6 +712,12 @@
 
                     <div id="player-grid" class="grid grid-cols-2 gap-2"></div>
 
+                    <!-- Selected team live tags preview for leader -->
+                    <div id="leader-selected-team-box" class="bg-slate-950/80 border border-amber-500/30 rounded-xl p-2.5 text-center hidden">
+                        <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wider block mb-1.5">สมาชิกที่คุณเลือก (Selected Members):</span>
+                        <div id="leader-selected-team-tags" class="flex flex-wrap justify-center gap-1.5 min-h-[28px] py-0.5"></div>
+                    </div>
+
                     <!-- Only displays when exact required count is selected -->
                     <button id="btn-propose-team" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 py-3.5 rounded-xl font-bold transition shadow-lg shadow-amber-500/20 text-sm hidden flex items-center justify-center gap-1.5 active:scale-95">
                         <span>เสนอทีมนี้ (Propose Team)</span>
@@ -676,8 +728,8 @@
                 <!-- Voting Panel (Approve / Reject) -->
                 <div id="voting-panel" class="hidden space-y-3 text-center">
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
-                        <span class="text-[11px] text-slate-400 uppercase">ทีมที่ถูกเสนอ:</span>
-                        <div id="proposed-team-names" class="text-sm font-bold text-amber-400 mt-0.5"></div>
+                        <span class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold block mb-1">ทีมที่ถูกเสนอไปทำภารกิจ (Proposed Team):</span>
+                        <div id="proposed-team-names" class="flex flex-wrap justify-center gap-1.5 mt-1.5"></div>
                     </div>
                     <div class="flex gap-2">
                         <button class="vote-btn flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-lg" data-vote="approve">
@@ -694,6 +746,10 @@
                     <div class="bg-slate-950 border border-blue-900/50 rounded-xl p-3">
                         <h4 class="text-sm font-bold text-blue-400">คุณอยู่ในทีมทำภารกิจ!</h4>
                         <p class="text-[11px] text-slate-400 mt-0.5">เลือกการกระทำในภารกิจอย่างลับ ๆ</p>
+                        <div class="mt-2.5 pt-2 border-t border-slate-800/80">
+                            <span class="text-[10px] text-slate-400 block mb-1 font-semibold">สมาชิกทีมในภารกิจนี้:</span>
+                            <div id="quest-panel-team-tags" class="flex flex-wrap justify-center gap-1.5"></div>
+                        </div>
                     </div>
                     <div class="flex gap-2">
                         <button class="quest-vote-btn flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl text-sm transition shadow-lg" data-vote="success">
@@ -719,8 +775,8 @@
 
             <!-- Proposed Team Info -->
             <div class="bg-slate-950/80 border border-slate-800 p-2.5 rounded-xl text-center">
-                <span class="text-[10px] text-slate-400 uppercase">ทีมที่ถูกเสนอ:</span>
-                <div id="vote-result-team-names" class="text-xs font-bold text-amber-400 mt-0.5"></div>
+                <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block mb-1">ทีมที่ถูกเสนอ (Proposed Team):</span>
+                <div id="vote-result-team-names" class="flex flex-wrap justify-center gap-1.5 mt-0.5"></div>
             </div>
 
             <!-- Summary Scores -->
@@ -776,6 +832,10 @@
                     <p class="text-xs text-slate-300 mt-1 drop-shadow">
                         กรุณาลงคะแนนอย่างลับ ๆ ผลลัพธ์จะไม่ระบุชื่อผู้ส่ง
                     </p>
+                    <div class="mt-2.5 pt-2 border-t border-slate-800/80">
+                        <span class="text-[10px] text-slate-400 block mb-1 font-semibold">สมาชิกทีมที่ร่วมทำภารกิจ:</span>
+                        <div id="quest-modal-team-tags" class="flex flex-wrap justify-center gap-1.5"></div>
+                    </div>
                 </div>
 
             <div class="space-y-2.5 pt-1">
@@ -837,6 +897,6 @@
         </div>
     </div>
 
-    <script src="./app.js?v=3.0"></script>
+    <script src="./app.js?v=3.1"></script>
 </body>
 </html>

@@ -537,6 +537,8 @@ function proceedAfterVoteReveal(room, isApproved) {
             leader: room.players[room.leaderIndex].name,
             leaderId: room.players[room.leaderIndex].id,
             currentTeam: room.currentTeam,
+            proposedTeam: room.players.filter(p => room.currentTeam.includes(p.id)).map(p => p.name),
+            proposedTeamIds: room.currentTeam,
             currentQuest: room.currentQuest,
             requiredTeamSize: requiredSize,
             questRequirements: questList,
@@ -1876,6 +1878,50 @@ let currentQuest = 1;
 let requiredTeamSize = 2;
 let questRequirements = [2, 3, 2, 3, 3];
 let currentQuestResults = [];
+let currentLeaderId = null;
+let currentLeaderName = '';
+let currentProposedTeam = [];
+let currentProposedTeamIds = [];
+
+function renderUserTags(items, containerEl, options = {}) {
+    if (!containerEl) return;
+    containerEl.innerHTML = '';
+    if (!items || items.length === 0) return;
+
+    const leaderName = typeof options === 'string' ? options : (options.leaderName || currentLeaderName || '');
+    const customIcon = (typeof options === 'object' && options.icon) ? options.icon : '⚔️';
+
+    items.forEach(item => {
+        let name = '';
+        let id = '';
+        if (typeof item === 'string') {
+            name = item;
+            const found = allPlayers.find(p => p.name === item || p.id === item);
+            if (found) {
+                name = found.name;
+                id = found.id;
+            }
+        } else if (item && typeof item === 'object') {
+            name = item.name || item.id || '';
+            id = item.id || '';
+        }
+        if (!name) return;
+
+        const isLdr = (name === leaderName || (id && id === currentLeaderId));
+        const tag = document.createElement('span');
+        tag.className = 'quest-user-tag inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/25 via-amber-500/15 to-amber-600/25 text-amber-300 font-bold text-xs sm:text-sm border border-amber-500/60 shadow-md shadow-amber-500/15 backdrop-blur-sm transition-transform hover:scale-105';
+        
+        tag.innerHTML = `
+            <span class="tag-avatar w-5 h-5 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center text-[10px] sm:text-xs font-black shadow-inner">
+                ${isLdr ? '👑' : customIcon}
+            </span>
+            <span class="tracking-wide">${name}</span>
+            ${isLdr ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-400/30 text-amber-200 border border-amber-400/40 font-normal">ผู้นำ</span>' : ''}
+        `;
+        containerEl.appendChild(tag);
+    });
+}
+window.renderUserTags = renderUserTags;
 
 // --- Game FSM Handlers ---
 socket.on('gameStateChanged', (data) => {
@@ -1889,25 +1935,87 @@ socket.on('gameStateChanged', (data) => {
         questRequirements: qReqs,
         rejectedVoteCount,
         questResults,
-        proposedTeam
+        proposedTeam,
+        proposedTeamIds,
+        currentTeam
     } = data;
 
+    if (leader) currentLeaderName = leader;
+    if (leaderId) currentLeaderId = leaderId;
     if (qNum !== undefined) currentQuest = qNum;
     if (reqSize !== undefined) requiredTeamSize = reqSize;
     if (qReqs) questRequirements = qReqs;
     if (questResults) currentQuestResults = questResults;
+    if (players) allPlayers = players;
+
+    // Track active team for quest
+    if (proposedTeam && proposedTeam.length > 0) {
+        currentProposedTeam = proposedTeam;
+    }
+    if (proposedTeamIds && proposedTeamIds.length > 0) {
+        currentProposedTeamIds = proposedTeamIds;
+    } else if (currentTeam && currentTeam.length > 0) {
+        currentProposedTeamIds = currentTeam;
+        currentProposedTeam = currentTeam.map(id => {
+            const p = allPlayers.find(pl => pl.id === id);
+            return p ? p.name : id;
+        });
+    }
+
+    if (state === 'TEAM_BUILDING') {
+        currentProposedTeam = [];
+        currentProposedTeamIds = [];
+    }
+
+    // Determine active team names for display
+    let activeTeamNames = [];
+    if (currentProposedTeam && currentProposedTeam.length > 0) {
+        activeTeamNames = currentProposedTeam.map(item => {
+            if (typeof item === 'string') {
+                const p = allPlayers.find(pl => pl.id === item);
+                return p ? p.name : item;
+            }
+            return item.name || item;
+        });
+    }
 
     // Update Mod Board Status & Quest Tracker
     const modStatus = document.getElementById('mod-status');
+    const modQuestTeamContainer = document.getElementById('mod-quest-team-container');
+    const modQuestTeamTitle = document.getElementById('mod-quest-team-title');
+    const modQuestTeamBadge = document.getElementById('mod-quest-team-count-badge');
+    const modQuestTeamTags = document.getElementById('mod-quest-team-tags');
+    const playersCardHint = document.getElementById('players-card-team-hint');
+
     if (modStatus) {
         if (state === 'TEAM_BUILDING') {
             modStatus.innerText = `ภารกิจที่ ${currentQuest} (ต้องการ ${requiredTeamSize} คน) | ผู้นำ: ${leader}`;
         } else if (state === 'TEAM_VOTING') {
-            modStatus.innerText = `กำลังโหวตรับรองทีม: ${proposedTeam ? proposedTeam.join(', ') : ''}`;
+            modStatus.innerText = `กำลังโหวตรับรองทีม: ${activeTeamNames.length > 0 ? activeTeamNames.join(', ') : (proposedTeam ? proposedTeam.join(', ') : '')}`;
         } else if (state === 'QUEST_EXECUTION') {
             modStatus.innerText = `กำลังดำเนินภารกิจที่ ${currentQuest}...`;
         } else if (state === 'GAME_OVER') {
             modStatus.innerText = `🏆 จบเกม!`;
+        }
+    }
+
+    // Update Mod Quest Team Card (Prominent User Tags)
+    if (modQuestTeamContainer) {
+        if (state === 'TEAM_VOTING' && activeTeamNames.length > 0) {
+            modQuestTeamContainer.classList.remove('hidden');
+            if (modQuestTeamTitle) modQuestTeamTitle.innerText = 'ทีมที่เสนอไปทำ Quest (รอการโหวต)';
+            if (modQuestTeamBadge) modQuestTeamBadge.innerText = `${activeTeamNames.length} คน`;
+            if (modQuestTeamTags) renderUserTags(activeTeamNames, modQuestTeamTags, { leaderName: leader });
+            if (playersCardHint) playersCardHint.classList.remove('hidden');
+        } else if (state === 'QUEST_EXECUTION' && activeTeamNames.length > 0) {
+            modQuestTeamContainer.classList.remove('hidden');
+            if (modQuestTeamTitle) modQuestTeamTitle.innerText = 'ทีมที่กำลังดำเนินภารกิจ (Quest Team)!';
+            if (modQuestTeamBadge) modQuestTeamBadge.innerText = `${activeTeamNames.length} คน`;
+            if (modQuestTeamTags) renderUserTags(activeTeamNames, modQuestTeamTags, { leaderName: leader });
+            if (playersCardHint) playersCardHint.classList.remove('hidden');
+        } else {
+            modQuestTeamContainer.classList.add('hidden');
+            if (playersCardHint) playersCardHint.classList.add('hidden');
         }
     }
 
@@ -1919,19 +2027,35 @@ socket.on('gameStateChanged', (data) => {
     }
     
     // Update Live Players on Mod Board
-    if (players) {
-        allPlayers = players;
-        const gamePlayersList = document.getElementById('game-players-list');
-        if (gamePlayersList) {
-            gamePlayersList.innerHTML = '';
-            players.forEach(p => {
-                const isLeader = (p.id === leaderId || p.name === leader);
-                const div = document.createElement('div');
+    const gamePlayersList = document.getElementById('game-players-list');
+    if (gamePlayersList && allPlayers && allPlayers.length > 0) {
+        gamePlayersList.innerHTML = '';
+        allPlayers.forEach(p => {
+            const isLeader = (p.id === leaderId || p.name === leader);
+            const isInActiveTeam = (state === 'TEAM_VOTING' || state === 'QUEST_EXECUTION') && (
+                activeTeamNames.includes(p.name) || 
+                (currentProposedTeamIds && currentProposedTeamIds.includes(p.id))
+            );
+
+            const div = document.createElement('div');
+            if (isInActiveTeam) {
+                div.className = `p-2.5 rounded-xl border-2 border-amber-400 bg-gradient-to-r from-amber-950/90 via-slate-900 to-amber-950/90 text-amber-200 font-bold ring-2 ring-amber-500/50 shadow-lg shadow-amber-500/20 text-center flex flex-col items-center justify-center gap-1 transition-all transform scale-[1.02]`;
+                div.innerHTML = `
+                    <div class="flex items-center gap-1.5 justify-center">
+                        ${isLeader ? '<span>👑</span>' : ''}
+                        <span class="text-amber-100 font-extrabold tracking-wide">${p.name}</span>
+                    </div>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 shadow-sm animate-pulse">
+                        <span>⚔️</span>
+                        <span>ในทีมเควสต์</span>
+                    </span>
+                `;
+            } else {
                 div.className = `p-2 rounded-xl border text-center transition ${isLeader ? 'border-amber-500 bg-amber-950/40 text-amber-300 font-bold shadow-sm' : 'border-slate-800 bg-slate-950/70 text-slate-300'}`;
                 div.innerHTML = `${isLeader ? '👑 ' : ''}${p.name}`;
-                gamePlayersList.appendChild(div);
-            });
-        }
+            }
+            gamePlayersList.appendChild(div);
+        });
     }
 
     // Player View Actions
@@ -1959,10 +2083,12 @@ socket.on('gameStateChanged', (data) => {
             renderPlayerGrid(allPlayers);
         }
     } else if (state === 'TEAM_VOTING') {
-        if (playerBanner) playerBanner.innerText = `ร่วมลงคะแนนโหวตรับรองทีม (${proposedTeam ? proposedTeam.join(', ') : ''})`;
+        if (playerBanner) playerBanner.innerText = `ร่วมลงคะแนนโหวตรับรองทีม (${activeTeamNames.length > 0 ? activeTeamNames.join(', ') : (proposedTeam ? proposedTeam.join(', ') : '')})`;
         if (votingPanel) votingPanel.classList.remove('hidden');
+        renderUserTags(activeTeamNames.length > 0 ? activeTeamNames : proposedTeam, document.getElementById('proposed-team-names'), { leaderName: leader });
     } else if (state === 'QUEST_EXECUTION') {
         if (playerBanner) playerBanner.innerText = `กำลังดำเนินภารกิจที่ ${currentQuest}...`;
+        renderUserTags(activeTeamNames, document.getElementById('quest-panel-team-tags'), { leaderName: leader });
     } else if (state === 'GAME_OVER') {
         if (playerBanner) playerBanner.innerText = "เกมจบลงแล้ว!";
         if (modStatus) modStatus.innerText = "🏆 จบเกม!";
@@ -2016,10 +2142,27 @@ function updateTeamSelectionUI() {
     const hintEl = document.getElementById('team-select-hint');
     const proposeBtn = document.getElementById('btn-propose-team');
     const questLabel = document.getElementById('current-quest-num-label');
+    const leaderTagsBox = document.getElementById('leader-selected-team-box');
+    const leaderTagsContainer = document.getElementById('leader-selected-team-tags');
 
     if (questLabel) questLabel.innerText = currentQuest;
     if (countEl) countEl.innerText = selectedTeam.length;
     if (reqEl) reqEl.innerText = requiredTeamSize;
+
+    // Live Tags Preview for Leader
+    if (leaderTagsBox && leaderTagsContainer) {
+        if (selectedTeam.length > 0) {
+            leaderTagsBox.classList.remove('hidden');
+            const selectedNames = selectedTeam.map(id => {
+                const p = allPlayers.find(pl => pl.id === id);
+                return p ? p.name : id;
+            });
+            renderUserTags(selectedNames, leaderTagsContainer, { leaderName: myName });
+        } else {
+            leaderTagsBox.classList.add('hidden');
+            leaderTagsContainer.innerHTML = '';
+        }
+    }
 
     if (proposeBtn) {
         if (selectedTeam.length === requiredTeamSize) {
@@ -2048,12 +2191,17 @@ document.getElementById('btn-propose-team')?.addEventListener('click', () => {
 });
 
 socket.on('voteTeam', (team) => {
-    const proposed = team.map(id => {
-        const p = allPlayers.find(pl => pl.id === id);
-        return p ? p.name : 'Unknown';
-    }).join(', ');
+    let proposedNames = [];
+    if (Array.isArray(team)) {
+        proposedNames = team.map(id => {
+            const p = allPlayers.find(pl => pl.id === id);
+            return p ? p.name : id;
+        });
+    }
     const namesEl = document.getElementById('proposed-team-names');
-    if (namesEl) namesEl.innerText = proposed;
+    if (namesEl) {
+        renderUserTags(proposedNames, namesEl, { leaderName: currentLeaderName });
+    }
 });
 
 document.querySelectorAll('.vote-btn').forEach(btn => {
@@ -2073,9 +2221,11 @@ window.voteResultInterval = null;
 socket.on('teamVoteResult', (data) => {
     const { approved, approvesCount, rejectsCount, voteDetails, nextLeader, rejectedVoteCount, proposedTeam, revealDuration } = data;
     
-    // Proposed Team
+    // Proposed Team User Tags
     const teamEl = document.getElementById('vote-result-team-names');
-    if (teamEl) teamEl.innerText = proposedTeam ? proposedTeam.join(', ') : '';
+    if (teamEl) {
+        renderUserTags(proposedTeam, teamEl, { leaderName: currentLeaderName });
+    }
 
     // Status Badge
     const badge = document.getElementById('vote-result-status-badge');
@@ -2169,6 +2319,21 @@ socket.on('startQuest', (data) => {
     
     // Close team vote result modal if still open
     closeVoteResultModal();
+
+    const memberNames = (Array.isArray(team) ? team : []).map(id => {
+        const p = allPlayers.find(pl => pl.id === id);
+        return p ? p.name : id;
+    });
+
+    const modalTags = document.getElementById('quest-modal-team-tags');
+    if (modalTags) {
+        renderUserTags(memberNames, modalTags, { leaderName: currentLeaderName });
+    }
+
+    const panelTags = document.getElementById('quest-panel-team-tags');
+    if (panelTags) {
+        renderUserTags(memberNames, panelTags, { leaderName: currentLeaderName });
+    }
 
     if (team.includes(socket.id)) {
         const modal = document.getElementById('quest-action-modal');

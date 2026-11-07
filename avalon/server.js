@@ -334,6 +334,8 @@ function getRequiredTeamSize(playerCount, questNumber) {
                 leader: room.players[room.leaderIndex].name,
                 leaderId: room.players[room.leaderIndex].id,
                 currentTeam: room.currentTeam,
+                proposedTeam: room.players.filter(p => room.currentTeam.includes(p.id)).map(p => p.name),
+                proposedTeamIds: room.currentTeam,
                 currentQuest: room.currentQuest,
                 requiredTeamSize: requiredSize,
                 questRequirements: questList,
