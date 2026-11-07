@@ -57,7 +57,13 @@ function shuffle(array) {
     return array;
 }
 
-// Game FSM States: LOBBY, ROLE_ASSIGNMENT, TEAM_BUILDING, TEAM_VOTING, QUEST_EXECUTION, GAME_OVER
+function isGoodRole(role) {
+    if (!role) return true;
+    const evilList = ['Mordred', 'Morgana', 'Assassin', 'Oberon', 'Minion', 'Other Evil'];
+    return !evilList.some(evil => role.includes(evil));
+}
+
+// Game FSM States: LOBBY, ROLE_ASSIGNMENT, TEAM_BUILDING, TEAM_VOTING, QUEST_EXECUTION, ASSASSINATION, GAME_OVER
 
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
@@ -435,14 +441,18 @@ function getRequiredTeamSize(playerCount, questNumber) {
             const goodWins = room.questResults.filter(v => v === true).length >= 3;
             const evilWins = room.questResults.filter(v => v === false).length >= 3;
 
-            if (goodWins || evilWins || room.currentQuest > 5) {
+            const assassinPlayer = room.players.find(p => p.role && p.role.includes('Assassin'));
+
+            if (goodWins && assassinPlayer) {
+                room.state = 'ASSASSINATION';
+            } else if (goodWins || evilWins || room.currentQuest > 5) {
                 room.state = 'GAME_OVER';
             } else {
                 room.state = 'TEAM_BUILDING';
             }
 
-            const nextLeader = (room.state === 'GAME_OVER' || room.players.length === 0) ? null : room.players[room.leaderIndex].name;
-            const nextLeaderId = (room.state === 'GAME_OVER' || room.players.length === 0) ? null : room.players[room.leaderIndex].id;
+            const nextLeader = (room.state === 'GAME_OVER' || room.state === 'ASSASSINATION' || room.players.length === 0) ? null : room.players[room.leaderIndex].name;
+            const nextLeaderId = (room.state === 'GAME_OVER' || room.state === 'ASSASSINATION' || room.players.length === 0) ? null : room.players[room.leaderIndex].id;
             const playerCount = room.players.length;
             const questList = QUEST_REQUIREMENTS[playerCount] || QUEST_REQUIREMENTS[5];
             const requiredSize = getRequiredTeamSize(playerCount, room.currentQuest);
@@ -458,6 +468,10 @@ function getRequiredTeamSize(playerCount, questNumber) {
                 nextLeader
             });
 
+            const goodPlayers = room.players
+                .filter(p => isGoodRole(p.role))
+                .map(p => ({ id: p.id, name: p.name }));
+
             io.to(roomCode).emit('gameStateChanged', {
                 state: room.state,
                 leader: nextLeader,
@@ -467,10 +481,30 @@ function getRequiredTeamSize(playerCount, questNumber) {
                 currentQuest: room.currentQuest,
                 requiredTeamSize: requiredSize,
                 questRequirements: questList,
-                rejectedVoteCount: room.rejectedVoteCount
+                rejectedVoteCount: room.rejectedVoteCount,
+                assassinName: assassinPlayer ? assassinPlayer.name : null,
+                assassinId: assassinPlayer ? assassinPlayer.id : null,
+                goodPlayers: (room.state === 'ASSASSINATION') ? goodPlayers : []
             });
 
-            if (room.state === 'GAME_OVER') {
+            if (room.state === 'ASSASSINATION') {
+                // Send assassination phase to Assassin
+                io.to(assassinPlayer.id).emit('assassinationPhase', {
+                    goodPlayers,
+                    assassinName: assassinPlayer.name
+                });
+
+                // Auto-resolve if Assassin is a bot
+                if (assassinPlayer.id.startsWith('bot_')) {
+                    setTimeout(() => {
+                        if (room.state !== 'ASSASSINATION') return;
+                        const randomTarget = goodPlayers[Math.floor(Math.random() * goodPlayers.length)];
+                        if (randomTarget) {
+                            resolveAssassination(room, roomCode, randomTarget.id);
+                        }
+                    }, 2500);
+                }
+            } else if (room.state === 'GAME_OVER') {
                 const winner = goodWins ? 'GOOD' : 'EVIL';
                 const reason = goodWins 
                     ? 'QUESTS_SUCCESS_3' 
@@ -486,6 +520,52 @@ function getRequiredTeamSize(playerCount, questNumber) {
             }
         }
     }
+
+    function resolveAssassination(room, roomCode, targetId) {
+        if (!room || room.state !== 'ASSASSINATION') return;
+
+        const target = room.players.find(p => p.id === targetId);
+        const merlin = room.players.find(p => p.role && p.role.includes('Merlin'));
+        const assassin = room.players.find(p => p.role && p.role.includes('Assassin'));
+
+        const isMerlinHit = !!(target && target.role && target.role.includes('Merlin'));
+        room.state = 'GAME_OVER';
+
+        const winner = isMerlinHit ? 'EVIL' : 'GOOD';
+        const reason = isMerlinHit ? 'MERLIN_ASSASSINATED' : 'MERLIN_SURVIVED';
+
+        const gameOverPayload = {
+            winner,
+            reason,
+            isMerlinHit,
+            targetName: target ? target.name : 'Unknown',
+            targetRole: target ? target.role : 'Unknown',
+            merlinName: merlin ? merlin.name : 'Unknown',
+            assassinName: assassin ? assassin.name : 'Assassin',
+            questHistory: room.questResults,
+            rejectedVoteCount: room.rejectedVoteCount
+        };
+
+        io.to(roomCode).emit('gameStateChanged', {
+            state: 'GAME_OVER',
+            leader: null,
+            questResults: room.questResults,
+            rejectedVoteCount: room.rejectedVoteCount
+        });
+
+        io.to(roomCode).emit('gameOver', gameOverPayload);
+    }
+
+    // Handle Assassin Target Selection
+    socket.on('assassinateTarget', ({ roomCode, targetId }) => {
+        const room = rooms[roomCode];
+        if (room && room.state === 'ASSASSINATION') {
+            const assassin = room.players.find(p => p.role && p.role.includes('Assassin'));
+            if (assassin && assassin.id === socket.id) {
+                resolveAssassination(room, roomCode, targetId);
+            }
+        }
+    });
 
     // Handle Quest Execution (Support both voteQuest and questVoteSubmit)
     const handleVoteQuest = ({ roomCode, vote }) => {

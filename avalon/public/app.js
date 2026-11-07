@@ -278,6 +278,13 @@ function sendRoomStateToConn(conn, peerId) {
     }
 }
 
+function isGoodRole(role) {
+    if (!role) return true;
+    const evilList = ['Mordred', 'Morgana', 'Assassin', 'Oberon', 'Minion', 'Other Evil'];
+    return !evilList.some(evil => role.includes(evil));
+}
+window.isGoodRole = isGoodRole;
+
 function handleModHostAction(event, data, senderId) {
     console.log(`[ModHost] Processing ${event} from ${senderId}:`, data);
 
@@ -461,6 +468,16 @@ function handleModHostAction(event, data, senderId) {
         return;
     }
 
+    if (event === 'assassinateTarget') {
+        if (hostRoom && hostRoom.state === 'ASSASSINATION') {
+            const assassin = hostRoom.players.find(p => p.role && p.role.includes('Assassin'));
+            if (assassin && assassin.id === senderId) {
+                resolveAssassination(hostRoom, data.targetId);
+            }
+        }
+        return;
+    }
+
     if (event === 'resetRoom') {
         socket.trigger('roomReset');
         broadcastToAllPlayers('roomReset', {});
@@ -628,14 +645,18 @@ function checkAndResolveQuest(room) {
         const goodWins = room.questResults.filter(v => v === true).length >= 3;
         const evilWins = room.questResults.filter(v => v === false).length >= 3;
 
-        if (goodWins || evilWins || room.currentQuest > 5) {
+        const assassinPlayer = room.players.find(p => p.role && p.role.includes('Assassin'));
+
+        if (goodWins && assassinPlayer) {
+            room.state = 'ASSASSINATION';
+        } else if (goodWins || evilWins || room.currentQuest > 5) {
             room.state = 'GAME_OVER';
         } else {
             room.state = 'TEAM_BUILDING';
         }
 
-        const nextLeader = (room.state === 'GAME_OVER' || room.players.length === 0) ? null : room.players[room.leaderIndex].name;
-        const nextLeaderId = (room.state === 'GAME_OVER' || room.players.length === 0) ? null : room.players[room.leaderIndex].id;
+        const nextLeader = (room.state === 'GAME_OVER' || room.state === 'ASSASSINATION' || room.players.length === 0) ? null : room.players[room.leaderIndex].name;
+        const nextLeaderId = (room.state === 'GAME_OVER' || room.state === 'ASSASSINATION' || room.players.length === 0) ? null : room.players[room.leaderIndex].id;
         const playerCount = room.players.length;
         const questList = QUEST_REQUIREMENTS[playerCount] || QUEST_REQUIREMENTS[5];
         const requiredSize = getRequiredTeamSize(playerCount, room.currentQuest);
@@ -653,6 +674,10 @@ function checkAndResolveQuest(room) {
         socket.trigger('questResult', questResultData);
         broadcastToAllPlayers('questResult', questResultData);
 
+        const goodPlayers = room.players
+            .filter(p => isGoodRole(p.role))
+            .map(p => ({ id: p.id, name: p.name }));
+
         const stateData = {
             state: room.state,
             leader: nextLeader,
@@ -662,13 +687,36 @@ function checkAndResolveQuest(room) {
             currentQuest: room.currentQuest,
             requiredTeamSize: requiredSize,
             questRequirements: questList,
-            rejectedVoteCount: room.rejectedVoteCount
+            rejectedVoteCount: room.rejectedVoteCount,
+            assassinName: assassinPlayer ? assassinPlayer.name : null,
+            assassinId: assassinPlayer ? assassinPlayer.id : null,
+            goodPlayers: (room.state === 'ASSASSINATION') ? goodPlayers : []
         };
 
         socket.trigger('gameStateChanged', stateData);
         broadcastToAllPlayers('gameStateChanged', stateData);
 
-        if (room.state === 'GAME_OVER') {
+        if (room.state === 'ASSASSINATION') {
+            const assassinPayload = {
+                goodPlayers,
+                assassinName: assassinPlayer.name
+            };
+            if (assassinPlayer.id === socket.id) {
+                socket.trigger('assassinationPhase', assassinPayload);
+            } else {
+                sendToPeer(assassinPlayer.id, 'assassinationPhase', assassinPayload);
+            }
+
+            if (assassinPlayer.id.startsWith('bot_')) {
+                setTimeout(() => {
+                    if (room.state !== 'ASSASSINATION') return;
+                    const randomTarget = goodPlayers[Math.floor(Math.random() * goodPlayers.length)];
+                    if (randomTarget) {
+                        resolveAssassination(room, randomTarget.id);
+                    }
+                }, 2500);
+            }
+        } else if (room.state === 'GAME_OVER') {
             const winner = goodWins ? 'GOOD' : 'EVIL';
             const reason = goodWins 
                 ? 'QUESTS_SUCCESS_3' 
@@ -685,6 +733,45 @@ function checkAndResolveQuest(room) {
             handleBotLeaderTurn(room);
         }
     }
+}
+
+function resolveAssassination(room, targetId) {
+    if (!room || room.state !== 'ASSASSINATION') return;
+
+    const target = room.players.find(p => p.id === targetId);
+    const merlin = room.players.find(p => p.role && p.role.includes('Merlin'));
+    const assassin = room.players.find(p => p.role && p.role.includes('Assassin'));
+
+    const isMerlinHit = !!(target && target.role && target.role.includes('Merlin'));
+    room.state = 'GAME_OVER';
+
+    const winner = isMerlinHit ? 'EVIL' : 'GOOD';
+    const reason = isMerlinHit ? 'MERLIN_ASSASSINATED' : 'MERLIN_SURVIVED';
+
+    const gameOverPayload = {
+        winner,
+        reason,
+        isMerlinHit,
+        targetName: target ? target.name : 'Unknown',
+        targetRole: target ? target.role : 'Unknown',
+        merlinName: merlin ? merlin.name : 'Unknown',
+        assassinName: assassin ? assassin.name : 'Assassin',
+        questHistory: room.questResults,
+        rejectedVoteCount: room.rejectedVoteCount
+    };
+
+    const stateData = {
+        state: 'GAME_OVER',
+        leader: null,
+        questResults: room.questResults,
+        rejectedVoteCount: room.rejectedVoteCount
+    };
+
+    socket.trigger('gameStateChanged', stateData);
+    broadcastToAllPlayers('gameStateChanged', stateData);
+
+    socket.trigger('gameOver', gameOverPayload);
+    broadcastToAllPlayers('gameOver', gameOverPayload);
 }
 
 function handleBotLeaderTurn(room) {
@@ -1882,6 +1969,8 @@ let currentLeaderId = null;
 let currentLeaderName = '';
 let currentProposedTeam = [];
 let currentProposedTeamIds = [];
+let selectedAssassinTargetId = null;
+let selectedAssassinTargetName = '';
 
 function renderUserTags(items, containerEl, options = {}) {
     if (!containerEl) return;
@@ -1994,6 +2083,8 @@ socket.on('gameStateChanged', (data) => {
             modStatus.innerText = `กำลังโหวตรับรองทีม: ${activeTeamNames.length > 0 ? activeTeamNames.join(', ') : (proposedTeam ? proposedTeam.join(', ') : '')}`;
         } else if (state === 'QUEST_EXECUTION') {
             modStatus.innerText = `กำลังดำเนินภารกิจที่ ${currentQuest}...`;
+        } else if (state === 'ASSASSINATION') {
+            modStatus.innerHTML = `🗡️ <span class="text-rose-400 font-bold">ฝ่ายคนดีสำเร็จ 3 เควสต์!</span> รอ Assassin (${data.assassinName || 'มือสังหาร'}) เลือกลอบสังหาร Merlin...`;
         } else if (state === 'GAME_OVER') {
             modStatus.innerText = `🏆 จบเกม!`;
         }
@@ -2032,13 +2123,25 @@ socket.on('gameStateChanged', (data) => {
         gamePlayersList.innerHTML = '';
         allPlayers.forEach(p => {
             const isLeader = (p.id === leaderId || p.name === leader);
+            const isAssassinPlayer = (state === 'ASSASSINATION') && (p.name === data.assassinName || p.id === data.assassinId);
             const isInActiveTeam = (state === 'TEAM_VOTING' || state === 'QUEST_EXECUTION') && (
                 activeTeamNames.includes(p.name) || 
                 (currentProposedTeamIds && currentProposedTeamIds.includes(p.id))
             );
 
             const div = document.createElement('div');
-            if (isInActiveTeam) {
+            if (isAssassinPlayer) {
+                div.className = `p-2.5 rounded-xl border-2 border-rose-500 bg-gradient-to-r from-rose-950/90 via-slate-900 to-rose-950/90 text-rose-200 font-bold ring-2 ring-rose-500/50 shadow-lg shadow-rose-900/40 text-center flex flex-col items-center justify-center gap-1 transition-all transform scale-[1.02]`;
+                div.innerHTML = `
+                    <div class="flex items-center gap-1.5 justify-center">
+                        <span class="text-rose-100 font-extrabold tracking-wide">${p.name}</span>
+                    </div>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-slate-950 shadow-sm animate-pulse">
+                        <span>🗡️</span>
+                        <span>กำลังเลือกสังหาร Merlin...</span>
+                    </span>
+                `;
+            } else if (isInActiveTeam) {
                 div.className = `p-2.5 rounded-xl border-2 border-amber-400 bg-gradient-to-r from-amber-950/90 via-slate-900 to-amber-950/90 text-amber-200 font-bold ring-2 ring-amber-500/50 shadow-lg shadow-amber-500/20 text-center flex flex-col items-center justify-center gap-1 transition-all transform scale-[1.02]`;
                 div.innerHTML = `
                     <div class="flex items-center gap-1.5 justify-center">
@@ -2089,7 +2192,19 @@ socket.on('gameStateChanged', (data) => {
     } else if (state === 'QUEST_EXECUTION') {
         if (playerBanner) playerBanner.innerText = `กำลังดำเนินภารกิจที่ ${currentQuest}...`;
         renderUserTags(activeTeamNames, document.getElementById('quest-panel-team-tags'), { leaderName: leader });
+    } else if (state === 'ASSASSINATION') {
+        const isAssassin = (myRole && myRole.includes('Assassin'));
+        if (playerBanner) {
+            playerBanner.innerText = isAssassin 
+                ? "🗡️ คุณคือ Assassin! โปรดเลือกผู้เล่นคนดีที่คิดว่าเป็น Merlin ในหน้าต่างป๊อปอัป" 
+                : `🗡️ ฝ่ายคนดีสำเร็จ 3 เควสต์! รอ Assassin (${data.assassinName || 'มือสังหาร'}) เลือกลอบสังหาร Merlin...`;
+        }
+        if (isAssassin && data.goodPlayers && data.goodPlayers.length > 0) {
+            renderAssassinTargetChoices(data.goodPlayers);
+        }
     } else if (state === 'GAME_OVER') {
+        const assassinModal = document.getElementById('assassin-modal');
+        if (assassinModal) assassinModal.classList.add('hidden');
         if (playerBanner) playerBanner.innerText = "เกมจบลงแล้ว!";
         if (modStatus) modStatus.innerText = "🏆 จบเกม!";
     }
@@ -2389,7 +2504,8 @@ socket.on('questResult', ({ questNumber, success, allSuccess, fails, history, re
     }
 });
 
-socket.on('gameOver', ({ winner, reason, questHistory, rejectedVoteCount }) => {
+socket.on('gameOver', (data) => {
+    const { winner, reason, questHistory, rejectedVoteCount } = data;
     if (questHistory) {
         currentQuestResults = questHistory;
         renderQuestTracker(currentQuestResults, currentQuest, questRequirements);
@@ -2410,13 +2526,17 @@ socket.on('gameOver', ({ winner, reason, questHistory, rejectedVoteCount }) => {
 
     // Delay 1.2s so Modulator and Players can clearly see the 3rd Success Card light up on the board first!
     setTimeout(() => {
-        showGameOverModal(winner, reason, currentQuestResults);
+        showGameOverModal(winner, reason, currentQuestResults, data);
     }, 1200);
 });
 
-function showGameOverModal(winner, reason, questHistory) {
+function showGameOverModal(winner, reason, questHistory, details = {}) {
     const modal = document.getElementById('game-over-modal');
     if (!modal) return;
+
+    // Close Assassin Modal if open
+    const assassinModal = document.getElementById('assassin-modal');
+    if (assassinModal) assassinModal.classList.add('hidden');
 
     const isGood = (winner === 'GOOD');
     const history = questHistory || currentQuestResults || [];
@@ -2438,8 +2558,14 @@ function showGameOverModal(winner, reason, questHistory) {
             : '<span class="text-rose-400 drop-shadow-[0_0_12px_rgba(244,63,94,0.6)]">🔴 ฝ่ายร้าย (Evil) ชนะ!</span>';
     }
 
+    const { targetName, targetRole, merlinName } = details;
+
     if (subtitleEl) {
-        if (isGood) {
+        if (reason === 'MERLIN_ASSASSINATED') {
+            subtitleEl.innerHTML = `🗡️ <span class="text-rose-300 font-bold">Assassin สังหาร Merlin (${merlinName || ''}) สำเร็จ!</span> ฝ่ายร้ายพลิกกลับมาชนะ`;
+        } else if (reason === 'MERLIN_SURVIVED') {
+            subtitleEl.innerHTML = `✨ <span class="text-emerald-300 font-bold">Assassin สังหารผิดคน!</span> (${targetName || ''} ไม่ใช่ Merlin) ฝ่ายคนดีชนะสมบูรณ์`;
+        } else if (isGood) {
             subtitleEl.innerText = `ภารกิจสำเร็จ 3 ใน 5 ครั้ง (Success 3/5)`;
         } else if (reason === 'VOTES_REJECTED_5') {
             subtitleEl.innerText = `ฝ่ายคนดีไม่สามารถเลือกทีมได้ (โหวตคัดค้านครบ 5 ครั้ง)`;
@@ -2450,6 +2576,33 @@ function showGameOverModal(winner, reason, questHistory) {
 
     if (successCountEl) successCountEl.innerText = successCount;
     if (failCountEl) failCountEl.innerText = failCount;
+
+    // Assassination result box
+    const assassinBox = document.getElementById('game-over-assassin-box');
+    const assassinRes = document.getElementById('game-over-assassin-result');
+    const targetNameEl = document.getElementById('game-over-target-name');
+    const merlinNameEl = document.getElementById('game-over-merlin-name');
+
+    if (assassinBox) {
+        if (reason === 'MERLIN_ASSASSINATED' || reason === 'MERLIN_SURVIVED') {
+            assassinBox.classList.remove('hidden');
+            if (reason === 'MERLIN_ASSASSINATED') {
+                if (assassinRes) {
+                    assassinRes.className = 'text-xs font-bold text-rose-300 bg-rose-950/80 border border-rose-800 p-2 rounded-xl';
+                    assassinRes.innerHTML = '💀 ลอบสังหาร Merlin สำเร็จ! (Merlin Assassinated)';
+                }
+            } else {
+                if (assassinRes) {
+                    assassinRes.className = 'text-xs font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-800 p-2 rounded-xl';
+                    assassinRes.innerHTML = '🛡️ ลอบสังหารไม่สำเร็จ! Merlin รอดชีวิต (Merlin Survived)';
+                }
+            }
+            if (targetNameEl) targetNameEl.innerText = `${targetName || '-'} (${targetRole || '-'})`;
+            if (merlinNameEl) merlinNameEl.innerText = merlinName || '-';
+        } else {
+            assassinBox.classList.add('hidden');
+        }
+    }
 
     if (questListEl) {
         questListEl.innerHTML = '';
@@ -2480,6 +2633,115 @@ function showGameOverModal(winner, reason, questHistory) {
 
     modal.classList.remove('hidden');
 }
+
+// --- Assassin Phase Handlers ---
+socket.on('assassinationPhase', (data) => {
+    const isAssassin = (myRole && myRole.includes('Assassin'));
+    if (isAssassin && data && data.goodPlayers) {
+        renderAssassinTargetChoices(data.goodPlayers);
+    }
+});
+
+function renderAssassinTargetChoices(goodPlayers) {
+    const listEl = document.getElementById('assassin-target-list');
+    const countEl = document.getElementById('assassin-good-count-badge');
+    const confirmBtn = document.getElementById('btn-confirm-assassinate');
+    const noticeEl = document.getElementById('assassin-selected-notice');
+    const nameEl = document.getElementById('assassin-selected-name');
+
+    selectedAssassinTargetId = null;
+    selectedAssassinTargetName = '';
+
+    if (countEl) countEl.innerText = `${(goodPlayers || []).length} คน`;
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = `<span>🗡️ สังหารเป้าหมายทันที!</span>`;
+    }
+    if (noticeEl) noticeEl.classList.add('hidden');
+
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    if (!goodPlayers || goodPlayers.length === 0) {
+        listEl.innerHTML = '<p class="text-xs text-slate-500 text-center py-2">ไม่พบรายชื่อผู้เล่นฝ่ายคนดี</p>';
+        return;
+    }
+
+    goodPlayers.forEach(p => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'assassin-target-btn w-full p-3 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-rose-500/80 hover:bg-rose-950/30 text-slate-200 transition-all flex items-center justify-between shadow active:scale-95';
+        btn.innerHTML = `
+            <div class="flex items-center gap-2.5">
+                <span class="w-7 h-7 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-xs font-bold border border-slate-700 target-avatar">👤</span>
+                <span class="text-sm font-bold tracking-wide">${p.name}</span>
+            </div>
+            <span class="target-badge text-[11px] font-semibold text-slate-500 px-2.5 py-1 rounded-lg border border-slate-800">แตะเพื่อเลือก</span>
+        `;
+
+        btn.addEventListener('click', () => {
+            // Deselect all
+            document.querySelectorAll('.assassin-target-btn').forEach(b => {
+                b.className = 'assassin-target-btn w-full p-3 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-rose-500/80 hover:bg-rose-950/30 text-slate-200 transition-all flex items-center justify-between shadow active:scale-95';
+                const av = b.querySelector('.target-avatar');
+                if (av) av.className = 'w-7 h-7 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-xs font-bold border border-slate-700 target-avatar';
+                const bd = b.querySelector('.target-badge');
+                if (bd) {
+                    bd.innerText = 'แตะเพื่อเลือก';
+                    bd.className = 'target-badge text-[11px] font-semibold text-slate-500 px-2.5 py-1 rounded-lg border border-slate-800';
+                }
+            });
+
+            // Select this
+            selectedAssassinTargetId = p.id;
+            selectedAssassinTargetName = p.name;
+            btn.className = 'assassin-target-btn w-full p-3 rounded-2xl bg-rose-950/60 border-2 border-rose-500 text-rose-100 font-bold transition-all flex items-center justify-between shadow-lg shadow-rose-900/30 ring-2 ring-rose-500/30';
+            const av = btn.querySelector('.target-avatar');
+            if (av) av.className = 'w-7 h-7 rounded-full bg-rose-500 text-slate-950 flex items-center justify-center text-xs font-black target-avatar';
+            const bd = btn.querySelector('.target-badge');
+            if (bd) {
+                bd.innerText = '✓ เลือกแล้ว';
+                bd.className = 'target-badge text-[11px] font-bold text-rose-200 bg-rose-900/80 px-2.5 py-1 rounded-lg border border-rose-600';
+            }
+
+            if (noticeEl) noticeEl.classList.remove('hidden');
+            if (nameEl) nameEl.innerText = p.name;
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = `<span>🗡️ ยืนยันสังหาร ${p.name}!</span>`;
+            }
+        });
+
+        listEl.appendChild(btn);
+    });
+
+    const modal = document.getElementById('assassin-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+window.renderAssassinTargetChoices = renderAssassinTargetChoices;
+
+function confirmAssassination() {
+    if (!selectedAssassinTargetId) {
+        alert('กรุณาเลือกเป้าหมายฝ่ายคนดี 1 คน');
+        return;
+    }
+    if (!confirm(`คุณต้องการยืนยันการลอบสังหาร "${selectedAssassinTargetName}" ใช่หรือไม่?`)) {
+        return;
+    }
+
+    const modal = document.getElementById('assassin-modal');
+    if (modal) modal.classList.add('hidden');
+
+    socket.emit('assassinateTarget', {
+        roomCode: myRoom,
+        targetId: selectedAssassinTargetId,
+        targetName: selectedAssassinTargetName
+    });
+
+    const playerBanner = document.getElementById('player-status-banner');
+    if (playerBanner) playerBanner.innerText = "ส่งเป้าหมายสังหารแล้ว... กำลังรอสรุปผล";
+}
+window.confirmAssassination = confirmAssassination;
 
 function confirmGameOverAndReturnHome() {
     const modal = document.getElementById('game-over-modal');

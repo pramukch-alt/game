@@ -857,6 +857,54 @@
     </div>
 
     <!-- ========================================== -->
+    <!-- MODAL 2.5: ASSASSIN KILL MERLIN POPUP      -->
+    <!-- ========================================== -->
+    <div id="assassin-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border-2 border-rose-600/70 w-full max-w-sm rounded-3xl p-6 shadow-2xl shadow-rose-950/60 space-y-4 text-center relative overflow-hidden">
+            <!-- Background Artwork -->
+            <img src="./pics/Avalon.png" alt="Avalon" class="absolute inset-0 w-full h-full object-cover opacity-10 pointer-events-none">
+            
+            <div class="relative z-10 space-y-3.5">
+                <!-- Header Icon & Badge -->
+                <div>
+                    <span class="text-[11px] font-mono font-bold text-rose-300 uppercase tracking-wider bg-rose-950/90 border border-rose-700/80 px-3.5 py-1 rounded-full shadow-sm inline-flex items-center gap-1.5">
+                        <span>🗡️</span>
+                        <span>ภารกิจสุดท้าย: ลอบสังหาร MERLIN</span>
+                    </span>
+                    <h3 class="text-xl font-black text-rose-100 mt-2.5 drop-shadow">
+                        คุณคือมือสังหาร (Assassin)
+                    </h3>
+                    <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                        ฝ่ายคนดีทำเควสต์สำเร็จ 3 ครั้ง! นี่คือโอกาสพลิกเกม... จงเลือกว่า <strong class="text-amber-300">ใครคือ Merlin</strong> จากผู้เล่นฝ่ายคนดี
+                    </p>
+                </div>
+
+                <!-- Good Players Choice List -->
+                <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-3 text-left space-y-2">
+                    <div class="flex items-center justify-between px-1">
+                        <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">เลือกเป้าหมาย (ผู้เล่นฝ่ายคนดี):</span>
+                        <span id="assassin-good-count-badge" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full font-mono">0 คน</span>
+                    </div>
+                    <div id="assassin-target-list" class="space-y-1.5 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
+                        <!-- Populated with Good Player buttons -->
+                    </div>
+                </div>
+
+                <!-- Selected Target Notice -->
+                <div id="assassin-selected-notice" class="bg-rose-950/50 border border-rose-800/60 p-2.5 rounded-xl text-center hidden">
+                    <span class="text-[11px] text-slate-300">เป้าหมายที่เลือก: </span>
+                    <span id="assassin-selected-name" class="font-bold text-rose-300 text-sm"></span>
+                </div>
+
+                <!-- Confirm Assassination Button -->
+                <button id="btn-confirm-assassinate" onclick="confirmAssassination()" disabled class="w-full bg-gradient-to-r from-rose-700 to-rose-600 hover:from-rose-600 hover:to-rose-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black py-3.5 px-4 rounded-xl transition shadow-lg shadow-rose-700/30 text-sm active:scale-95 flex items-center justify-center gap-2">
+                    <span>🗡️ สังหารเป้าหมายทันที!</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
     <!-- MODAL 3: GAME OVER POPUP                   -->
     <!-- ========================================== -->
     <div id="game-over-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
@@ -889,6 +937,16 @@
                 </div>
             </div>
 
+            <!-- Assassination Info Box (Shows if assassination occurred) -->
+            <div id="game-over-assassin-box" class="bg-slate-950/90 border border-slate-800 rounded-2xl p-3 text-center space-y-1.5 hidden">
+                <span class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">ผลการลอบสังหาร Merlin</span>
+                <div id="game-over-assassin-result" class="text-xs font-bold"></div>
+                <div class="text-[11px] text-slate-300 flex justify-between px-2 pt-1 border-t border-slate-800/80">
+                    <span>เป้าหมายที่ถูกยิง: <strong id="game-over-target-name" class="text-rose-400"></strong></span>
+                    <span>Merlin ตัวจริง: <strong id="game-over-merlin-name" class="text-amber-400"></strong></span>
+                </div>
+            </div>
+
             <!-- Confirm Button: Returns to initial game creation screen -->
             <button onclick="confirmGameOverAndReturnHome()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-black py-3.5 px-4 rounded-xl transition shadow-lg shadow-amber-500/25 text-sm sm:text-base flex items-center justify-center gap-2 active:scale-95">
                 <span>ตกลง (กลับสู่หน้าแรก)</span>
@@ -897,6 +955,6 @@
         </div>
     </div>
 
-    <script src="./app.js?v=3.1"></script>
+    <script src="./app.js?v=3.2"></script>
 </body>
 </html>
