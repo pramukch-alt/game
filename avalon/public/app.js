@@ -5,12 +5,11 @@
 // (Identical architectural pattern to Werewolf Modulator)
 // =========================================================================
 
-// Persistent unique device identifier for 100% reliable peer tracking
-let myDeviceId = localStorage.getItem('av_device_id') || sessionStorage.getItem('av_device_id');
+// Persistent unique device identifier per tab/session for reliable multi-tab and multi-device tracking
+let myDeviceId = sessionStorage.getItem('av_device_id');
 if (!myDeviceId) {
     myDeviceId = 'dev_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
     try {
-        localStorage.setItem('av_device_id', myDeviceId);
         sessionStorage.setItem('av_device_id', myDeviceId);
     } catch(e) {}
 }
@@ -199,12 +198,13 @@ function broadcastToAllPlayers(type, data) {
     });
 }
 
-function sendToPeer(targetId, type, data) {
+function sendToPeer(targetId, type, data, targetName) {
     if (targetId === myDeviceId) {
         socket.trigger(type, data);
         return;
     }
-    const packet = { type, data, targetId, room: activeRoomCode, timestamp: Date.now() };
+    const currentRoom = (activeRoomCode || myRoom || sessionStorage.getItem('av_room_code') || '').trim().toUpperCase();
+    const packet = { type, data, targetId, targetName, room: currentRoom, timestamp: Date.now() };
     if (localChannel) {
         try { localChannel.postMessage(packet); } catch(e){}
     }
@@ -216,7 +216,7 @@ function sendToPeer(targetId, type, data) {
 }
 
 function broadcastMessageToMod(msg) {
-    if (!msg.room) msg.room = activeRoomCode;
+    if (!msg.room) msg.room = (activeRoomCode || myRoom || sessionStorage.getItem('av_room_code') || '').trim().toUpperCase();
     if (localChannel) {
         try { localChannel.postMessage(msg); } catch(e){}
     }
@@ -227,25 +227,27 @@ function broadcastMessageToMod(msg) {
 
 function sendRoomStateToConn(conn, peerId) {
     if (!hostRoom) return;
+    const currentRoom = (activeRoomCode || myRoom || sessionStorage.getItem('av_room_code') || '').trim().toUpperCase();
     
     // 1. Send playerJoined
     try {
         conn.send({
             type: 'playerJoined',
             data: hostRoom.players.map(p => ({ id: p.id, name: p.name })),
-            room: activeRoomCode
+            room: currentRoom
         });
     } catch(e){}
 
     // 2. If role assigned, send secret role
-    const playerObj = hostRoom.players.find(p => p.id === peerId);
+    const playerObj = hostRoom.players.find(p => p.id === peerId || p.peerId === peerId);
     if (playerObj && playerObj.role) {
         try {
             conn.send({
                 type: 'roleAssigned',
                 data: playerObj.role,
-                targetId: peerId,
-                room: activeRoomCode
+                targetId: playerObj.id,
+                targetName: playerObj.name,
+                room: currentRoom
             });
         } catch(e){}
     }
@@ -332,10 +334,11 @@ function handleModHostAction(event, data, senderId) {
             if (existing) {
                 existing.id = pId;
                 existing.name = pName;
+                if (data.peerId) existing.peerId = data.peerId;
             } else {
-                hostRoom.players.push({ id: pId, name: pName, role: null });
+                hostRoom.players.push({ id: pId, name: pName, role: null, peerId: data.peerId });
             }
-            sendToPeer(pId, 'joined', { roomCode: hostRoom.roomCode, playerName: pName });
+            sendToPeer(pId, 'joined', { roomCode: hostRoom.roomCode, playerName: pName }, pName);
             socket.trigger('playerJoined', hostRoom.players);
             broadcastToAllPlayers('playerJoined', hostRoom.players);
         }
@@ -379,7 +382,7 @@ function handleModHostAction(event, data, senderId) {
         hostRoom.players.forEach((player, index) => {
             player.role = rolesPool[index];
             hostRoom.assignments[player.id] = rolesPool[index];
-            sendToPeer(player.id, 'roleAssigned', player.role);
+            sendToPeer(player.id, 'roleAssigned', player.role, player.name);
         });
 
         hostRoom.state = 'TEAM_BUILDING';
@@ -405,7 +408,13 @@ function handleModHostAction(event, data, senderId) {
 
     if (event === 'proposeTeam') {
         const team = data.team;
-        if (hostRoom.state === 'TEAM_BUILDING' && hostRoom.players[hostRoom.leaderIndex]?.id === senderId) {
+        const currentLeader = hostRoom.players[hostRoom.leaderIndex];
+        const isLeader = currentLeader && (
+            currentLeader.id === senderId ||
+            (data.playerId && currentLeader.id === data.playerId) ||
+            (data.playerName && currentLeader.name === data.playerName)
+        );
+        if (hostRoom.state === 'TEAM_BUILDING' && isLeader) {
             const playerCount = hostRoom.players.length;
             const questList = QUEST_REQUIREMENTS[playerCount] || QUEST_REQUIREMENTS[5];
             const reqSize = getRequiredTeamSize(playerCount, hostRoom.currentQuest);
@@ -445,7 +454,14 @@ function handleModHostAction(event, data, senderId) {
 
     if (event === 'voteTeam' || event === 'voteTeamSubmit') {
         if (hostRoom.state === 'TEAM_VOTING') {
-            hostRoom.votes[senderId] = data.vote;
+            const voter = hostRoom.players.find(p => 
+                p.id === senderId || 
+                (data.playerId && p.id === data.playerId) || 
+                (data.playerName && p.name === data.playerName)
+            );
+            const voterKey = voter ? voter.id : senderId;
+            hostRoom.votes[voterKey] = data.vote;
+            console.log(`[HostEngine] Team vote received: ${voter ? voter.name : voterKey} = ${data.vote} (${Object.keys(hostRoom.votes).length}/${hostRoom.players.length})`);
             checkAndResolveTeamVote(hostRoom);
         }
         return;
@@ -488,7 +504,7 @@ function handleModHostAction(event, data, senderId) {
 
 function checkAndResolveTeamVote(room) {
     if (!room || room.state !== 'TEAM_VOTING') return;
-    if (Object.keys(room.votes).length === room.players.length) {
+    if (Object.keys(room.votes).length >= room.players.length) {
         const approves = Object.values(room.votes).filter(v => v === 'approve').length;
         const isApproved = approves > (room.players.length / 2);
 
@@ -841,7 +857,11 @@ function handleIncomingMessage(msg, conn) {
             handleModHostAction(actionType, actionData, senderId);
         }
     } else {
-        if (msg.targetId && msg.targetId !== myDeviceId) return;
+        const isTargetedToMe = !msg.targetId || 
+            msg.targetId === myDeviceId || 
+            (peerInstance && msg.targetId === peerInstance.id) ||
+            (msg.targetName && myName && msg.targetName === myName);
+        if (!isTargetedToMe) return;
 
         const eventType = msg.type;
         const payload = msg.data !== undefined ? msg.data : msg;
@@ -849,12 +869,12 @@ function handleIncomingMessage(msg, conn) {
         if (eventType === 'roleAssigned') {
             try {
                 sessionStorage.setItem('av_assigned_role', payload);
-                sessionStorage.setItem('av_room_code', activeRoomCode);
+                sessionStorage.setItem('av_room_code', activeRoomCode || myRoom);
             } catch(e){}
         } else if (eventType === 'joined') {
             try {
                 sessionStorage.setItem('av_player_name', payload.playerName || myName);
-                sessionStorage.setItem('av_room_code', activeRoomCode);
+                sessionStorage.setItem('av_room_code', activeRoomCode || myRoom);
                 sessionStorage.setItem('av_joined_room', 'true');
             } catch(e){}
         }
@@ -1256,6 +1276,24 @@ let allPlayers = [];
 let amLeader = false;
 let selectedTeam = [];
 let activeRoomCode = '';
+
+function getEffectiveRoomCode() {
+    let code = (myRoom || activeRoomCode || sessionStorage.getItem('av_room_code') || '').trim().toUpperCase();
+    if (!code || code === 'AV-XXXX') {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const pRoom = (params.get('room') || '').trim().toUpperCase();
+            if (pRoom) code = pRoom;
+        } catch(e){}
+    }
+    if (code && code !== 'AV-XXXX') {
+        myRoom = code;
+        activeRoomCode = code;
+        try { sessionStorage.setItem('av_room_code', code); } catch(e){}
+    }
+    return code;
+}
+window.getEffectiveRoomCode = getEffectiveRoomCode;
 
 // --- Role Selection State & Config ---
 let expectedPlayers = 5;
@@ -1702,6 +1740,7 @@ function submitDirectPlayerJoin() {
         return;
     }
     activeRoomCode = room;
+    myRoom = room;
     myName = name;
 
     try {
@@ -2014,6 +2053,7 @@ window.renderUserTags = renderUserTags;
 
 // --- Game FSM Handlers ---
 socket.on('gameStateChanged', (data) => {
+    if (!data) return;
     const { 
         state, 
         leader, 
@@ -2028,6 +2068,19 @@ socket.on('gameStateChanged', (data) => {
         proposedTeamIds,
         currentTeam
     } = data;
+
+    getEffectiveRoomCode();
+
+    // Ensure player is switched to screen-player-game when game is in progress
+    if (!isMod && state !== 'LOBBY' && state !== 'ROLE_ASSIGNMENT') {
+        const savedRole = sessionStorage.getItem('av_assigned_role') || myRole;
+        if (savedRole && !myRole) {
+            renderPlayerCard(savedRole);
+        }
+        if (currentScreen !== 'screen-player-game') {
+            showScreen('screen-player-game');
+        }
+    }
 
     if (leader) currentLeaderName = leader;
     if (leaderId) currentLeaderId = leaderId;
@@ -2174,7 +2227,7 @@ socket.on('gameStateChanged', (data) => {
     if (questPanel) questPanel.classList.add('hidden');
 
     if (state === 'TEAM_BUILDING') {
-        amLeader = (leaderId === socket.id || leader === myName);
+        amLeader = (leaderId === socket.id || leader === myName || (leaderId && leaderId === myDeviceId));
         if (playerBanner) {
             playerBanner.innerText = amLeader 
                 ? `👑 คุณเป็นผู้นำ! เลือกสมาชิก ${requiredTeamSize} คนสำหรับภารกิจที่ ${currentQuest}` 
@@ -2186,8 +2239,18 @@ socket.on('gameStateChanged', (data) => {
             renderPlayerGrid(allPlayers);
         }
     } else if (state === 'TEAM_VOTING') {
+        if (!isMod && currentScreen !== 'screen-player-game') {
+            showScreen('screen-player-game');
+        }
         if (playerBanner) playerBanner.innerText = `ร่วมลงคะแนนโหวตรับรองทีม (${activeTeamNames.length > 0 ? activeTeamNames.join(', ') : (proposedTeam ? proposedTeam.join(', ') : '')})`;
-        if (votingPanel) votingPanel.classList.remove('hidden');
+        if (actionPanel) actionPanel.classList.remove('hidden');
+        if (votingPanel) {
+            votingPanel.classList.remove('hidden');
+            votingPanel.querySelectorAll('.vote-btn').forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'pointer-events-none');
+            });
+        }
         renderUserTags(activeTeamNames.length > 0 ? activeTeamNames : proposedTeam, document.getElementById('proposed-team-names'), { leaderName: leader });
     } else if (state === 'QUEST_EXECUTION') {
         if (playerBanner) playerBanner.innerText = `กำลังดำเนินภารกิจที่ ${currentQuest}...`;
@@ -2302,7 +2365,14 @@ document.getElementById('btn-propose-team')?.addEventListener('click', () => {
         alert(`ต้องเลือกสมาชิกให้ครบ ${requiredTeamSize} คน`);
         return;
     }
-    socket.emit('proposeTeam', { roomCode: myRoom, team: selectedTeam });
+    const room = getEffectiveRoomCode();
+    const payload = { 
+        roomCode: room, 
+        team: selectedTeam,
+        playerName: myName,
+        playerId: myDeviceId
+    };
+    socket.emit('proposeTeam', payload);
 });
 
 socket.on('voteTeam', (team) => {
@@ -2322,7 +2392,15 @@ socket.on('voteTeam', (team) => {
 document.querySelectorAll('.vote-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         const vote = e.currentTarget.getAttribute('data-vote');
-        socket.emit('voteTeamSubmit', { roomCode: myRoom, vote });
+        const room = getEffectiveRoomCode();
+        const payload = { 
+            roomCode: room, 
+            vote,
+            playerName: myName,
+            playerId: myDeviceId 
+        };
+        socket.emit('voteTeamSubmit', payload);
+        socket.emit('voteTeam', payload);
         const votingPanel = document.getElementById('voting-panel');
         if (votingPanel) votingPanel.classList.add('hidden');
         const playerBanner = document.getElementById('player-status-banner');
@@ -2417,7 +2495,7 @@ function proceedFromVoteModal() {
         window.voteResultInterval = null;
     }
     closeVoteResultModal();
-    socket.emit('skipVoteReveal', myRoom);
+    socket.emit('skipVoteReveal', getEffectiveRoomCode());
 }
 window.proceedFromVoteModal = proceedFromVoteModal;
 
@@ -2450,7 +2528,15 @@ socket.on('startQuest', (data) => {
         renderUserTags(memberNames, panelTags, { leaderName: currentLeaderName });
     }
 
-    if (team.includes(socket.id)) {
+    const myPlayer = allPlayers.find(p => p.name === myName || p.id === socket.id || p.id === myDeviceId);
+    const isMember = (team && Array.isArray(team)) && team.some(id => 
+        id === socket.id || 
+        id === myDeviceId || 
+        (myPlayer && id === myPlayer.id) ||
+        allPlayers.find(p => p.id === id)?.name === myName
+    );
+
+    if (isMember) {
         const modal = document.getElementById('quest-action-modal');
         const numLabel = document.getElementById('quest-modal-num');
         if (numLabel) numLabel.innerText = qNum;
@@ -2462,15 +2548,17 @@ socket.on('startQuest', (data) => {
 });
 
 function submitQuestVote(vote) {
-    const isEvil = ['Mordred', 'Morgana', 'Assassin', 'Oberon', 'Other Evil 1', 'Other Evil 2', 'Minion'].some(r => myRole.includes(r));
+    const isEvil = ['Mordred', 'Morgana', 'Assassin', 'Oberon', 'Other Evil 1', 'Other Evil 2', 'Minion'].some(r => (myRole || '').includes(r));
     
     if (!isEvil && vote === 'fail') {
         alert('คุณเป็นฝ่ายคนดี (Good) ตามกติกาคุณต้องลงผลสำเร็จ (SUCCESS) เท่านั้น!');
         return;
     }
 
-    socket.emit('questVoteSubmit', { roomCode: myRoom, vote });
-    socket.emit('voteQuest', { roomCode: myRoom, vote });
+    const room = getEffectiveRoomCode();
+    const payload = { roomCode: room, vote, playerName: myName, playerId: myDeviceId };
+    socket.emit('questVoteSubmit', payload);
+    socket.emit('voteQuest', payload);
     
     // Close modal
     const modal = document.getElementById('quest-action-modal');
@@ -2732,10 +2820,13 @@ function confirmAssassination() {
     const modal = document.getElementById('assassin-modal');
     if (modal) modal.classList.add('hidden');
 
+    const room = getEffectiveRoomCode();
     socket.emit('assassinateTarget', {
-        roomCode: myRoom,
+        roomCode: room,
         targetId: selectedAssassinTargetId,
-        targetName: selectedAssassinTargetName
+        targetName: selectedAssassinTargetName,
+        playerName: myName,
+        playerId: myDeviceId
     });
 
     const playerBanner = document.getElementById('player-status-banner');
@@ -2747,7 +2838,7 @@ function confirmGameOverAndReturnHome() {
     const modal = document.getElementById('game-over-modal');
     if (modal) modal.classList.add('hidden');
     
-    const room = myRoom || activeRoomCode;
+    const room = getEffectiveRoomCode();
     if (room) {
         socket.emit('resetRoom', room);
     }
@@ -2834,6 +2925,7 @@ function initDirectJoin() {
 
     if (roomParam) {
         activeRoomCode = roomParam.trim().toUpperCase();
+        myRoom = activeRoomCode;
         isMod = false;
 
         // Connect directly to Mod Peer via WebRTC (Works on 4G/5G and Wi-Fi alike)
@@ -2853,6 +2945,7 @@ function initDirectJoin() {
 
         if (savedRoom === activeRoomCode && savedRole) {
             try {
+                myRoom = activeRoomCode;
                 myRole = savedRole;
                 myName = savedName || '';
                 renderPlayerCard(myRole);
@@ -2862,6 +2955,7 @@ function initDirectJoin() {
         }
 
         if (savedRoom === activeRoomCode && savedJoined === 'true' && savedName) {
+            myRoom = activeRoomCode;
             myName = savedName;
             const waitingTag = document.getElementById('waiting-room-tag');
             if (waitingTag) waitingTag.innerText = activeRoomCode;

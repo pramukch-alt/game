@@ -46,6 +46,32 @@ function generateRoomCode() {
     return 'AV-' + Math.floor(1000 + Math.random() * 9000).toString();
 }
 
+// Helper: Robust room resolution by code, socket room, or socket connection
+function findRoom(roomCode, socket) {
+    let code = (roomCode && typeof roomCode === 'string') ? roomCode.trim().toUpperCase() : '';
+    if (code) {
+        if (!code.startsWith('AV-') && rooms['AV-' + code]) {
+            code = 'AV-' + code;
+        }
+        if (rooms[code]) {
+            return { room: rooms[code], code };
+        }
+    }
+    if (socket) {
+        if (socket.rooms) {
+            for (const r of socket.rooms) {
+                if (rooms[r]) return { room: rooms[r], code: r };
+            }
+        }
+        for (const [rCode, rObj] of Object.entries(rooms)) {
+            if (rObj.modId === socket.id || (rObj.players && rObj.players.some(p => p.id === socket.id))) {
+                return { room: rObj, code: rCode };
+            }
+        }
+    }
+    return { room: null, code };
+}
+
 // Helper: Shuffle Array
 function shuffle(array) {
     let currentIndex = array.length, randomIndex;
@@ -91,27 +117,55 @@ io.on('connection', (socket) => {
     });
 
     // Join Room (Player)
-    socket.on('joinRoom', ({ roomCode, playerName }) => {
-        let code = (roomCode || '').trim().toUpperCase();
-        if (!code.startsWith('AV-') && rooms['AV-' + code]) {
-            code = 'AV-' + code;
-        }
-        const room = rooms[code];
-        if (room && room.state === 'LOBBY') {
+    socket.on('joinRoom', (payload) => {
+        const data = (typeof payload === 'object' && payload !== null) ? payload : {};
+        const playerName = (data.playerName || data.name || '').trim();
+        const playerId = data.playerId;
+        const { room, code } = findRoom(data.roomCode, socket);
+
+        if (room) {
             socket.join(code);
-            room.players.push({ id: socket.id, name: playerName, role: null });
-            
-            // Notify Mod & Player
-            io.to(room.modId).emit('playerJoined', room.players);
-            socket.emit('joined', { roomCode: code, playerName });
+            let existing = room.players.find(p => 
+                (p.name && playerName && p.name.toLowerCase() === playerName.toLowerCase()) || 
+                p.id === socket.id || 
+                (playerId && p.id === playerId)
+            );
+            if (existing) {
+                existing.id = socket.id;
+                existing.name = playerName || existing.name;
+                socket.emit('joined', { roomCode: code, playerName: existing.name });
+                if (room.state !== 'LOBBY') {
+                    if (existing.role) socket.emit('roleAssigned', existing.role);
+                    const questList = QUEST_REQUIREMENTS[room.players.length] || QUEST_REQUIREMENTS[5];
+                    socket.emit('gameStateChanged', {
+                        state: room.state,
+                        leader: room.players.length > 0 ? room.players[room.leaderIndex].name : 'None',
+                        leaderId: room.players.length > 0 ? room.players[room.leaderIndex].id : null,
+                        players: room.players.map(p => ({ id: p.id, name: p.name })),
+                        rejectedVoteCount: room.rejectedVoteCount,
+                        currentQuest: room.currentQuest,
+                        requiredTeamSize: getRequiredTeamSize(room.players.length, room.currentQuest),
+                        questRequirements: questList,
+                        questResults: room.questResults,
+                        proposedTeam: room.currentTeam ? room.players.filter(p => room.currentTeam.includes(p.id)).map(p => p.name) : [],
+                        proposedTeamIds: room.currentTeam || []
+                    });
+                }
+            } else if (room.state === 'LOBBY') {
+                room.players.push({ id: socket.id, name: playerName, role: null });
+                io.to(room.modId).emit('playerJoined', room.players);
+                socket.emit('joined', { roomCode: code, playerName });
+            } else {
+                socket.emit('error', 'เกมได้เริ่มขึ้นแล้ว และไม่พบชื่อผู้เล่นในห้องนี้');
+            }
         } else {
-            socket.emit('error', 'ไม่พบห้องนี้ หรือเกมได้เริ่มขึ้นแล้ว');
+            socket.emit('error', 'ไม่พบห้องนี้ กรุณาตรวจสอบรหัสห้อง');
         }
     });
 
     // Simulate Bot (Test Bot for Mod testing)
     socket.on('simulateBot', (roomCode) => {
-        const room = rooms[roomCode];
+        const { room, code } = findRoom(roomCode, socket);
         if (room && socket.id === room.modId && room.state === 'LOBBY') {
             const expected = (room.config && room.config.expectedPlayers) || 5;
             if (room.players.length < expected) {
@@ -142,7 +196,7 @@ function getRequiredTeamSize(playerCount, questNumber) {
 
     // Start Game & Role Assignment
     socket.on('startGame', (roomCode) => {
-        const room = rooms[roomCode];
+        const { room, code } = findRoom(roomCode, socket);
         if (room && socket.id === room.modId && room.state === 'LOBBY') {
             room.state = 'ROLE_ASSIGNMENT';
             room.currentQuest = 1;
@@ -165,7 +219,7 @@ function getRequiredTeamSize(playerCount, questNumber) {
             
             // Move to team building
             room.state = 'TEAM_BUILDING';
-            io.to(roomCode).emit('gameStateChanged', { 
+            io.to(code).emit('gameStateChanged', { 
                 state: room.state, 
                 leader: room.players.length > 0 ? room.players[room.leaderIndex].name : 'None',
                 leaderId: room.players.length > 0 ? room.players[room.leaderIndex].id : null,
@@ -177,19 +231,30 @@ function getRequiredTeamSize(playerCount, questNumber) {
                 questResults: room.questResults
             });
 
-            handleBotLeaderTurn(room, roomCode);
+            handleBotLeaderTurn(room, code);
         }
     });
 
     // Handle Team Selection
-    socket.on('proposeTeam', ({ roomCode, team }) => {
-        const room = rooms[roomCode];
-        if (room && room.state === 'TEAM_BUILDING' && room.players[room.leaderIndex].id === socket.id) {
+    socket.on('proposeTeam', (payload) => {
+        const data = (typeof payload === 'object' && payload !== null) ? payload : {};
+        const { room, code } = findRoom(data.roomCode, socket);
+        const team = data.team;
+        if (!room || room.state !== 'TEAM_BUILDING' || !Array.isArray(team)) return;
+
+        const currentLeader = room.players[room.leaderIndex];
+        const isLeader = currentLeader && (
+            currentLeader.id === socket.id ||
+            (data.playerId && currentLeader.id === data.playerId) ||
+            (data.playerName && currentLeader.name === data.playerName)
+        );
+
+        if (isLeader) {
             const playerCount = room.players.length;
             const questList = QUEST_REQUIREMENTS[playerCount] || QUEST_REQUIREMENTS[5];
             const requiredSize = getRequiredTeamSize(playerCount, room.currentQuest);
             
-            if (!team || team.length !== requiredSize) {
+            if (team.length !== requiredSize) {
                 socket.emit('error', `จำนวนผู้เล่นไม่ตรงตามเงื่อนไข (ต้องเลือก ${requiredSize} คนสำหรับ Quest ${room.currentQuest})`);
                 return;
             }
@@ -200,11 +265,12 @@ function getRequiredTeamSize(playerCount, questNumber) {
 
             const proposedNames = room.players.filter(p => team.includes(p.id)).map(p => p.name);
             
-            io.to(roomCode).emit('gameStateChanged', {
+            io.to(code).emit('gameStateChanged', {
                 state: room.state,
                 proposedTeam: proposedNames,
                 proposedTeamIds: team,
                 leader: room.players[room.leaderIndex].name,
+                leaderId: room.players[room.leaderIndex].id,
                 currentQuest: room.currentQuest,
                 requiredTeamSize: requiredSize,
                 questRequirements: questList,
@@ -218,7 +284,7 @@ function getRequiredTeamSize(playerCount, questNumber) {
                     room.votes[p.id] = 'approve';
                 }
             });
-            checkAndResolveTeamVote(room, roomCode);
+            checkAndResolveTeamVote(room, code);
         }
     });
 
@@ -273,7 +339,7 @@ function getRequiredTeamSize(playerCount, questNumber) {
     }
 
     function checkAndResolveTeamVote(room, roomCode) {
-        if (Object.keys(room.votes).length === room.players.length) {
+        if (Object.keys(room.votes).length >= room.players.length) {
             const approves = Object.values(room.votes).filter(v => v === 'approve').length;
             const isApproved = approves > room.players.length / 2;
 
@@ -407,27 +473,35 @@ function getRequiredTeamSize(playerCount, questNumber) {
 
     // Client can skip the 4s reveal timer if ready
     socket.on('skipVoteReveal', (roomCode) => {
-        const room = rooms[roomCode];
+        const { room, code } = findRoom(roomCode, socket);
         if (room && room.state === 'TEAM_VOTE_REVEAL') {
             const approves = Object.values(room.votes).filter(v => v === 'approve').length;
             const isApproved = approves > room.players.length / 2;
-            proceedAfterVoteReveal(room, roomCode, isApproved);
+            proceedAfterVoteReveal(room, code, isApproved);
         }
     });
 
     // Handle Team Voting (Support both voteTeam and voteTeamSubmit)
-    const handleVoteTeam = ({ roomCode, vote }) => {
-        const room = rooms[roomCode];
+    const handleVoteTeam = (payload) => {
+        const data = (typeof payload === 'object' && payload !== null) ? payload : { vote: payload };
+        const { room, code } = findRoom(data.roomCode, socket);
         if (room && room.state === 'TEAM_VOTING') {
-            room.votes[socket.id] = vote;
-            checkAndResolveTeamVote(room, roomCode);
+            const voter = room.players.find(p => 
+                p.id === socket.id || 
+                (data.playerId && p.id === data.playerId) || 
+                (data.playerName && p.name === data.playerName)
+            );
+            const voterId = voter ? voter.id : socket.id;
+            room.votes[voterId] = data.vote;
+            console.log(`[VoteTeam] Room ${code}: vote from ${voter ? voter.name : voterId} = ${data.vote} (${Object.keys(room.votes).length}/${room.players.length})`);
+            checkAndResolveTeamVote(room, code);
         }
     };
     socket.on('voteTeam', handleVoteTeam);
     socket.on('voteTeamSubmit', handleVoteTeam);
 
     function checkAndResolveQuest(room, roomCode) {
-        if (Object.keys(room.questVotes).length === room.currentTeam.length) {
+        if (Object.keys(room.questVotes).length >= room.currentTeam.length) {
             const fails = Object.values(room.questVotes).filter(v => v === 'fail').length;
             const isTwoFailRequired = (room.players.length >= 7 && room.currentQuest === 4);
             const isSuccess = isTwoFailRequired ? (fails < 2) : (fails === 0);
@@ -557,22 +631,46 @@ function getRequiredTeamSize(playerCount, questNumber) {
     }
 
     // Handle Assassin Target Selection
-    socket.on('assassinateTarget', ({ roomCode, targetId }) => {
-        const room = rooms[roomCode];
+    socket.on('assassinateTarget', (payload) => {
+        const data = (typeof payload === 'object' && payload !== null) ? payload : {};
+        const { room, code } = findRoom(data.roomCode, socket);
         if (room && room.state === 'ASSASSINATION') {
             const assassin = room.players.find(p => p.role && p.role.includes('Assassin'));
-            if (assassin && assassin.id === socket.id) {
-                resolveAssassination(room, roomCode, targetId);
+            const isAssassin = assassin && (
+                assassin.id === socket.id || 
+                (data.playerId && assassin.id === data.playerId) || 
+                (data.playerName && assassin.name === data.playerName)
+            );
+            if (isAssassin) {
+                resolveAssassination(room, code, data.targetId);
             }
         }
     });
 
     // Handle Quest Execution (Support both voteQuest and questVoteSubmit)
-    const handleVoteQuest = ({ roomCode, vote }) => {
-        const room = rooms[roomCode];
-        if (room && room.state === 'QUEST_EXECUTION' && room.currentTeam.includes(socket.id)) {
-            room.questVotes[socket.id] = vote;
-            checkAndResolveQuest(room, roomCode);
+    const handleVoteQuest = (payload) => {
+        const data = (typeof payload === 'object' && payload !== null) ? payload : { vote: payload };
+        const { room, code } = findRoom(data.roomCode, socket);
+        if (!room || room.state !== 'QUEST_EXECUTION') return;
+
+        const voter = room.players.find(p => 
+            p.id === socket.id || 
+            (data.playerId && p.id === data.playerId) || 
+            (data.playerName && p.name === data.playerName)
+        );
+        const voterId = voter ? voter.id : socket.id;
+
+        const isInTeam = room.currentTeam.some(id => 
+            id === voterId || 
+            id === socket.id || 
+            (data.playerId && id === data.playerId) ||
+            (voter && id === voter.id)
+        );
+
+        if (isInTeam) {
+            room.questVotes[voterId] = data.vote;
+            console.log(`[QuestVote] Room ${code}: vote from ${voter ? voter.name : voterId} = ${data.vote} (${Object.keys(room.questVotes).length}/${room.currentTeam.length})`);
+            checkAndResolveQuest(room, code);
         }
     };
     socket.on('voteQuest', handleVoteQuest);
@@ -580,10 +678,11 @@ function getRequiredTeamSize(playerCount, questNumber) {
 
     // Reset Room & Return all players to Home Screen
     socket.on('resetRoom', (roomCode) => {
-        if (roomCode && rooms[roomCode]) {
-            console.log(`Resetting room: ${roomCode}`);
-            io.to(roomCode).emit('roomReset');
-            delete rooms[roomCode];
+        const { room, code } = findRoom(roomCode, socket);
+        if (room) {
+            console.log(`Resetting room: ${code}`);
+            io.to(code).emit('roomReset');
+            delete rooms[code];
         }
     });
 
