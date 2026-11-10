@@ -533,7 +533,13 @@
             <div class="players-card bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-2 shadow-lg">
                 <div class="flex items-center justify-between mb-2">
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">ผู้เล่นในเกม</h4>
-                    <span id="players-card-team-hint" class="text-[10px] text-amber-400 font-semibold hidden">⚔️ แถบสีทอง = ทีมทำเควสต์</span>
+                    <div class="flex items-center gap-1.5">
+                        <span id="players-card-team-hint" class="text-[10px] text-amber-400 font-semibold hidden">⚔️ แถบสีทอง = ทีมทำเควสต์</span>
+                        <span id="mod-live-voting-hint" class="text-[10px] text-amber-300 font-bold hidden bg-amber-950/80 border border-amber-800/80 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                            <span>🗳️</span>
+                            <span id="mod-live-voting-text">โหวตแล้ว 0/0</span>
+                        </span>
+                    </div>
                 </div>
                 <div id="game-players-list" class="grid grid-cols-2 gap-2 text-xs font-medium"></div>
             </div>
@@ -731,13 +737,36 @@
                         <span class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold block mb-1">ทีมที่ถูกเสนอไปทำภารกิจ (Proposed Team):</span>
                         <div id="proposed-team-names" class="flex flex-wrap justify-center gap-1.5 mt-1.5"></div>
                     </div>
-                    <div class="flex gap-2">
-                        <button class="vote-btn flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl text-sm transition shadow-lg" data-vote="approve">
-                            เห็นชอบ (Approve)
+
+                    <!-- Live Voting Progress Box -->
+                    <div id="voting-status-box" class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-center space-y-2">
+                        <div class="flex items-center justify-between text-xs px-1">
+                            <span class="text-slate-400 font-semibold flex items-center gap-1">
+                                <span>🗳️</span>
+                                <span>สถานะการลงคะแนน:</span>
+                            </span>
+                            <span id="voting-progress-text" class="font-mono font-bold text-amber-400 bg-amber-950/70 border border-amber-800/80 px-2.5 py-0.5 rounded-lg text-xs">โหวตแล้ว 0/0 คน</span>
+                        </div>
+                        <div id="voting-players-status-list" class="flex flex-wrap justify-center gap-1.5 pt-2 border-t border-slate-800/80"></div>
+                    </div>
+
+                    <!-- Vote Action Buttons (Hidden after this player voted) -->
+                    <div id="vote-action-buttons" class="flex gap-2">
+                        <button class="vote-btn flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-3.5 rounded-xl text-sm transition shadow-lg active:scale-95 flex items-center justify-center gap-1.5" data-vote="approve">
+                            <span>🟢 เห็นชอบ (Approve)</span>
                         </button>
-                        <button class="vote-btn flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg" data-vote="reject">
-                            คัดค้าน (Reject)
+                        <button class="vote-btn flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-3.5 rounded-xl text-sm transition shadow-lg active:scale-95 flex items-center justify-center gap-1.5" data-vote="reject">
+                            <span>🔴 คัดค้าน (Reject)</span>
                         </button>
+                    </div>
+
+                    <!-- Post-Vote Waiting Message -->
+                    <div id="vote-submitted-notice" class="hidden bg-emerald-950/40 border border-emerald-800/60 p-3 rounded-xl text-center space-y-1">
+                        <span class="text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5">
+                            <span>✓</span>
+                            <span>คุณลงคะแนนโหวตเรียบร้อยแล้ว</span>
+                        </span>
+                        <p class="text-[11px] text-slate-400" id="vote-waiting-others-text">กำลังรอเพื่อนร่วมห้องลงคะแนนให้ครบ...</p>
                     </div>
                 </div>
                 

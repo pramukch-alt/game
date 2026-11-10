@@ -444,6 +444,7 @@ function handleModHostAction(event, data, senderId) {
             hostRoom.players.forEach(p => {
                 if (p.id.startsWith('bot_')) {
                     hostRoom.votes[p.id] = 'approve';
+                    if (p.name) hostRoom.votes[p.name] = 'approve';
                 }
             });
 
@@ -457,11 +458,15 @@ function handleModHostAction(event, data, senderId) {
             const voter = hostRoom.players.find(p => 
                 p.id === senderId || 
                 (data.playerId && p.id === data.playerId) || 
-                (data.playerName && p.name === data.playerName)
+                (data.playerName && p.name && p.name.trim().toLowerCase() === data.playerName.trim().toLowerCase())
             );
             const voterKey = voter ? voter.id : senderId;
-            hostRoom.votes[voterKey] = data.vote;
-            console.log(`[HostEngine] Team vote received: ${voter ? voter.name : voterKey} = ${data.vote} (${Object.keys(hostRoom.votes).length}/${hostRoom.players.length})`);
+            const canonicalVote = (data.vote === 'approve' || data.vote === 'reject') ? data.vote : 'reject';
+            hostRoom.votes[voterKey] = canonicalVote;
+            if (voter && voter.name) {
+                hostRoom.votes[voter.name] = canonicalVote;
+            }
+            console.log(`[HostEngine] Team vote received: ${voter ? voter.name : voterKey} = ${canonicalVote}`);
             checkAndResolveTeamVote(hostRoom);
         }
         return;
@@ -469,7 +474,7 @@ function handleModHostAction(event, data, senderId) {
 
     if (event === 'skipVoteReveal') {
         if (hostRoom.state === 'TEAM_VOTE_REVEAL') {
-            const approves = Object.values(hostRoom.votes).filter(v => v === 'approve').length;
+            const approves = hostRoom.players.filter(p => (hostRoom.votes[p.id] || (p.name && hostRoom.votes[p.name])) === 'approve').length;
             const isApproved = approves > (hostRoom.players.length / 2);
             proceedAfterVoteReveal(hostRoom, isApproved);
         }
@@ -504,48 +509,73 @@ function handleModHostAction(event, data, senderId) {
 
 function checkAndResolveTeamVote(room) {
     if (!room || room.state !== 'TEAM_VOTING') return;
-    if (Object.keys(room.votes).length >= room.players.length) {
-        const approves = Object.values(room.votes).filter(v => v === 'approve').length;
-        const isApproved = approves > (room.players.length / 2);
 
-        const voteDetails = room.players.map(p => ({
+    // Strictly map each player in room.players to prevent tally mismatch
+    const voteDetails = room.players.map(p => {
+        let vote = room.votes[p.id];
+        if (!vote && p.name && room.votes[p.name]) vote = room.votes[p.name];
+        if (!vote && p.peerId && room.votes[p.peerId]) vote = room.votes[p.peerId];
+        return {
             id: p.id,
             name: p.name,
-            vote: room.votes[p.id] || 'approve'
-        }));
-
-        const proposedNames = room.players.filter(p => room.currentTeam.includes(p.id)).map(p => p.name);
-
-        let potentialNextLeaderIndex = room.leaderIndex;
-        let potentialRejectedCount = room.rejectedVoteCount;
-        if (!isApproved) {
-            potentialRejectedCount++;
-            potentialNextLeaderIndex = (room.leaderIndex + 1) % room.players.length;
-        }
-        const nextLeaderName = room.players[potentialNextLeaderIndex]?.name || null;
-
-        room.state = 'TEAM_VOTE_REVEAL';
-
-        const revealPayload = {
-            approved: isApproved,
-            approvesCount: approves,
-            rejectsCount: room.players.length - approves,
-            voteDetails,
-            proposedTeam: proposedNames,
-            nextLeader: nextLeaderName,
-            rejectedVoteCount: potentialRejectedCount,
-            currentQuest: room.currentQuest,
-            revealDuration: 4
+            hasVoted: !!vote,
+            vote: vote || null
         };
+    });
 
-        socket.trigger('teamVoteResult', revealPayload);
-        broadcastToAllPlayers('teamVoteResult', revealPayload);
+    const votedCount = voteDetails.filter(d => d.hasVoted).length;
 
-        if (voteRevealTimer) clearTimeout(voteRevealTimer);
-        voteRevealTimer = setTimeout(() => {
-            proceedAfterVoteReveal(room, isApproved);
-        }, 4500);
+    // Broadcast live vote progress to all players & mod
+    const progressPayload = {
+        votedPlayerIds: voteDetails.filter(d => d.hasVoted).map(d => d.id),
+        votedPlayerNames: voteDetails.filter(d => d.hasVoted).map(d => d.name),
+        votedCount,
+        totalPlayers: room.players.length
+    };
+    socket.trigger('voteProgress', progressPayload);
+    broadcastToAllPlayers('voteProgress', progressPayload);
+
+    // DO NOT proceed until EVERY player in room.players has voted!
+    if (votedCount < room.players.length) {
+        return;
     }
+
+    // Compute approves and rejects strictly from voteDetails (100% consistent with breakdown)
+    const approves = voteDetails.filter(d => d.vote === 'approve').length;
+    const rejects = voteDetails.filter(d => d.vote === 'reject').length;
+    const isApproved = approves > (room.players.length / 2);
+
+    const proposedNames = room.players.filter(p => room.currentTeam && room.currentTeam.includes(p.id)).map(p => p.name);
+
+    let potentialNextLeaderIndex = room.leaderIndex;
+    let potentialRejectedCount = room.rejectedVoteCount;
+    if (!isApproved) {
+        potentialRejectedCount++;
+        potentialNextLeaderIndex = (room.leaderIndex + 1) % room.players.length;
+    }
+    const nextLeaderName = room.players[potentialNextLeaderIndex]?.name || null;
+
+    room.state = 'TEAM_VOTE_REVEAL';
+
+    const revealPayload = {
+        approved: isApproved,
+        approvesCount: approves,
+        rejectsCount: rejects,
+        voteDetails: voteDetails.map(d => ({ id: d.id, name: d.name, vote: d.vote })),
+        proposedTeam: proposedNames,
+        nextLeader: nextLeaderName,
+        rejectedVoteCount: potentialRejectedCount,
+        currentQuest: room.currentQuest,
+        revealDuration: 4
+    };
+
+    socket.trigger('teamVoteResult', revealPayload);
+    broadcastToAllPlayers('teamVoteResult', revealPayload);
+
+    if (voteRevealTimer) clearTimeout(voteRevealTimer);
+    voteRevealTimer = setTimeout(() => {
+        proceedAfterVoteReveal(room, isApproved);
+    }, 4500);
 }
 
 function proceedAfterVoteReveal(room, isApproved) {
@@ -1276,6 +1306,9 @@ let allPlayers = [];
 let amLeader = false;
 let selectedTeam = [];
 let activeRoomCode = '';
+let currentVotedPlayerNames = [];
+let currentVotedPlayerIds = [];
+let currentGameState = 'LOBBY';
 
 function getEffectiveRoomCode() {
     let code = (myRoom || activeRoomCode || sessionStorage.getItem('av_room_code') || '').trim().toUpperCase();
@@ -2070,6 +2103,19 @@ socket.on('gameStateChanged', (data) => {
     } = data;
 
     getEffectiveRoomCode();
+    currentGameState = state;
+
+    // Close vote result modal if we've moved past reveal
+    if (state !== 'TEAM_VOTE_REVEAL') {
+        closeVoteResultModal();
+    }
+
+    if (state === 'TEAM_BUILDING') {
+        currentVotedPlayerNames = [];
+        currentVotedPlayerIds = [];
+    }
+    if (data.votedPlayerNames) currentVotedPlayerNames = data.votedPlayerNames;
+    if (data.votedPlayerIds) currentVotedPlayerIds = data.votedPlayerIds;
 
     // Ensure player is switched to screen-player-game when game is in progress
     if (!isMod && state !== 'LOBBY' && state !== 'ROLE_ASSIGNMENT') {
@@ -2128,18 +2174,31 @@ socket.on('gameStateChanged', (data) => {
     const modQuestTeamBadge = document.getElementById('mod-quest-team-count-badge');
     const modQuestTeamTags = document.getElementById('mod-quest-team-tags');
     const playersCardHint = document.getElementById('players-card-team-hint');
+    const modLiveVotingHint = document.getElementById('mod-live-voting-hint');
+    const modLiveVotingText = document.getElementById('mod-live-voting-text');
 
     if (modStatus) {
         if (state === 'TEAM_BUILDING') {
             modStatus.innerText = `ภารกิจที่ ${currentQuest} (ต้องการ ${requiredTeamSize} คน) | ผู้นำ: ${leader}`;
         } else if (state === 'TEAM_VOTING') {
-            modStatus.innerText = `กำลังโหวตรับรองทีม: ${activeTeamNames.length > 0 ? activeTeamNames.join(', ') : (proposedTeam ? proposedTeam.join(', ') : '')}`;
+            const vCount = currentVotedPlayerNames.length;
+            const tCount = allPlayers.length;
+            modStatus.innerText = `กำลังโหวตรับรองทีม: ${activeTeamNames.length > 0 ? activeTeamNames.join(', ') : (proposedTeam ? proposedTeam.join(', ') : '')} | ลงคะแนนแล้ว ${vCount}/${tCount} คน`;
         } else if (state === 'QUEST_EXECUTION') {
             modStatus.innerText = `กำลังดำเนินภารกิจที่ ${currentQuest}...`;
         } else if (state === 'ASSASSINATION') {
             modStatus.innerHTML = `🗡️ <span class="text-rose-400 font-bold">ฝ่ายคนดีสำเร็จ 3 เควสต์!</span> รอ Assassin (${data.assassinName || 'มือสังหาร'}) เลือกลอบสังหาร Merlin...`;
         } else if (state === 'GAME_OVER') {
             modStatus.innerText = `🏆 จบเกม!`;
+        }
+    }
+
+    if (modLiveVotingHint && modLiveVotingText) {
+        if (state === 'TEAM_VOTING') {
+            modLiveVotingHint.classList.remove('hidden');
+            modLiveVotingText.innerText = `โหวตแล้ว ${currentVotedPlayerNames.length}/${allPlayers.length}`;
+        } else {
+            modLiveVotingHint.classList.add('hidden');
         }
     }
 
@@ -2182,7 +2241,17 @@ socket.on('gameStateChanged', (data) => {
                 (currentProposedTeamIds && currentProposedTeamIds.includes(p.id))
             );
 
+            const hasVoted = currentVotedPlayerNames.includes(p.name) || currentVotedPlayerIds.includes(p.id);
+            const voteBadgeHtml = (state === 'TEAM_VOTING') ? (
+                hasVoted 
+                    ? `<span class="vote-status-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 mt-1 shadow-sm"><span>🗳️</span><span>โหวตแล้ว</span></span>`
+                    : `<span class="vote-status-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 mt-1 animate-pulse"><span>⏳</span><span>รอโหวต...</span></span>`
+            ) : '';
+
             const div = document.createElement('div');
+            div.setAttribute('data-player-id', p.id);
+            div.setAttribute('data-player-name', p.name);
+
             if (isAssassinPlayer) {
                 div.className = `p-2.5 rounded-xl border-2 border-rose-500 bg-gradient-to-r from-rose-950/90 via-slate-900 to-rose-950/90 text-rose-200 font-bold ring-2 ring-rose-500/50 shadow-lg shadow-rose-900/40 text-center flex flex-col items-center justify-center gap-1 transition-all transform scale-[1.02]`;
                 div.innerHTML = `
@@ -2193,6 +2262,7 @@ socket.on('gameStateChanged', (data) => {
                         <span>🗡️</span>
                         <span>กำลังเลือกสังหาร Merlin...</span>
                     </span>
+                    ${voteBadgeHtml}
                 `;
             } else if (isInActiveTeam) {
                 div.className = `p-2.5 rounded-xl border-2 border-amber-400 bg-gradient-to-r from-amber-950/90 via-slate-900 to-amber-950/90 text-amber-200 font-bold ring-2 ring-amber-500/50 shadow-lg shadow-amber-500/20 text-center flex flex-col items-center justify-center gap-1 transition-all transform scale-[1.02]`;
@@ -2205,10 +2275,17 @@ socket.on('gameStateChanged', (data) => {
                         <span>⚔️</span>
                         <span>ในทีมเควสต์</span>
                     </span>
+                    ${voteBadgeHtml}
                 `;
             } else {
-                div.className = `p-2 rounded-xl border text-center transition ${isLeader ? 'border-amber-500 bg-amber-950/40 text-amber-300 font-bold shadow-sm' : 'border-slate-800 bg-slate-950/70 text-slate-300'}`;
-                div.innerHTML = `${isLeader ? '👑 ' : ''}${p.name}`;
+                div.className = `p-2 rounded-xl border text-center transition flex flex-col items-center justify-center ${isLeader ? 'border-amber-500 bg-amber-950/40 text-amber-300 font-bold shadow-sm' : 'border-slate-800 bg-slate-950/70 text-slate-300'}`;
+                div.innerHTML = `
+                    <div class="flex items-center gap-1 justify-center">
+                        ${isLeader ? '<span>👑</span>' : ''}
+                        <span>${p.name}</span>
+                    </div>
+                    ${voteBadgeHtml}
+                `;
             }
             gamePlayersList.appendChild(div);
         });
@@ -2242,16 +2319,30 @@ socket.on('gameStateChanged', (data) => {
         if (!isMod && currentScreen !== 'screen-player-game') {
             showScreen('screen-player-game');
         }
-        if (playerBanner) playerBanner.innerText = `ร่วมลงคะแนนโหวตรับรองทีม (${activeTeamNames.length > 0 ? activeTeamNames.join(', ') : (proposedTeam ? proposedTeam.join(', ') : '')})`;
         if (actionPanel) actionPanel.classList.remove('hidden');
         if (votingPanel) {
             votingPanel.classList.remove('hidden');
+            const actionBtns = document.getElementById('vote-action-buttons');
+            const submittedNotice = document.getElementById('vote-submitted-notice');
+
+            const hasIVoted = currentVotedPlayerNames.includes(myName) || currentVotedPlayerIds.includes(myDeviceId) || currentVotedPlayerIds.includes(socket.id);
+            if (hasIVoted) {
+                if (actionBtns) actionBtns.classList.add('hidden');
+                if (submittedNotice) submittedNotice.classList.remove('hidden');
+                if (playerBanner) playerBanner.innerText = `✓ ส่งผลโหวตแล้ว กำลังรอผู้เล่นคนอื่น (${currentVotedPlayerNames.length}/${allPlayers.length} คน)`;
+            } else {
+                if (actionBtns) actionBtns.classList.remove('hidden');
+                if (submittedNotice) submittedNotice.classList.add('hidden');
+                if (playerBanner) playerBanner.innerText = `ร่วมลงคะแนนโหวตรับรองทีม (${activeTeamNames.length > 0 ? activeTeamNames.join(', ') : (proposedTeam ? proposedTeam.join(', ') : '')})`;
+            }
+
             votingPanel.querySelectorAll('.vote-btn').forEach(btn => {
                 btn.disabled = false;
                 btn.classList.remove('opacity-50', 'pointer-events-none');
             });
         }
         renderUserTags(activeTeamNames.length > 0 ? activeTeamNames : proposedTeam, document.getElementById('proposed-team-names'), { leaderName: leader });
+        renderLiveVotingProgress();
     } else if (state === 'QUEST_EXECUTION') {
         if (playerBanner) playerBanner.innerText = `กำลังดำเนินภารกิจที่ ${currentQuest}...`;
         renderUserTags(activeTeamNames, document.getElementById('quest-panel-team-tags'), { leaderName: leader });
@@ -2389,6 +2480,90 @@ socket.on('voteTeam', (team) => {
     }
 });
 
+function renderLiveVotingProgress() {
+    const progressText = document.getElementById('voting-progress-text');
+    const statusList = document.getElementById('voting-players-status-list');
+    const modLiveVotingHint = document.getElementById('mod-live-voting-hint');
+    const modLiveVotingText = document.getElementById('mod-live-voting-text');
+
+    const total = allPlayers.length;
+    const count = currentVotedPlayerNames.length;
+
+    if (progressText) {
+        progressText.innerText = `โหวตแล้ว ${count}/${total} คน`;
+    }
+    if (modLiveVotingText) {
+        modLiveVotingText.innerText = `โหวตแล้ว ${count}/${total}`;
+    }
+    if (modLiveVotingHint) {
+        if (count > 0 || currentGameState === 'TEAM_VOTING') {
+            modLiveVotingHint.classList.remove('hidden');
+        } else {
+            modLiveVotingHint.classList.add('hidden');
+        }
+    }
+
+    const waitText = document.getElementById('vote-waiting-others-text');
+    if (waitText) {
+        const remaining = Math.max(0, total - count);
+        waitText.innerText = remaining > 0 ? `กำลังรอเพื่อนร่วมห้องลงคะแนนอีก ${remaining} คน...` : `ทุกคนลงคะแนนครบแล้ว กำลังสรุปผล...`;
+    }
+
+    if (statusList && allPlayers && allPlayers.length > 0) {
+        statusList.innerHTML = '';
+        allPlayers.forEach(p => {
+            const hasVoted = currentVotedPlayerNames.includes(p.name) || currentVotedPlayerIds.includes(p.id);
+            const tag = document.createElement('span');
+            if (hasVoted) {
+                tag.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-600/80 shadow-sm transition-all';
+                tag.innerHTML = `<span>👤 ${p.name}</span><span class="text-[10px] bg-emerald-500 text-slate-950 px-1 rounded-full font-black">✓</span>`;
+            } else {
+                tag.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-medium bg-slate-950 text-slate-400 border border-slate-800 transition-all animate-pulse';
+                tag.innerHTML = `<span>👤 ${p.name}</span><span class="text-[10px] text-amber-400">⏳</span>`;
+            }
+            statusList.appendChild(tag);
+        });
+    }
+}
+window.renderLiveVotingProgress = renderLiveVotingProgress;
+
+socket.on('voteProgress', (data) => {
+    if (!data) return;
+    currentVotedPlayerIds = data.votedPlayerIds || [];
+    currentVotedPlayerNames = data.votedPlayerNames || [];
+    renderLiveVotingProgress();
+
+    // Update Mod Board player cards
+    const gamePlayersList = document.getElementById('game-players-list');
+    if (gamePlayersList && allPlayers && allPlayers.length > 0) {
+        allPlayers.forEach(p => {
+            const playerCard = gamePlayersList.querySelector(`[data-player-id="${p.id}"]`) || 
+                               gamePlayersList.querySelector(`[data-player-name="${p.name}"]`);
+            const hasVoted = currentVotedPlayerNames.includes(p.name) || currentVotedPlayerIds.includes(p.id);
+            if (playerCard) {
+                const badge = playerCard.querySelector('.vote-status-badge');
+                if (badge) {
+                    if (hasVoted) {
+                        badge.className = 'vote-status-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 mt-1';
+                        badge.innerHTML = '<span>🗳️</span><span>โหวตแล้ว</span>';
+                    } else {
+                        badge.className = 'vote-status-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 mt-1 animate-pulse';
+                        badge.innerHTML = '<span>⏳</span><span>รอโหวต...</span>';
+                    }
+                }
+            }
+        });
+    }
+
+    // Update Mod Status bar
+    const modStatus = document.getElementById('mod-status');
+    if (modStatus && currentGameState === 'TEAM_VOTING') {
+        const count = currentVotedPlayerNames.length;
+        const total = data.totalPlayers || allPlayers.length;
+        modStatus.innerText = `กำลังโหวตรับรองทีม | ลงคะแนนแล้ว ${count}/${total} คน`;
+    }
+});
+
 document.querySelectorAll('.vote-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         const vote = e.currentTarget.getAttribute('data-vote');
@@ -2400,11 +2575,20 @@ document.querySelectorAll('.vote-btn').forEach(btn => {
             playerId: myDeviceId 
         };
         socket.emit('voteTeamSubmit', payload);
-        socket.emit('voteTeam', payload);
-        const votingPanel = document.getElementById('voting-panel');
-        if (votingPanel) votingPanel.classList.add('hidden');
+
+        // Optimistically record my vote
+        if (myName && !currentVotedPlayerNames.includes(myName)) currentVotedPlayerNames.push(myName);
+        if (myDeviceId && !currentVotedPlayerIds.includes(myDeviceId)) currentVotedPlayerIds.push(myDeviceId);
+
+        const actionBtns = document.getElementById('vote-action-buttons');
+        const submittedNotice = document.getElementById('vote-submitted-notice');
+        if (actionBtns) actionBtns.classList.add('hidden');
+        if (submittedNotice) submittedNotice.classList.remove('hidden');
+
         const playerBanner = document.getElementById('player-status-banner');
-        if (playerBanner) playerBanner.innerText = "ส่งผลโหวตแล้ว รอผู้เล่นคนอื่น...";
+        if (playerBanner) playerBanner.innerText = `ส่งผลโหวตแล้ว รอเพื่อนร่วมห้องอีก ${Math.max(0, allPlayers.length - currentVotedPlayerNames.length)} คน...`;
+        
+        renderLiveVotingProgress();
     });
 });
 
@@ -2432,7 +2616,7 @@ socket.on('teamVoteResult', (data) => {
         }
     }
 
-    // Numbers
+    // Numbers (Guaranteed 100% consistent with breakdown list)
     if (document.getElementById('vote-result-approve-count')) document.getElementById('vote-result-approve-count').innerText = approvesCount;
     if (document.getElementById('vote-result-reject-count')) document.getElementById('vote-result-reject-count').innerText = rejectsCount;
 
@@ -2481,6 +2665,7 @@ socket.on('teamVoteResult', (data) => {
         } else {
             clearInterval(window.voteResultInterval);
             window.voteResultInterval = null;
+            closeVoteResultModal();
         }
     }, 1000);
 
@@ -2500,6 +2685,10 @@ function proceedFromVoteModal() {
 window.proceedFromVoteModal = proceedFromVoteModal;
 
 function closeVoteResultModal() {
+    if (window.voteResultInterval) {
+        clearInterval(window.voteResultInterval);
+        window.voteResultInterval = null;
+    }
     const modal = document.getElementById('vote-result-modal');
     if (modal) modal.classList.add('hidden');
 }

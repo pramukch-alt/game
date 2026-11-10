@@ -282,6 +282,7 @@ function getRequiredTeamSize(playerCount, questNumber) {
             room.players.forEach(p => {
                 if (p.id.startsWith('bot_')) {
                     room.votes[p.id] = 'approve';
+                    if (p.name) room.votes[p.name] = 'approve';
                 }
             });
             checkAndResolveTeamVote(room, code);
@@ -330,6 +331,7 @@ function getRequiredTeamSize(playerCount, questNumber) {
                 room.players.forEach(p => {
                     if (p.id.startsWith('bot_')) {
                         room.votes[p.id] = 'approve';
+                        if (p.name) room.votes[p.name] = 'approve';
                     }
                 });
 
@@ -339,49 +341,73 @@ function getRequiredTeamSize(playerCount, questNumber) {
     }
 
     function checkAndResolveTeamVote(room, roomCode) {
-        if (Object.keys(room.votes).length >= room.players.length) {
-            const approves = Object.values(room.votes).filter(v => v === 'approve').length;
-            const isApproved = approves > room.players.length / 2;
+        if (!room || room.state !== 'TEAM_VOTING') return;
 
-            const voteDetails = room.players.map(p => ({
+        // Strictly map each player in room.players to prevent tally mismatch
+        const voteDetails = room.players.map(p => {
+            let vote = room.votes[p.id];
+            if (!vote && p.name && room.votes[p.name]) vote = room.votes[p.name];
+            return {
                 id: p.id,
                 name: p.name,
-                vote: room.votes[p.id] || 'approve' // 'approve' or 'reject'
-            }));
+                hasVoted: !!vote,
+                vote: vote || null
+            };
+        });
 
-            const proposedNames = room.players.filter(p => room.currentTeam.includes(p.id)).map(p => p.name);
+        const votedCount = voteDetails.filter(d => d.hasVoted).length;
 
-            // Determine next leader if rejected
-            let potentialNextLeaderIndex = room.leaderIndex;
-            let potentialRejectedCount = room.rejectedVoteCount;
-            if (!isApproved) {
-                potentialRejectedCount++;
-                potentialNextLeaderIndex = (room.leaderIndex + 1) % room.players.length;
-            }
-            const nextLeaderName = room.players[potentialNextLeaderIndex]?.name || null;
+        // Live vote progress broadcast to all players & mod
+        const progressPayload = {
+            votedPlayerIds: voteDetails.filter(d => d.hasVoted).map(d => d.id),
+            votedPlayerNames: voteDetails.filter(d => d.hasVoted).map(d => d.name),
+            votedCount,
+            totalPlayers: room.players.length
+        };
+        io.to(roomCode).emit('voteProgress', progressPayload);
 
-            // Enter reveal state: Show who voted approve/reject FIRST!
-            room.state = 'TEAM_VOTE_REVEAL';
-
-            // Broadcast Vote Results breakdown to everyone
-            io.to(roomCode).emit('teamVoteResult', {
-                approved: isApproved,
-                approvesCount: approves,
-                rejectsCount: room.players.length - approves,
-                voteDetails,
-                proposedTeam: proposedNames,
-                nextLeader: nextLeaderName,
-                rejectedVoteCount: potentialRejectedCount,
-                currentQuest: room.currentQuest,
-                revealDuration: 4
-            });
-
-            // Hold on screen for 4.5 seconds so everyone can see the result popup, then proceed!
-            if (room.voteRevealTimer) clearTimeout(room.voteRevealTimer);
-            room.voteRevealTimer = setTimeout(() => {
-                proceedAfterVoteReveal(room, roomCode, isApproved);
-            }, 4500);
+        // DO NOT proceed until EVERY player in room.players has voted!
+        if (votedCount < room.players.length) {
+            return;
         }
+
+        // Compute approves and rejects strictly from voteDetails (100% consistent with breakdown)
+        const approves = voteDetails.filter(d => d.vote === 'approve').length;
+        const rejects = voteDetails.filter(d => d.vote === 'reject').length;
+        const isApproved = approves > room.players.length / 2;
+
+        const proposedNames = room.players.filter(p => room.currentTeam && room.currentTeam.includes(p.id)).map(p => p.name);
+
+        // Determine next leader if rejected
+        let potentialNextLeaderIndex = room.leaderIndex;
+        let potentialRejectedCount = room.rejectedVoteCount;
+        if (!isApproved) {
+            potentialRejectedCount++;
+            potentialNextLeaderIndex = (room.leaderIndex + 1) % room.players.length;
+        }
+        const nextLeaderName = room.players[potentialNextLeaderIndex]?.name || null;
+
+        // Enter reveal state: Show who voted approve/reject FIRST!
+        room.state = 'TEAM_VOTE_REVEAL';
+
+        // Broadcast Vote Results breakdown to everyone
+        io.to(roomCode).emit('teamVoteResult', {
+            approved: isApproved,
+            approvesCount: approves,
+            rejectsCount: rejects,
+            voteDetails: voteDetails.map(d => ({ id: d.id, name: d.name, vote: d.vote })),
+            proposedTeam: proposedNames,
+            nextLeader: nextLeaderName,
+            rejectedVoteCount: potentialRejectedCount,
+            currentQuest: room.currentQuest,
+            revealDuration: 4
+        });
+
+        // Hold on screen for 4.5 seconds so everyone can see the result popup, then proceed!
+        if (room.voteRevealTimer) clearTimeout(room.voteRevealTimer);
+        room.voteRevealTimer = setTimeout(() => {
+            proceedAfterVoteReveal(room, roomCode, isApproved);
+        }, 4500);
     }
 
     function proceedAfterVoteReveal(room, roomCode, isApproved) {
@@ -475,7 +501,7 @@ function getRequiredTeamSize(playerCount, questNumber) {
     socket.on('skipVoteReveal', (roomCode) => {
         const { room, code } = findRoom(roomCode, socket);
         if (room && room.state === 'TEAM_VOTE_REVEAL') {
-            const approves = Object.values(room.votes).filter(v => v === 'approve').length;
+            const approves = room.players.filter(p => (room.votes[p.id] || (p.name && room.votes[p.name])) === 'approve').length;
             const isApproved = approves > room.players.length / 2;
             proceedAfterVoteReveal(room, code, isApproved);
         }
@@ -489,11 +515,15 @@ function getRequiredTeamSize(playerCount, questNumber) {
             const voter = room.players.find(p => 
                 p.id === socket.id || 
                 (data.playerId && p.id === data.playerId) || 
-                (data.playerName && p.name === data.playerName)
+                (data.playerName && p.name && p.name.trim().toLowerCase() === data.playerName.trim().toLowerCase())
             );
             const voterId = voter ? voter.id : socket.id;
-            room.votes[voterId] = data.vote;
-            console.log(`[VoteTeam] Room ${code}: vote from ${voter ? voter.name : voterId} = ${data.vote} (${Object.keys(room.votes).length}/${room.players.length})`);
+            const canonicalVote = (data.vote === 'approve' || data.vote === 'reject') ? data.vote : 'reject';
+            room.votes[voterId] = canonicalVote;
+            if (voter && voter.name) {
+                room.votes[voter.name] = canonicalVote;
+            }
+            console.log(`[VoteTeam] Room ${code}: vote from ${voter ? voter.name : voterId} = ${canonicalVote}`);
             checkAndResolveTeamVote(room, code);
         }
     };
